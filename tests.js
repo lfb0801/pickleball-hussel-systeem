@@ -274,3 +274,87 @@ test('kiesTeams levert twee teams van twee met alle vier de spelers', function (
   const ids = teams.teamA.concat(teams.teamB).map(function (s) { return s.id; }).sort();
   assertGelijk(ids, spelers.map(function (s) { return s.id; }).sort());
 });
+
+test('genereerRonde geeft null als er geen volledige baan te vullen is', function () {
+  const uitkomst = Hussel.genereerRonde({
+    aanwezigen: maakSpelers([3]),
+    banen: 4,
+    rng: Hussel.maakRng(1),
+    pogingen: 5,
+  });
+  assertGelijk(uitkomst, null);
+});
+
+test('genereerRonde deelt iedere aanwezige precies één keer in', function () {
+  const spelers = maakSpelers([6, 6, 6]);
+  const ronde = Hussel.genereerRonde({
+    aanwezigen: spelers,
+    banen: 4,
+    rng: Hussel.maakRng(11),
+    pogingen: 20,
+  });
+  const ingedeeld = [];
+  for (const baan of ronde.banen) {
+    for (const id of baan.teamA.concat(baan.teamB)) ingedeeld.push(id);
+  }
+  for (const id of ronde.rustend) ingedeeld.push(id);
+  assertGelijk(ingedeeld.length, spelers.length);
+  assertGelijk(ingedeeld.slice().sort(), spelers.map(function (s) { return s.id; }).sort());
+});
+
+test('genereerRonde vult niet meer banen dan er plekken zijn', function () {
+  const ronde = Hussel.genereerRonde({
+    aanwezigen: maakSpelers([18]),
+    banen: 3,
+    rng: Hussel.maakRng(2),
+    pogingen: 20,
+  });
+  assertGelijk(ronde.banen.length, 3);
+  assertGelijk(ronde.rustend.length, 6);
+  assertGelijk(ronde.banen.map(function (baan) { return baan.baan; }), [1, 2, 3]);
+});
+
+test('genereerRonde vult de baanbeschrijving met groepen, thuisgroep en leners', function () {
+  const ronde = Hussel.genereerRonde({
+    aanwezigen: maakSpelers([6, 6]),
+    banen: 3,
+    rng: Hussel.maakRng(4),
+    pogingen: 20,
+  });
+  const breukvlak = ronde.banen[1];
+  assertGelijk(breukvlak.groepen, [0, 1]);
+  assertGelijk(breukvlak.thuisgroep, 0);
+  assertGelijk(breukvlak.leners.length, 2);
+  assertGelijk(ronde.banen[0].groepen, [0]);
+  assertGelijk(ronde.banen[0].leners, []);
+});
+
+test('genereerRonde is reproduceerbaar bij hetzelfde zaad', function () {
+  const spelers = maakSpelers([8, 8]);
+  const eerste = Hussel.genereerRonde({ aanwezigen: spelers, banen: 4, rng: Hussel.maakRng(9), pogingen: 30 });
+  const tweede = Hussel.genereerRonde({ aanwezigen: spelers, banen: 4, rng: Hussel.maakRng(9), pogingen: 30 });
+  assertGelijk(eerste, tweede);
+});
+
+test('genereerRonde vermijdt het koppel dat vorige ronde samen speelde', function () {
+  const spelers = maakSpelers([4]);
+  const eerste = Hussel.genereerRonde({ aanwezigen: spelers, banen: 1, rng: Hussel.maakRng(6), pogingen: 30 });
+  const tweede = Hussel.genereerRonde({
+    aanwezigen: spelers,
+    banen: 1,
+    historie: [eerste],
+    rng: Hussel.maakRng(6),
+    pogingen: 30,
+  });
+  const eerdereKoppels = [
+    Hussel.sleutel(eerste.banen[0].teamA[0], eerste.banen[0].teamA[1]),
+    Hussel.sleutel(eerste.banen[0].teamB[0], eerste.banen[0].teamB[1]),
+  ];
+  const nieuweKoppels = [
+    Hussel.sleutel(tweede.banen[0].teamA[0], tweede.banen[0].teamA[1]),
+    Hussel.sleutel(tweede.banen[0].teamB[0], tweede.banen[0].teamB[1]),
+  ];
+  for (const koppel of nieuweKoppels) {
+    assert(eerdereKoppels.indexOf(koppel) === -1, 'koppel ' + koppel + ' wordt herhaald');
+  }
+});

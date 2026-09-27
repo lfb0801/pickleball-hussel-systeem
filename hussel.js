@@ -181,7 +181,63 @@
     return beste;
   }
 
+  function maakBaan(nummer, teams) {
+    const viertal = teams.teamA.concat(teams.teamB);
+    const verdeling = bepaalLeners(viertal);
+    const groepen = [];
+    for (const speler of viertal) {
+      if (groepen.indexOf(speler.groep) === -1) groepen.push(speler.groep);
+    }
+    groepen.sort(function (a, b) { return a - b; });
+    return {
+      baan: nummer,
+      teamA: teams.teamA.map(function (speler) { return speler.id; }),
+      teamB: teams.teamB.map(function (speler) { return speler.id; }),
+      thuisgroep: verdeling.thuisgroep,
+      groepen: groepen,
+      leners: verdeling.leners.map(function (speler) { return speler.id; }),
+    };
+  }
+
+  function genereerRonde(invoer) {
+    const aanwezigen = invoer.aanwezigen;
+    const historie = invoer.historie === undefined ? [] : invoer.historie;
+    const pogingen = Math.max(1, invoer.pogingen === undefined ? AANTAL_POGINGEN : invoer.pogingen);
+    const rng = invoer.rng === undefined
+      ? maakRng(Math.floor(Math.random() * 4294967296))
+      : invoer.rng;
+
+    const stat = maakHistorieStatistiek(historie, invoer.rustcorrectie);
+    const plekken = aantalPlekken(aanwezigen.length, invoer.banen);
+    if (plekken === 0) return null;
+
+    let beste = null;
+    let besteScore = Infinity;
+
+    for (let poging = 0; poging < pogingen; poging += 1) {
+      const keuze = kiesSpelenden(aanwezigen, plekken, stat, rng);
+      const viertallen = verdeelOverBanen(keuze.spelend, rng);
+      const teamsPerBaan = viertallen.map(function (viertal) { return kiesTeams(viertal, stat); });
+
+      let score = 0;
+      for (const teams of teamsPerBaan) {
+        score += scoorViertal(teams.teamA, teams.teamB, stat);
+      }
+
+      if (score < besteScore) {
+        besteScore = score;
+        beste = { teamsPerBaan: teamsPerBaan, rustend: keuze.rustend };
+      }
+    }
+
+    return {
+      banen: beste.teamsPerBaan.map(function (teams, index) { return maakBaan(index + 1, teams); }),
+      rustend: beste.rustend.map(function (speler) { return speler.id; }),
+    };
+  }
+
   globalThis.Hussel = {
+    genereerRonde: genereerRonde,
     scoorViertal: scoorViertal,
     kiesTeams: kiesTeams,
     verdeelOverBanen: verdeelOverBanen,

@@ -81,3 +81,55 @@ test('hoogsteRustsaldo geeft het maximum onder de opgegeven spelers', function (
   assertGelijk(Hussel.hoogsteRustsaldo(stat, ['a', 'c']), 1);
   assertGelijk(Hussel.hoogsteRustsaldo(stat, []), 0);
 });
+
+function maakSpelers(aantalPerGroep) {
+  const spelers = [];
+  aantalPerGroep.forEach(function (hoeveel, groep) {
+    for (let i = 0; i < hoeveel; i += 1) {
+      const id = 'g' + groep + 'n' + i;
+      spelers.push({ id: id, naam: id, groep: groep });
+    }
+  });
+  return spelers;
+}
+
+test('aantalPlekken wordt begrensd door banen en door viertallen', function () {
+  assertGelijk(Hussel.aantalPlekken(18, 4), 16);
+  assertGelijk(Hussel.aantalPlekken(18, 10), 16);
+  assertGelijk(Hussel.aantalPlekken(11, 4), 8);
+  assertGelijk(Hussel.aantalPlekken(20, 3), 12);
+  assertGelijk(Hussel.aantalPlekken(3, 4), 0);
+  assertGelijk(Hussel.aantalPlekken(8, 0), 0);
+});
+
+test('kiesSpelenden vult precies het aantal plekken en laat de rest rusten', function () {
+  const spelers = maakSpelers([6, 6]);
+  const stat = Hussel.maakHistorieStatistiek([]);
+  const keuze = Hussel.kiesSpelenden(spelers, 8, stat, Hussel.maakRng(1));
+  assertGelijk(keuze.spelend.length, 8);
+  assertGelijk(keuze.rustend.length, 4);
+  const ids = keuze.spelend.concat(keuze.rustend).map(function (s) { return s.id; });
+  assertGelijk(ids.slice().sort(), spelers.map(function (s) { return s.id; }).sort());
+});
+
+test('kiesSpelenden laat wie het meest gerust heeft spelen', function () {
+  const spelers = maakSpelers([5]);
+  const stat = Hussel.maakHistorieStatistiek([], { g0n0: 3, g0n1: 0, g0n2: 0, g0n3: 0, g0n4: 0 });
+  const keuze = Hussel.kiesSpelenden(spelers, 4, stat, Hussel.maakRng(1));
+  const rustendeIds = keuze.rustend.map(function (s) { return s.id; });
+  assert(rustendeIds.indexOf('g0n0') === -1, 'de speler met het hoogste rustsaldo rust ten onrechte opnieuw');
+});
+
+test('kiesSpelenden breekt gelijke rustsaldi willekeurig', function () {
+  const spelers = maakSpelers([8]);
+  const stat = Hussel.maakHistorieStatistiek([]);
+  const eerste = Hussel.kiesSpelenden(spelers, 4, stat, Hussel.maakRng(1)).rustend
+    .map(function (s) { return s.id; }).sort();
+  let andersGevonden = false;
+  for (let zaad = 2; zaad < 20; zaad += 1) {
+    const volgende = Hussel.kiesSpelenden(spelers, 4, stat, Hussel.maakRng(zaad)).rustend
+      .map(function (s) { return s.id; }).sort();
+    if (JSON.stringify(volgende) !== JSON.stringify(eerste)) andersGevonden = true;
+  }
+  assert(andersGevonden, 'de rustende spelers zijn bij elk zaad gelijk');
+});

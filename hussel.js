@@ -84,7 +84,27 @@
     return hoogste;
   }
 
+  function aantalPlekken(aantalAanwezigen, banen) {
+    const doorBanen = Math.max(0, banen) * 4;
+    const doorViertallen = Math.floor(aantalAanwezigen / 4) * 4;
+    return Math.min(doorBanen, doorViertallen);
+  }
+
+  // Harde regel: wie tot nu toe het meest gerust heeft, speelt. Eerst
+  // husselen en dan stabiel sorteren geeft een willekeurige tiebreak.
+  function kiesSpelenden(aanwezigen, plekken, stat, rng) {
+    const opRustsaldo = husselLijst(aanwezigen, rng).sort(function (a, b) {
+      return aantal(stat.rust, b.id) - aantal(stat.rust, a.id);
+    });
+    return {
+      spelend: opRustsaldo.slice(0, plekken),
+      rustend: opRustsaldo.slice(plekken),
+    };
+  }
+
   globalThis.Hussel = {
+    aantalPlekken: aantalPlekken,
+    kiesSpelenden: kiesSpelenden,
     GEWICHT_PARTNER: GEWICHT_PARTNER,
     GEWICHT_TEGENSTANDER: GEWICHT_TEGENSTANDER,
     GEWICHT_NIVEAUKLOOF: GEWICHT_NIVEAUKLOOF,

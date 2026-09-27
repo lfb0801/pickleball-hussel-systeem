@@ -17,9 +17,32 @@
   </nav>
 </header>
 <p id="waarschuwing" hidden></p>
-<main></main>
+<main>
+  <section id="scherm-spelers" hidden>
+    <h2>Spelers en groepen</h2>
+
+    <h3>Groepen, van sterk naar zwak</h3>
+    <ol id="groepen-lijst"></ol>
+    <form id="groep-toevoegen">
+      <input type="text" id="groep-naam" placeholder="Naam van de groep" required>
+      <button type="submit">Groep toevoegen</button>
+    </form>
+
+    <h3>Spelers</h3>
+    <table id="spelers-tabel">
+      <thead><tr><th>Naam</th><th>Groep</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <form id="speler-toevoegen">
+      <input type="text" id="nieuwe-speler-naam" placeholder="Naam van de speler" required>
+      <select id="nieuwe-speler-groep"></select>
+      <button type="submit">Speler toevoegen</button>
+    </form>
+  </section>
+</main>
 <script src="hussel.js"></script>
 <script src="opslag.js"></script>
+<script src="scherm-spelers.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

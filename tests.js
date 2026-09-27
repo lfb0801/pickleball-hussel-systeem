@@ -358,3 +358,119 @@ test('genereerRonde vermijdt het koppel dat vorige ronde samen speelde', functio
     assert(eerdereKoppels.indexOf(koppel) === -1, 'koppel ' + koppel + ' wordt herhaald');
   }
 });
+
+function speelAvond(spelers, banen, aantalRondes, zaad) {
+  const rondes = [];
+  for (let i = 0; i < aantalRondes; i += 1) {
+    const ronde = Hussel.genereerRonde({
+      aanwezigen: spelers,
+      banen: banen,
+      historie: rondes,
+      rng: Hussel.maakRng(zaad + i),
+      pogingen: 50,
+    });
+    assert(ronde !== null, 'ronde ' + i + ' kon niet gemaakt worden');
+    rondes.push(ronde);
+  }
+  return rondes;
+}
+
+function telRust(rondes, spelers) {
+  const telling = {};
+  for (const speler of spelers) telling[speler.id] = 0;
+  for (const ronde of rondes) {
+    for (const id of ronde.rustend) telling[id] += 1;
+  }
+  return telling;
+}
+
+test('eigenschap: iedere aanwezige staat per ronde precies één keer ingedeeld', function () {
+  const spelers = maakSpelers([7, 7, 4]);
+  const rondes = speelAvond(spelers, 4, 8, 100);
+  for (const ronde of rondes) {
+    const gezien = {};
+    for (const baan of ronde.banen) {
+      for (const id of baan.teamA.concat(baan.teamB)) {
+        assert(gezien[id] === undefined, id + ' staat twee keer ingedeeld');
+        gezien[id] = true;
+      }
+    }
+    for (const id of ronde.rustend) {
+      assert(gezien[id] === undefined, id + ' speelt en rust tegelijk');
+      gezien[id] = true;
+    }
+    assertGelijk(Object.keys(gezien).length, spelers.length, 'niet iedereen is ingedeeld');
+  }
+});
+
+test('eigenschap: over twintig rondes verschilt het aantal rustbeurten hooguit één', function () {
+  const spelers = maakSpelers([18]);
+  const rondes = speelAvond(spelers, 4, 20, 200);
+  const telling = telRust(rondes, spelers);
+  const waarden = Object.keys(telling).map(function (id) { return telling[id]; });
+  const verschil = Math.max.apply(null, waarden) - Math.min.apply(null, waarden);
+  assert(verschil <= 1, 'rustverschil is ' + verschil + ': ' + JSON.stringify(telling));
+});
+
+test('eigenschap: groepen die deelbaar zijn door vier blijven binnen één niveau', function () {
+  const spelers = maakSpelers([8, 8]);
+  const rondes = speelAvond(spelers, 4, 8, 300);
+  for (const ronde of rondes) {
+    for (const baan of ronde.banen) {
+      assertGelijk(baan.groepen.length, 1, 'baan overspant meerdere niveaus: ' + JSON.stringify(baan.groepen));
+    }
+  }
+});
+
+test('eigenschap: een restgroep leent hooguit uit één naastliggend niveau', function () {
+  const spelers = maakSpelers([6, 6]);
+  const rondes = speelAvond(spelers, 3, 8, 400);
+  for (const ronde of rondes) {
+    for (const baan of ronde.banen) {
+      const kloof = baan.groepen[baan.groepen.length - 1] - baan.groepen[0];
+      assert(kloof <= 1, 'baan overspant een kloof van ' + kloof);
+    }
+  }
+});
+
+test('eigenschap: wie als lener op het breukvlak valt, rouleert', function () {
+  const spelers = maakSpelers([6, 6]);
+  const rondes = speelAvond(spelers, 3, 10, 500);
+  const gezien = {};
+  for (const ronde of rondes) {
+    for (const baan of ronde.banen) {
+      for (const id of baan.leners) gezien[id] = true;
+    }
+  }
+  assert(Object.keys(gezien).length >= 4, 'slechts ' + Object.keys(gezien).length + ' spelers zijn ooit lener geweest');
+});
+
+test('eigenschap: vier tot veertig spelers bij één tot tien banen levert altijd een geldige ronde', function () {
+  for (let aantalSpelers = 4; aantalSpelers <= 40; aantalSpelers += 1) {
+    const spelers = [];
+    for (let i = 0; i < aantalSpelers; i += 1) {
+      spelers.push({ id: 'p' + i, naam: 'p' + i, groep: i % 3 });
+    }
+    for (let banen = 1; banen <= 10; banen += 1) {
+      const ronde = Hussel.genereerRonde({
+        aanwezigen: spelers,
+        banen: banen,
+        rng: Hussel.maakRng(aantalSpelers * 100 + banen),
+        pogingen: 3,
+      });
+      const plekken = Hussel.aantalPlekken(aantalSpelers, banen);
+      const omschrijving = aantalSpelers + ' spelers op ' + banen + ' banen';
+      assert(ronde !== null, 'geen ronde bij ' + omschrijving);
+      assertGelijk(ronde.banen.length, plekken / 4, 'verkeerd aantal banen bij ' + omschrijving);
+      const ids = [];
+      for (const baan of ronde.banen) {
+        assertGelijk(baan.teamA.length, 2, 'teamA is geen tweetal bij ' + omschrijving);
+        assertGelijk(baan.teamB.length, 2, 'teamB is geen tweetal bij ' + omschrijving);
+        for (const id of baan.teamA.concat(baan.teamB)) ids.push(id);
+      }
+      for (const id of ronde.rustend) ids.push(id);
+      assertGelijk(ids.length, aantalSpelers, 'niet iedereen ingedeeld bij ' + omschrijving);
+      assertGelijk(new Set(ids).size, aantalSpelers, 'dubbele indeling bij ' + omschrijving);
+    }
+  }
+});

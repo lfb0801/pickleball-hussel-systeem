@@ -63,3 +63,27 @@ th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--rand)
 ul, ol { padding-left: 1.25rem; }
 
 li { margin-bottom: 0.4rem; }
+
+#banen {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+.baan {
+  background: #fff;
+  border: 1px solid var(--rand);
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+  text-align: center;
+}
+
+.baan h3 { margin: 0; font-size: 1.1rem; }
+
+.baan .niveau { margin: 0.1rem 0 0.7rem; color: #6a6e76; font-size: 0.9rem; }
+
+.baan .team { margin: 0; font-size: 1.25rem; font-weight: 600; }
+
+.baan .tegen { margin: 0.2rem 0; color: #6a6e76; font-size: 0.85rem; }
+
+#rustend { font-size: 1.05rem; }

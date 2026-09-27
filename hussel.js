@@ -32,6 +32,58 @@
     return kopie;
   }
 
+  function sleutel(a, b) {
+    return a < b ? a + '|' + b : b + '|' + a;
+  }
+
+  function aantal(telling, sleutelwaarde) {
+    const waarde = telling[sleutelwaarde];
+    return waarde === undefined ? 0 : waarde;
+  }
+
+  function tel(telling, sleutelwaarde) {
+    telling[sleutelwaarde] = aantal(telling, sleutelwaarde) + 1;
+  }
+
+  function maakHistorieStatistiek(rondes, rustcorrectie) {
+    const stat = { partner: {}, tegenstander: {}, rust: {}, lener: {} };
+
+    if (rustcorrectie) {
+      for (const id of Object.keys(rustcorrectie)) {
+        stat.rust[id] = rustcorrectie[id];
+      }
+    }
+
+    for (const ronde of rondes) {
+      for (const id of ronde.rustend) {
+        tel(stat.rust, id);
+      }
+      for (const baan of ronde.banen) {
+        tel(stat.partner, sleutel(baan.teamA[0], baan.teamA[1]));
+        tel(stat.partner, sleutel(baan.teamB[0], baan.teamB[1]));
+        for (const a of baan.teamA) {
+          for (const b of baan.teamB) {
+            tel(stat.tegenstander, sleutel(a, b));
+          }
+        }
+        for (const id of baan.leners) {
+          tel(stat.lener, id);
+        }
+      }
+    }
+
+    return stat;
+  }
+
+  function hoogsteRustsaldo(stat, ids) {
+    let hoogste = 0;
+    for (const id of ids) {
+      const saldo = aantal(stat.rust, id);
+      if (saldo > hoogste) hoogste = saldo;
+    }
+    return hoogste;
+  }
+
   globalThis.Hussel = {
     GEWICHT_PARTNER: GEWICHT_PARTNER,
     GEWICHT_TEGENSTANDER: GEWICHT_TEGENSTANDER,
@@ -40,5 +92,9 @@
     AANTAL_POGINGEN: AANTAL_POGINGEN,
     maakRng: maakRng,
     husselLijst: husselLijst,
+    sleutel: sleutel,
+    aantal: aantal,
+    maakHistorieStatistiek: maakHistorieStatistiek,
+    hoogsteRustsaldo: hoogsteRustsaldo,
   };
 })();

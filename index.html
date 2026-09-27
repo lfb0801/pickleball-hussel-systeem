@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pickleball hussel systeem</title>
+<link rel="stylesheet" href="stijl.css">
+</head>
+<body>
+<header>
+  <h1>Hussel</h1>
+  <nav>
+    <button type="button" data-scherm="spelers">Spelers</button>
+    <button type="button" data-scherm="avond">Avond</button>
+    <button type="button" data-scherm="ronde">Ronde</button>
+    <button type="button" data-scherm="overzicht">Overzicht</button>
+  </nav>
+</header>
+<p id="waarschuwing" hidden></p>
+<main>
+  <section id="scherm-spelers" hidden>
+    <h2>Spelers en groepen</h2>
+
+    <h3>Groepen, van sterk naar zwak</h3>
+    <ol id="groepen-lijst"></ol>
+    <form id="groep-toevoegen">
+      <input type="text" id="groep-naam" placeholder="Naam van de groep" required>
+      <button type="submit">Groep toevoegen</button>
+    </form>
+
+    <h3>Spelers</h3>
+    <table id="spelers-tabel">
+      <thead><tr><th>Naam</th><th>Groep</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <form id="speler-toevoegen">
+      <input type="text" id="nieuwe-speler-naam" placeholder="Naam van de speler" required>
+      <select id="nieuwe-speler-groep"></select>
+      <button type="submit">Speler toevoegen</button>
+    </form>
+  </section>
+
+  <section id="scherm-avond" hidden>
+    <h2>Avond</h2>
+    <p>
+      <label>Aantal banen <input type="number" id="aantal-banen" min="1" max="20" value="4"></label>
+    </p>
+    <p id="avond-teller"></p>
+    <ul id="aanwezigheid-lijst"></ul>
+    <p>
+      <button type="button" id="start-avond">Avond starten</button>
+      <button type="button" id="stop-avond">Avond afsluiten</button>
+    </p>
+  </section>
+
+  <section id="scherm-ronde" hidden>
+    <h2>Ronde <span id="ronde-nummer"></span></h2>
+    <div id="banen"></div>
+    <p id="rustend"></p>
+    <p>
+      <button type="button" id="volgende-ronde">Volgende ronde</button>
+      <button type="button" id="opnieuw-genereren">Opnieuw genereren</button>
+      <button type="button" id="naar-avond">Spelers aanpassen</button>
+      <button type="button" id="naar-afsluiten">Avond afsluiten</button>
+    </p>
+  </section>
+
+  <section id="scherm-overzicht" hidden>
+    <h2>Overzicht</h2>
+    <p id="overzicht-melding"></p>
+    <table id="overzicht-tabel">
+      <thead><tr><th>Speler</th><th>Gespeeld</th><th>Gerust</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+</main>
+<script src="hussel.js"></script>
+<script src="opslag.js"></script>
+<script src="scherm-spelers.js"></script>
+<script src="scherm-avond.js"></script>
+<script src="scherm-ronde.js"></script>
+<script src="scherm-overzicht.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

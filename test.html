@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Tests — hussel systeem</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 2rem; }
+  li.gelukt { color: #17603a; }
+  li.mislukt { color: #a01b1b; }
+</style>
+</head>
+<body>
+<h1>Tests</h1>
+<p id="samenvatting"></p>
+<ul id="resultaten"></ul>
+<script>
+  const resultaten = [];
+  function test(naam, fn) {
+    try {
+      fn();
+      resultaten.push({ naam: naam, gelukt: true });
+    } catch (fout) {
+      resultaten.push({ naam: naam, gelukt: false, fout: fout.message });
+    }
+  }
+  function assert(voorwaarde, bericht) {
+    if (!voorwaarde) throw new Error(bericht || 'assertie mislukt');
+  }
+  function assertGelijk(gevonden, verwacht, bericht) {
+    const a = JSON.stringify(gevonden);
+    const b = JSON.stringify(verwacht);
+    if (a !== b) throw new Error((bericht || 'niet gelijk') + ': ' + a + ' !== ' + b);
+  }
+</script>
+<script src="hussel.js"></script>
+<script src="opslag.js"></script>
+<script src="tests.js"></script>
+<script>
+  const lijst = document.getElementById('resultaten');
+  let mislukt = 0;
+  for (const resultaat of resultaten) {
+    const item = document.createElement('li');
+    item.className = resultaat.gelukt ? 'gelukt' : 'mislukt';
+    item.textContent = resultaat.naam + (resultaat.gelukt ? '' : ' — ' + resultaat.fout);
+    if (!resultaat.gelukt) mislukt += 1;
+    lijst.appendChild(item);
+  }
+  document.getElementById('samenvatting').textContent =
+    (resultaten.length - mislukt) + '/' + resultaten.length + ' geslaagd';
+</script>
+</body>
+</html>

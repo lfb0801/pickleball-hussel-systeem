@@ -18,15 +18,24 @@ Een indelingssysteem voor pickleball-clubavonden. Het bepaalt per ronde wie met 
 
 ## Architectuur
 
-Drie bestanden, geen build-stap:
+Losse bestanden zonder build-stap, elk met één verantwoordelijkheid:
 
 | Bestand | Verantwoordelijkheid |
 |---|---|
 | `hussel.js` | Het algoritme. Pure functies, geen DOM, geen opslag. |
-| `index.html` | De app: opmaak, schermen, opslag. Laadt `hussel.js` via een gewone `<script>`. |
-| `test.html` | Draait assertions tegen `hussel.js` en toont de uitslag op de pagina. |
+| `opslag.js` | De `localStorage`-laag, met terugval op geheugen. |
+| `app.js` | Gedeelde toestand, navigatie tussen schermen, opstarten. |
+| `scherm-spelers.js` | Het scherm voor spelers- en groepsbeheer. |
+| `scherm-avond.js` | Avond starten, afsluiten en de aanwezigheid tijdens de avond aanpassen. |
+| `scherm-ronde.js` | Het ronde-scherm met de baankaarten. |
+| `scherm-overzicht.js` | De tabel met gespeelde rondes en rustbeurten. |
+| `stijl.css` | De opmaak. |
+| `index.html` | De markup, die de bovenstaande bestanden inlaadt. |
+| `tests.js` | De testgevallen. |
+| `test.html` | Testrunner in de browser. |
+| `test-node.js` | Dezelfde tests via `node test-node.js`, voor gebruik zonder browser. |
 
-Het algoritme staat apart van de app omdat het daarmee zonder browserinteractie te testen is. Een gewone `<script>` in plaats van een ES-module houdt het werkend via `file://`.
+Het algoritme staat apart van de app omdat het daarmee zonder browserinteractie te testen is. Gewone `<script>`-tags in plaats van ES-modules houden alles werkend via `file://`; de bestanden schrijven zichzelf op `globalThis`, zodat dezelfde code ook onder Node draait.
 
 ### Grens tussen algoritme en app
 
@@ -54,7 +63,7 @@ Het hussel-geheugen — wie speelde met wie, wie speelde tegen wie, wie rustte h
 Per ronde, in vijf stappen:
 
 1. **Capaciteit bepalen.** Het aantal spelende plekken is `min(banen × 4, aanwezigen naar beneden afgerond op een veelvoud van 4)`.
-2. **Rust toewijzen.** Een harde regel: wie tot dan toe het minst gerust heeft, speelt. Gelijke stand wordt willekeurig gebroken. Het verschil in rustbeurten tussen spelers loopt daardoor nooit verder op dan één.
+2. **Rust toewijzen.** Een harde regel: wie tot dan toe het meest gerust heeft, speelt. Gelijke stand wordt willekeurig gebroken. Het verschil in rustbeurten tussen spelers loopt daardoor nooit verder op dan één.
 3. **Banen vullen.** De spelende spelers worden op niveauvolgorde op een rij gezet en in blokken van vier geknipt; elk blok wordt een baan. Binnen een groep is de volgorde willekeurig, zodat het per ronde wisselt wie er op een breukvlak terechtkomt. Waar een groep niet op een veelvoud van vier uitkomt, ontstaat vanzelf een baan met spelers uit twee naastliggende groepen. Baan 1 is het sterkst.
 4. **Koppels binnen de baan.** Van de drie mogelijke teamindelingen binnen een viertal wordt de minst herhalende gekozen.
 5. **Scorend zoeken.** Stap 2 tot en met 4 draaien een paar honderd keer met andere willekeur. De indeling met de laagste strafscore wint.
@@ -82,7 +91,7 @@ Rustverdeling is geen strafpunt maar een harde regel in stap 2.
 
 **Ronde-scherm.** Het scherm dat de hele avond openstaat. Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team tegen team. Daaronder wie deze ronde rust. Knoppen: *volgende ronde*, *opnieuw genereren* (zelfde ronde, andere loting), *spelers aanpassen*, *avond afsluiten*.
 
-**Spelers aanpassen tijdens de avond.** Een laatkomer aanvinken of een afhaker uitvinken. De lopende ronde blijft ongewijzigd; de aanpassing geldt vanaf de volgende ronde. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 elke resterende ronde voorrang krijgen en zouden de spelers van het eerste uur alle overige rustbeurten opvangen. Met het hoogste saldo draait de laatkomer vanaf zijn eerste ronde gewoon mee in de rotatie.
+**Spelers aanpassen tijdens de avond.** Een laatkomer aanvinken of een afhaker uitvinken. De lopende ronde blijft ongewijzigd; de aanpassing geldt vanaf de volgende ronde. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.
 
 **Overzicht.** Een tabel met per speler het aantal gespeelde rondes en rustbeurten, om bij twijfel te laten zien dat de verdeling klopt.
 

@@ -38,6 +38,14 @@
       <select id="nieuwe-speler-groep"></select>
       <button type="submit">Speler toevoegen</button>
     </form>
+
+    <h3>Spelers uit een CSV-bestand</h3>
+    <form id="spelers-importeren">
+      <input type="file" id="csv-bestand" accept=".csv,text/csv,text/plain" required>
+      <select id="import-groep"></select>
+      <button type="submit">CSV inlezen</button>
+    </form>
+    <p class="uitleg">Eén naam per regel. Staat er meer op een regel, dan telt de eerste kolom als naam.</p>
   </section>
 
   <section id="scherm-avond" hidden>
@@ -74,8 +82,10 @@
     </table>
   </section>
 </main>
+<script src="papaparse.min.js"></script>
 <script src="hussel.js"></script>
 <script src="opslag.js"></script>
+<script src="csv.js"></script>
 <script src="scherm-spelers.js"></script>
 <script src="scherm-avond.js"></script>
 <script src="scherm-ronde.js"></script>

@@ -595,3 +595,21 @@ test('leesNamen geeft een lege lijst bij een leeg bestand', function () {
   assertGelijk(leesNamen('   \n\n'), []);
   assertGelijk(leesNamen('naam\n'), []);
 });
+
+test('filterNieuweNamen laat namen weg die al in de lijst staan', function () {
+  const uitkomst = filterNieuweNamen(['Anna', 'Bram', 'Carla'], ['Bram']);
+  assertGelijk(uitkomst.nieuw, ['Anna', 'Carla']);
+  assertGelijk(uitkomst.overgeslagen, ['Bram']);
+});
+
+test('filterNieuweNamen vergelijkt zonder op hoofdletters of spaties te letten', function () {
+  const uitkomst = filterNieuweNamen(['anna', 'BRAM'], ['Anna ', 'bram']);
+  assertGelijk(uitkomst.nieuw, []);
+  assertGelijk(uitkomst.overgeslagen, ['anna', 'BRAM']);
+});
+
+test('filterNieuweNamen houdt een dubbele naam binnen het bestand zelf maar één keer', function () {
+  const uitkomst = filterNieuweNamen(['Anna', 'anna', 'Bram'], []);
+  assertGelijk(uitkomst.nieuw, ['Anna', 'Bram']);
+  assertGelijk(uitkomst.overgeslagen, ['anna']);
+});

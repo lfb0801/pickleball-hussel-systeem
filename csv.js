@@ -19,5 +19,30 @@
     return namen;
   }
 
+  function vergelijkbaar(naam) {
+    return naam.trim().toLowerCase();
+  }
+
+  // Scheidt de namen die nog niet bestaan van de namen die al voorkomen,
+  // zowel in de bestaande lijst als eerder in het bestand zelf.
+  function filterNieuweNamen(namen, bestaandeNamen) {
+    const gezien = {};
+    for (const naam of bestaandeNamen) gezien[vergelijkbaar(naam)] = true;
+
+    const nieuw = [];
+    const overgeslagen = [];
+    for (const naam of namen) {
+      const sleutel = vergelijkbaar(naam);
+      if (gezien[sleutel]) {
+        overgeslagen.push(naam);
+      } else {
+        gezien[sleutel] = true;
+        nieuw.push(naam);
+      }
+    }
+    return { nieuw: nieuw, overgeslagen: overgeslagen };
+  }
+
   globalThis.leesNamen = leesNamen;
+  globalThis.filterNieuweNamen = filterNieuweNamen;
 })();

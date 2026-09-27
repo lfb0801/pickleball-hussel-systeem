@@ -132,7 +132,58 @@
     };
   }
 
+  const TEAMVERDELINGEN = [
+    [[0, 1], [2, 3]],
+    [[0, 2], [1, 3]],
+    [[0, 3], [1, 2]],
+  ];
+
+  function kwadraat(getal) {
+    return getal * getal;
+  }
+
+  function scoorViertal(teamA, teamB, stat) {
+    let score = 0;
+
+    score += GEWICHT_PARTNER * kwadraat(aantal(stat.partner, sleutel(teamA[0].id, teamA[1].id)));
+    score += GEWICHT_PARTNER * kwadraat(aantal(stat.partner, sleutel(teamB[0].id, teamB[1].id)));
+
+    for (const a of teamA) {
+      for (const b of teamB) {
+        score += GEWICHT_TEGENSTANDER * kwadraat(aantal(stat.tegenstander, sleutel(a.id, b.id)));
+      }
+    }
+
+    const viertal = teamA.concat(teamB);
+    const groepen = viertal.map(function (speler) { return speler.groep; });
+    const kloof = Math.max.apply(null, groepen) - Math.min.apply(null, groepen);
+    score += GEWICHT_NIVEAUKLOOF * kwadraat(kloof);
+
+    for (const lener of bepaalLeners(viertal).leners) {
+      score += GEWICHT_LENER * kwadraat(aantal(stat.lener, lener.id));
+    }
+
+    return score;
+  }
+
+  function kiesTeams(viertal, stat) {
+    let beste = null;
+    let besteScore = Infinity;
+    for (const verdeling of TEAMVERDELINGEN) {
+      const teamA = [viertal[verdeling[0][0]], viertal[verdeling[0][1]]];
+      const teamB = [viertal[verdeling[1][0]], viertal[verdeling[1][1]]];
+      const score = scoorViertal(teamA, teamB, stat);
+      if (score < besteScore) {
+        besteScore = score;
+        beste = { teamA: teamA, teamB: teamB };
+      }
+    }
+    return beste;
+  }
+
   globalThis.Hussel = {
+    scoorViertal: scoorViertal,
+    kiesTeams: kiesTeams,
     verdeelOverBanen: verdeelOverBanen,
     bepaalLeners: bepaalLeners,
     aantalPlekken: aantalPlekken,

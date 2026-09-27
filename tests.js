@@ -200,3 +200,77 @@ test('bepaalLeners levert geen leners bij een baan uit één groep', function ()
   const viertal = maakSpelers([4]);
   assertGelijk(Hussel.bepaalLeners(viertal).leners.length, 0);
 });
+
+test('scoorViertal is nul zonder historie en binnen één groep', function () {
+  const spelers = maakSpelers([4]);
+  const stat = Hussel.maakHistorieStatistiek([]);
+  assertGelijk(Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), stat), 0);
+});
+
+test('scoorViertal straft partnerherhaling kwadratisch', function () {
+  const spelers = maakSpelers([4]);
+  const stat = Hussel.maakHistorieStatistiek([]);
+  stat.partner[Hussel.sleutel('g0n0', 'g0n1')] = 2;
+  const score = Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), stat);
+  assertGelijk(score, Hussel.GEWICHT_PARTNER * 4);
+});
+
+test('scoorViertal straft tegenstanderherhaling lichter dan partnerherhaling', function () {
+  const spelers = maakSpelers([4]);
+  const metPartner = Hussel.maakHistorieStatistiek([]);
+  metPartner.partner[Hussel.sleutel('g0n0', 'g0n1')] = 1;
+  const metTegenstander = Hussel.maakHistorieStatistiek([]);
+  metTegenstander.tegenstander[Hussel.sleutel('g0n0', 'g0n2')] = 1;
+  const scorePartner = Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), metPartner);
+  const scoreTegenstander = Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), metTegenstander);
+  assert(scorePartner > scoreTegenstander, 'partnerherhaling weegt niet zwaarder');
+});
+
+test('scoorViertal straft de niveaukloof op een baan', function () {
+  const stat = Hussel.maakHistorieStatistiek([]);
+  const smal = [
+    { id: 'a', naam: 'a', groep: 0 }, { id: 'b', naam: 'b', groep: 0 },
+    { id: 'c', naam: 'c', groep: 0 }, { id: 'd', naam: 'd', groep: 1 },
+  ];
+  const breed = [
+    { id: 'a', naam: 'a', groep: 0 }, { id: 'b', naam: 'b', groep: 0 },
+    { id: 'c', naam: 'c', groep: 0 }, { id: 'd', naam: 'd', groep: 2 },
+  ];
+  const scoreSmal = Hussel.scoorViertal(smal.slice(0, 2), smal.slice(2), stat);
+  const scoreBreed = Hussel.scoorViertal(breed.slice(0, 2), breed.slice(2), stat);
+  assertGelijk(scoreSmal, Hussel.GEWICHT_NIVEAUKLOOF * 1);
+  assertGelijk(scoreBreed, Hussel.GEWICHT_NIVEAUKLOOF * 4);
+});
+
+test('scoorViertal straft wie al vaker lener was', function () {
+  const stat = Hussel.maakHistorieStatistiek([]);
+  stat.lener.d = 2;
+  const viertal = [
+    { id: 'a', naam: 'a', groep: 0 }, { id: 'b', naam: 'b', groep: 0 },
+    { id: 'c', naam: 'c', groep: 0 }, { id: 'd', naam: 'd', groep: 1 },
+  ];
+  const score = Hussel.scoorViertal(viertal.slice(0, 2), viertal.slice(2), stat);
+  assertGelijk(score, Hussel.GEWICHT_NIVEAUKLOOF * 1 + Hussel.GEWICHT_LENER * 4);
+});
+
+test('kiesTeams vermijdt een partnercombinatie die al voorkwam', function () {
+  const spelers = maakSpelers([4]);
+  const stat = Hussel.maakHistorieStatistiek([]);
+  stat.partner[Hussel.sleutel('g0n0', 'g0n1')] = 3;
+  stat.partner[Hussel.sleutel('g0n2', 'g0n3')] = 3;
+  const teams = Hussel.kiesTeams(spelers, stat);
+  const paren = [
+    Hussel.sleutel(teams.teamA[0].id, teams.teamA[1].id),
+    Hussel.sleutel(teams.teamB[0].id, teams.teamB[1].id),
+  ];
+  assert(paren.indexOf(Hussel.sleutel('g0n0', 'g0n1')) === -1, 'herhaalt een bestaand koppel');
+});
+
+test('kiesTeams levert twee teams van twee met alle vier de spelers', function () {
+  const spelers = maakSpelers([4]);
+  const teams = Hussel.kiesTeams(spelers, Hussel.maakHistorieStatistiek([]));
+  assertGelijk(teams.teamA.length, 2);
+  assertGelijk(teams.teamB.length, 2);
+  const ids = teams.teamA.concat(teams.teamB).map(function (s) { return s.id; }).sort();
+  assertGelijk(ids, spelers.map(function (s) { return s.id; }).sort());
+});

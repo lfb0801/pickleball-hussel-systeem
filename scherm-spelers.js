@@ -5,6 +5,7 @@
     render: function () {
       this.renderGroepen();
       this.vulGroepKeuze(document.getElementById('nieuwe-speler-groep'), 0);
+      this.vulGroepKeuze(document.getElementById('import-groep'), 0);
       this.renderSpelers();
     },
 
@@ -115,6 +116,33 @@
       this.render();
     },
 
+    importeerNamen: function (namen, groep) {
+      if (namen.length === 0) {
+        App.waarschuw('In dit bestand staan geen namen.');
+        return;
+      }
+
+      const bestaande = App.club.spelers.map(function (speler) { return speler.naam; });
+      const verdeling = filterNieuweNamen(namen, bestaande);
+
+      for (const naam of verdeling.nieuw) {
+        App.club.spelers.push({ id: App.nieuwId(), naam: naam, groep: groep });
+      }
+      App.bewaarClub();
+      this.render();
+
+      const groepsnaam = App.club.groepen[groep];
+      let melding = verdeling.nieuw.length === 1
+        ? '1 speler toegevoegd in groep ' + groepsnaam + '.'
+        : verdeling.nieuw.length + ' spelers toegevoegd in groep ' + groepsnaam + '.';
+      if (verdeling.overgeslagen.length) {
+        melding += ' ' + verdeling.overgeslagen.length
+          + (verdeling.overgeslagen.length === 1 ? ' overgeslagen: die naam' : ' overgeslagen: die namen')
+          + ' stond er al.';
+      }
+      App.waarschuw(melding);
+    },
+
     verwijderSpeler: function (id) {
       if (App.avond && App.avond.aanwezigen.indexOf(id) !== -1) {
         App.avond.aanwezigen = App.avond.aanwezigen.filter(function (a) { return a !== id; });
@@ -139,6 +167,26 @@
       App.bewaarClub();
       veld.value = '';
       SchermSpelers.render();
+    });
+
+    document.getElementById('spelers-importeren').addEventListener('submit', function (gebeurtenis) {
+      gebeurtenis.preventDefault();
+      const veld = document.getElementById('csv-bestand');
+      const bestand = veld.files[0];
+      if (!bestand) {
+        App.waarschuw('Kies eerst een bestand.');
+        return;
+      }
+      const groep = Number(document.getElementById('import-groep').value);
+      const lezer = new FileReader();
+      lezer.addEventListener('load', function () {
+        SchermSpelers.importeerNamen(leesNamen(String(lezer.result)), groep);
+        veld.value = '';
+      });
+      lezer.addEventListener('error', function () {
+        App.waarschuw('Het bestand kon niet gelezen worden.');
+      });
+      lezer.readAsText(bestand);
     });
 
     document.getElementById('speler-toevoegen').addEventListener('submit', function (gebeurtenis) {

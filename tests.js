@@ -555,3 +555,61 @@ test('opslag geeft null bij beschadigde inhoud', function () {
   store.data['hussel.club'] = '{geen geldige json';
   assertGelijk(maakOpslag(store).laadClub(), null);
 });
+
+test('leesNamen leest één naam per regel', function () {
+  assertGelijk(leesNamen('Anna\nBram\nCarla'), ['Anna', 'Bram', 'Carla']);
+});
+
+test('leesNamen negeert lege regels en spaties eromheen', function () {
+  assertGelijk(leesNamen('  Anna  \n\n\nBram\n   \n'), ['Anna', 'Bram']);
+});
+
+test('leesNamen slaat een kopregel met naam over', function () {
+  assertGelijk(leesNamen('naam\nAnna\nBram'), ['Anna', 'Bram']);
+  assertGelijk(leesNamen('Naam\nAnna'), ['Anna']);
+  assertGelijk(leesNamen('Anna\nBram'), ['Anna', 'Bram'], 'Anna is ten onrechte als kopregel gezien');
+});
+
+test('leesNamen neemt de eerste kolom bij een komma als scheidingsteken', function () {
+  assertGelijk(leesNamen('Anna,Midden\nBram,Gevorderd'), ['Anna', 'Bram']);
+});
+
+test('leesNamen neemt de eerste kolom bij een puntkomma als scheidingsteken', function () {
+  assertGelijk(leesNamen('Anna;Midden\nBram;Gevorderd'), ['Anna', 'Bram']);
+});
+
+test('leesNamen houdt een naam met een komma tussen aanhalingstekens heel', function () {
+  assertGelijk(leesNamen('"Zaalen, Anna van",Midden\nBram,Beginner'), ['Zaalen, Anna van', 'Bram']);
+});
+
+test('leesNamen verwijdert de bytevolgordemarkering van Excel', function () {
+  assertGelijk(leesNamen('﻿Anna\nBram'), ['Anna', 'Bram']);
+});
+
+test('leesNamen verwerkt regeleindes van Windows', function () {
+  assertGelijk(leesNamen('Anna\r\nBram\r\n'), ['Anna', 'Bram']);
+});
+
+test('leesNamen geeft een lege lijst bij een leeg bestand', function () {
+  assertGelijk(leesNamen(''), []);
+  assertGelijk(leesNamen('   \n\n'), []);
+  assertGelijk(leesNamen('naam\n'), []);
+});
+
+test('filterNieuweNamen laat namen weg die al in de lijst staan', function () {
+  const uitkomst = filterNieuweNamen(['Anna', 'Bram', 'Carla'], ['Bram']);
+  assertGelijk(uitkomst.nieuw, ['Anna', 'Carla']);
+  assertGelijk(uitkomst.overgeslagen, ['Bram']);
+});
+
+test('filterNieuweNamen vergelijkt zonder op hoofdletters of spaties te letten', function () {
+  const uitkomst = filterNieuweNamen(['anna', 'BRAM'], ['Anna ', 'bram']);
+  assertGelijk(uitkomst.nieuw, []);
+  assertGelijk(uitkomst.overgeslagen, ['anna', 'BRAM']);
+});
+
+test('filterNieuweNamen houdt een dubbele naam binnen het bestand zelf maar één keer', function () {
+  const uitkomst = filterNieuweNamen(['Anna', 'anna', 'Bram'], []);
+  assertGelijk(uitkomst.nieuw, ['Anna', 'Bram']);
+  assertGelijk(uitkomst.overgeslagen, ['anna']);
+});

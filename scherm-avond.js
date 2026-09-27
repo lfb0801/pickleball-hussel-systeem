@@ -37,7 +37,6 @@
         vinkje.type = 'checkbox';
         vinkje.value = speler.id;
         vinkje.checked = aangevinkt[speler.id] === true;
-        vinkje.disabled = Boolean(App.avond);
         vinkje.addEventListener('change', function () {
           scherm.bijWijziging(speler.id, vinkje.checked);
         });
@@ -49,7 +48,32 @@
     },
 
     bijWijziging: function (id, aanwezig) {
+      if (App.avond) {
+        if (aanwezig) this.voegLaatkomerToe(id);
+        else this.verwijderAfhaker(id);
+      }
       this.renderTeller();
+    },
+
+    // Een laatkomer staat op nul rustbeurten en zou daarmee als eerste
+    // moeten rusten. Het hoogste saldo onder de aanwezigen laat hem meteen
+    // meedraaien in de rotatie.
+    voegLaatkomerToe: function (id) {
+      if (App.avond.aanwezigen.indexOf(id) !== -1) return;
+      const stat = Hussel.maakHistorieStatistiek(App.avond.rondes, App.avond.rustcorrectie);
+      App.avond.rustcorrectie[id] = Hussel.hoogsteRustsaldo(stat, App.avond.aanwezigen);
+      App.avond.aanwezigen.push(id);
+      App.bewaarAvond();
+      const speler = App.spelerOp(id);
+      App.waarschuw((speler ? speler.naam : 'De speler') + ' doet mee vanaf de volgende ronde.');
+    },
+
+    verwijderAfhaker: function (id) {
+      App.avond.aanwezigen = App.avond.aanwezigen.filter(function (a) { return a !== id; });
+      App.bewaarAvond();
+      const speler = App.spelerOp(id);
+      App.waarschuw((speler ? speler.naam : 'De speler')
+        + ' doet niet meer mee. De lopende ronde blijft staan; de wijziging geldt vanaf de volgende ronde.');
     },
 
     renderTeller: function () {

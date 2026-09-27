@@ -494,3 +494,64 @@ test('maakOverzicht toont een speler zonder rondes als nul', function () {
   const overzicht = Hussel.maakOverzicht([], ['a']);
   assertGelijk(overzicht, [{ id: 'a', gespeeld: 0, gerust: 0 }]);
 });
+
+function maakNepStore() {
+  const data = {};
+  return {
+    data: data,
+    getItem: function (sleutel) {
+      return Object.prototype.hasOwnProperty.call(data, sleutel) ? data[sleutel] : null;
+    },
+    setItem: function (sleutel, waarde) { data[sleutel] = String(waarde); },
+    removeItem: function (sleutel) { delete data[sleutel]; },
+  };
+}
+
+function maakWeigerendeStore() {
+  return {
+    getItem: function () { throw new Error('geweigerd'); },
+    setItem: function () { throw new Error('geweigerd'); },
+    removeItem: function () { throw new Error('geweigerd'); },
+  };
+}
+
+test('opslag bewaart en laadt de club', function () {
+  const opslag = maakOpslag(maakNepStore());
+  assertGelijk(opslag.laadClub(), null);
+  opslag.bewaarClub({ groepen: ['A'], spelers: [{ id: 'x', naam: 'X', groep: 0 }] });
+  assertGelijk(opslag.laadClub(), { groepen: ['A'], spelers: [{ id: 'x', naam: 'X', groep: 0 }] });
+});
+
+test('opslag bewaart, laadt en wist de avond', function () {
+  const opslag = maakOpslag(maakNepStore());
+  opslag.bewaarAvond({ aanwezigen: ['x'], banen: 2, rondes: [], rustcorrectie: {} });
+  assertGelijk(opslag.laadAvond().banen, 2);
+  opslag.wisAvond();
+  assertGelijk(opslag.laadAvond(), null);
+});
+
+test('opslag overleeft een nieuwe opslag op dezelfde store', function () {
+  const store = maakNepStore();
+  maakOpslag(store).bewaarClub({ groepen: ['A'], spelers: [] });
+  assertGelijk(maakOpslag(store).laadClub(), { groepen: ['A'], spelers: [] });
+});
+
+test('opslag valt terug op geheugen als de store weigert', function () {
+  const opslag = maakOpslag(maakWeigerendeStore());
+  assertGelijk(opslag.beschikbaar(), false);
+  opslag.bewaarClub({ groepen: ['A'], spelers: [] });
+  assertGelijk(opslag.laadClub(), { groepen: ['A'], spelers: [] });
+});
+
+test('opslag zonder store meldt zich als niet beschikbaar', function () {
+  const opslag = maakOpslag(null);
+  assertGelijk(opslag.beschikbaar(), false);
+  opslag.bewaarAvond({ banen: 3 });
+  assertGelijk(opslag.laadAvond().banen, 3);
+});
+
+test('opslag geeft null bij beschadigde inhoud', function () {
+  const store = maakNepStore();
+  store.data['hussel.club'] = '{geen geldige json';
+  assertGelijk(maakOpslag(store).laadClub(), null);
+});

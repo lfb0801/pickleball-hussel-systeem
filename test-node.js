@@ -24,7 +24,7 @@ globalThis.assertGelijk = function (gevonden, verwacht, bericht) {
   if (a !== b) throw new Error((bericht || 'niet gelijk') + ': ' + a + ' !== ' + b);
 };
 
-const bestanden = ['hussel.js', 'tests.js'];
+const bestanden = ['hussel.js', 'opslag.js', 'tests.js'];
 for (const bestand of bestanden) {
   const volledig = path.join(__dirname, bestand);
   if (!fs.existsSync(volledig)) continue;

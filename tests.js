@@ -133,3 +133,70 @@ test('kiesSpelenden breekt gelijke rustsaldi willekeurig', function () {
   }
   assert(andersGevonden, 'de rustende spelers zijn bij elk zaad gelijk');
 });
+
+test('verdeelOverBanen knipt de rij in viertallen op niveauvolgorde', function () {
+  const spelers = maakSpelers([4, 4, 4]);
+  const banen = Hussel.verdeelOverBanen(spelers, Hussel.maakRng(5));
+  assertGelijk(banen.length, 3);
+  banen.forEach(function (viertal, index) {
+    assertGelijk(viertal.length, 4);
+    viertal.forEach(function (speler) {
+      assertGelijk(speler.groep, index, 'baan ' + index + ' bevat een speler uit groep ' + speler.groep);
+    });
+  });
+});
+
+test('verdeelOverBanen laat op het breukvlak twee naastliggende groepen samenspelen', function () {
+  const spelers = maakSpelers([6, 6]);
+  const banen = Hussel.verdeelOverBanen(spelers, Hussel.maakRng(5));
+  assertGelijk(banen.length, 3);
+  const spanwijdtes = banen.map(function (viertal) {
+    const groepen = viertal.map(function (s) { return s.groep; });
+    return Math.max.apply(null, groepen) - Math.min.apply(null, groepen);
+  });
+  assertGelijk(spanwijdtes, [0, 1, 0]);
+});
+
+test('verdeelOverBanen negeert spelers die geen viertal meer vormen', function () {
+  const banen = Hussel.verdeelOverBanen(maakSpelers([6]), Hussel.maakRng(5));
+  assertGelijk(banen.length, 1);
+});
+
+test('verdeelOverBanen wisselt wie er op het breukvlak komt', function () {
+  const spelers = maakSpelers([6, 6]);
+  const gezien = {};
+  for (let zaad = 1; zaad < 30; zaad += 1) {
+    const middelste = Hussel.verdeelOverBanen(spelers, Hussel.maakRng(zaad))[1];
+    for (const speler of middelste) gezien[speler.id] = true;
+  }
+  assert(Object.keys(gezien).length > 4, 'steeds dezelfde spelers op het breukvlak');
+});
+
+test('bepaalLeners wijst de minderheid op een baan aan als lener', function () {
+  const viertal = [
+    { id: 'a', naam: 'a', groep: 0 },
+    { id: 'b', naam: 'b', groep: 0 },
+    { id: 'c', naam: 'c', groep: 0 },
+    { id: 'd', naam: 'd', groep: 1 },
+  ];
+  const uitkomst = Hussel.bepaalLeners(viertal);
+  assertGelijk(uitkomst.thuisgroep, 0);
+  assertGelijk(uitkomst.leners.map(function (s) { return s.id; }), ['d']);
+});
+
+test('bepaalLeners kiest bij gelijke aantallen de sterkste groep als thuisgroep', function () {
+  const viertal = [
+    { id: 'a', naam: 'a', groep: 0 },
+    { id: 'b', naam: 'b', groep: 0 },
+    { id: 'c', naam: 'c', groep: 1 },
+    { id: 'd', naam: 'd', groep: 1 },
+  ];
+  const uitkomst = Hussel.bepaalLeners(viertal);
+  assertGelijk(uitkomst.thuisgroep, 0);
+  assertGelijk(uitkomst.leners.map(function (s) { return s.id; }), ['c', 'd']);
+});
+
+test('bepaalLeners levert geen leners bij een baan uit één groep', function () {
+  const viertal = maakSpelers([4]);
+  assertGelijk(Hussel.bepaalLeners(viertal).leners.length, 0);
+});

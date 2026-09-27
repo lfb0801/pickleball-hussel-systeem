@@ -102,7 +102,39 @@
     };
   }
 
+  // Eerst husselen, dan stabiel sorteren op groep: de groepsvolgorde ligt
+  // vast, maar binnen een groep wisselt de volgorde per ronde. Daardoor
+  // rouleert vanzelf wie er op een breukvlak tussen twee groepen valt.
+  function verdeelOverBanen(spelend, rng) {
+    const rij = husselLijst(spelend, rng).sort(function (a, b) {
+      return a.groep - b.groep;
+    });
+    const banen = [];
+    for (let i = 0; i + 4 <= rij.length; i += 4) {
+      banen.push(rij.slice(i, i + 4));
+    }
+    return banen;
+  }
+
+  function bepaalLeners(viertal) {
+    const telling = {};
+    for (const speler of viertal) {
+      telling[speler.groep] = (telling[speler.groep] === undefined ? 0 : telling[speler.groep]) + 1;
+    }
+    const groepen = Object.keys(telling).map(Number).sort(function (a, b) { return a - b; });
+    let thuisgroep = groepen[0];
+    for (const groep of groepen) {
+      if (telling[groep] > telling[thuisgroep]) thuisgroep = groep;
+    }
+    return {
+      thuisgroep: thuisgroep,
+      leners: viertal.filter(function (speler) { return speler.groep !== thuisgroep; }),
+    };
+  }
+
   globalThis.Hussel = {
+    verdeelOverBanen: verdeelOverBanen,
+    bepaalLeners: bepaalLeners,
     aantalPlekken: aantalPlekken,
     kiesSpelenden: kiesSpelenden,
     GEWICHT_PARTNER: GEWICHT_PARTNER,

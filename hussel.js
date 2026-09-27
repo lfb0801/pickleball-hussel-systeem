@@ -236,7 +236,23 @@
     };
   }
 
+  function maakOverzicht(rondes, ids) {
+    const stat = maakHistorieStatistiek(rondes);
+    const gespeeld = {};
+    for (const ronde of rondes) {
+      for (const baan of ronde.banen) {
+        for (const id of baan.teamA.concat(baan.teamB)) {
+          gespeeld[id] = aantal(gespeeld, id) + 1;
+        }
+      }
+    }
+    return ids.map(function (id) {
+      return { id: id, gespeeld: aantal(gespeeld, id), gerust: aantal(stat.rust, id) };
+    });
+  }
+
   globalThis.Hussel = {
+    maakOverzicht: maakOverzicht,
     genereerRonde: genereerRonde,
     scoorViertal: scoorViertal,
     kiesTeams: kiesTeams,

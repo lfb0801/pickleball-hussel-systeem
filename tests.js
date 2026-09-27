@@ -474,3 +474,23 @@ test('eigenschap: vier tot veertig spelers bij één tot tien banen levert altij
     }
   }
 });
+
+test('maakOverzicht telt gespeelde rondes en rustbeurten per speler', function () {
+  const rondes = [
+    maakTestRonde([maakTestBaan(1, ['a', 'b'], ['c', 'd'])], ['e']),
+    maakTestRonde([maakTestBaan(1, ['a', 'c'], ['b', 'e'])], ['d']),
+  ];
+  const overzicht = Hussel.maakOverzicht(rondes, ['a', 'b', 'c', 'd', 'e']);
+  assertGelijk(overzicht, [
+    { id: 'a', gespeeld: 2, gerust: 0 },
+    { id: 'b', gespeeld: 2, gerust: 0 },
+    { id: 'c', gespeeld: 2, gerust: 0 },
+    { id: 'd', gespeeld: 1, gerust: 1 },
+    { id: 'e', gespeeld: 1, gerust: 1 },
+  ]);
+});
+
+test('maakOverzicht toont een speler zonder rondes als nul', function () {
+  const overzicht = Hussel.maakOverzicht([], ['a']);
+  assertGelijk(overzicht, [{ id: 'a', gespeeld: 0, gerust: 0 }]);
+});

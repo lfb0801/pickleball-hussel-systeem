@@ -38,12 +38,11 @@ flowchart LR
 │   ├── tests.js             De testgevallen
 │   ├── index.html           Testrunner in de browser
 │   └── node.js              Dezelfde tests onder Node
-├── scripts/
-│   └── stempel-versie.js    Zet een ?v=-versie achter elk eigen script en stijlblad
-└── docs/                    Ontwerp en bouwplan
+└── scripts/
+    └── stempel-versie.js    Zet een ?v=-versie achter elk eigen script en stijlblad
 ```
 
-`assets/js/kern/hussel.js` (het algoritme) en `assets/js/kern/sessie.js` (verzoeken van telefoons verwerken) zijn pure functies zonder DOM of netwerk. Daardoor is elke indeling reproduceerbaar uit zijn invoer en zonder browser te testen. Het volledige ontwerp staat in [docs/superpowers/specs](docs/superpowers/specs/2026-09-27-pickleball-hussel-systeem-design.md).
+`assets/js/kern/hussel.js` (het algoritme) en `assets/js/kern/sessie.js` (verzoeken van telefoons verwerken) zijn pure functies zonder DOM of netwerk. Daardoor is elke indeling reproduceerbaar uit zijn invoer en zonder browser te testen.
 
 ## Lokaal draaien
 

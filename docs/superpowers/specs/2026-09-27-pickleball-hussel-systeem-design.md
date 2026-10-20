@@ -44,6 +44,7 @@ Losse bestanden zonder build-stap, elk met één verantwoordelijkheid:
 | `index.html` | De laptop-app, die de bovenstaande bestanden inlaadt. |
 | `speler.html` / `speler.js` / `speler.css` | De telefoon-app en zijn opmaak. |
 | `peerjs.min.js` (1.5.4), `qrcode.js` (qrcode-generator 1.4.4) | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
+| `stempel-versie.js` | Zet een versie achter elk eigen script en stijlblad in de HTML (`node stempel-versie.js`). |
 | `tests.js` | De testgevallen. |
 | `test.html` | Testrunner in de browser. |
 | `test-node.js` | Dezelfde tests via `node test-node.js`, voor gebruik zonder browser. |
@@ -137,7 +138,7 @@ De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spe
 
 **Spelersbeheer.** Groepen benoemen, op volgorde zetten, toevoegen en verwijderen. De groepen zijn ook de niveaus waaruit spelers op hun telefoon kiezen. Spelers melden zich normaal zelf aan; hier kan de organisator er ook een toevoegen, een naam verbeteren (spelers typen hem zelf in), het niveau aanpassen of een speler verwijderen. Een naam is uniek, zonder op hoofdletters of spaties te letten. Dit is, met de preset, het enige dat tussen avonden bewaard blijft. Er is geen import uit een bestand.
 
-**Avond starten.** Alleen vóór de avond. Het aantal banen instellen en een preset kiezen. Aanvinken uit de bewaarde lijst kan, maar hoeft niet: een avond kan ook zonder aanwezigen starten, waarna spelers zich met hun telefoon aanmelden. Een teller toont hoeveel spelers per ronde spelen en hoeveel er rusten, zodat het aantal banen vóór aanvang bijgesteld kan worden. Bij het starten krijgt de avond een sessiecode en opent het ronde-scherm met de wachtruimte.
+**Avond starten.** Alleen vóór de avond. Het aantal banen instellen en een preset kiezen. Aanvinken uit de bewaarde lijst kan, maar hoeft niet: een avond kan altijd starten, ook zonder aanwezigen, waarna spelers zich met hun telefoon aanmelden. De QR-code verschijnt pas na het starten, in de wachtruimte; dat staat onder de startknop, en de teller noemt vier spelers alleen als voorwaarde voor de eerste ronde, niet voor het starten. Een teller toont hoeveel spelers per ronde spelen en hoeveel er rusten, zodat het aantal banen vóór aanvang bijgesteld kan worden. Bij het starten krijgt de avond een sessiecode en opent het ronde-scherm met de wachtruimte.
 
 **Ronde-scherm.** Het scherm dat de hele avond openstaat. Het kent drie toestanden:
 
@@ -220,6 +221,7 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 ## Hosting en privacy
 
 - De app staat op GitHub Pages, vanuit een publieke repository op de branch `master`.
+- GitHub Pages laat browsers bestanden tien minuten bewaren. Zonder maatregel kan een browser na een nieuwe uitgave de nieuwe pagina met oude scripts combineren. Daarom staat achter elk eigen script en stijlblad een versie (`?v=…`), die `node stempel-versie.js` vóór elke uitgave bijwerkt.
 - In de repository staan geen namen of andere gegevens van leden. `docs/Pickleball Den Bosch_members/` staat in `.gitignore` of buiten de repository, vóór de eerste push.
 - Spelersnamen staan alleen in `localStorage` van de laptop en gaan rechtstreeks van laptop naar telefoon. De namen van de clublijst worden naar aangesloten telefoons gestuurd, zodat spelers zichzelf kunnen kiezen en aanmelden; andere gegevens dan naam en groep kent de app niet.
 - De publieke PeerJS-server ziet alleen verbindingsgegevens, geen namen of indelingen. PeerJS gebruikt standaard ook zijn eigen gratis TURN-servers voor telefoons die niet rechtstreeks kunnen verbinden; daar is geen account of sleutel voor nodig. Het verkeer daarlangs is versleuteld (WebRTC).

@@ -116,7 +116,7 @@
       if (aanwezig === 0) {
         teller.textContent = T.teller_leeg;
       } else if (aanwezig < 4) {
-        teller.textContent = T.teller_te_weinig(aanwezig);
+        teller.textContent = T.teller_voorbereiding(aanwezig);
       } else {
         teller.innerHTML = T.teller(aanwezig, plekken, aanwezig - plekken, plekken / 4, this.banen, 0);
       }

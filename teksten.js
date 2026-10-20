@@ -55,9 +55,9 @@
     banen: 'Banen',
     preset_titel: 'Hoe husselen?',
     avond_starten: 'Avond starten',
+    avond_starten_uitleg: 'Daarna verschijnt de QR-code waarmee spelers zich aanmelden. Starten kan altijd, ook als er nog niemand is.',
     avond_afsluiten: 'Avond afsluiten',
     afsluiten_vraag: 'Avond afsluiten? De rondes van vanavond worden gewist en telefoons worden losgekoppeld.',
-    teller_te_weinig: function (n) { return meervoud(n, 'speler', 'spelers') + ' aanwezig. Er zijn er minstens vier nodig.'; },
     teller: function (aanwezig, spelen, rusten, banenInGebruik, banen, pauzes) {
       let tekst = '<strong>' + aanwezig + '</strong> aanwezig · <strong>' + spelen + '</strong> spelen · <strong>' + rusten + '</strong> rusten';
       if (pauzes) tekst += ' · <strong>' + pauzes + '</strong> pauzeren';
@@ -73,6 +73,9 @@
     ontkoppel: 'Ontkoppel',
     ontkoppeld_melding: function (naam) { return 'De telefoon van ' + naam + ' is ontkoppeld.'; },
     niveau_wijzigen: 'Niveau',
+    teller_voorbereiding: function (n) {
+      return meervoud(n, 'speler', 'spelers') + ' aangevinkt. Start gerust: de rest meldt zich aan met de QR-code. Voor de eerste ronde zijn er vier nodig.';
+    },
     teller_leeg: 'Nog niemand aangevinkt. Dat mag: spelers melden zich na de start zelf aan met hun telefoon.',
     paneel_knop: 'Spelers',
     paneel_titel: 'Spelers vanavond',

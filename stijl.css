@@ -289,11 +289,6 @@ td:last-child { text-align: right; }
 /* Ronde */
 .ronde-kop { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; margin-bottom: 0.4rem; }
 .ronde-kop h1 { margin: 0; }
-.ronde-banen { gap: 0.7rem; padding: 0.25rem 0.4rem 0.25rem 0.9rem; background: var(--kleur-oppervlak); border-radius: 999px; box-shadow: var(--schaduw); }
-.ronde-banen .stapper output { font-size: 1.4rem; }
-.ronde-banen .knop-rond { width: 34px; height: 34px; font-size: 1.1rem; }
-.ronde-modus { cursor: pointer; padding-right: 0.5rem; }
-.ronde-modus select { border: 0; background: transparent; font-weight: 700; padding: 0.35rem 0.3rem; }
 .ronde-kop .acties { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 .verouderd { border-left: 6px solid var(--kleur-accent); margin-bottom: 1rem; padding: 0.9rem 1.1rem; }
@@ -438,7 +433,20 @@ button.naamkaartje:hover { border-color: var(--kleur-accent); }
 .paneel-rij .niveau-keuze { font-size: 0.8rem; padding: 0.25rem 0.4rem; border-radius: 999px; }
 .knop-weg { color: var(--kleur-gevaar); font-size: 0.8rem; }
 .paneel-afwezig { list-style: none; padding: 0; margin: 0.5rem 0; }
-.paneel-afwezig li { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; }
-.paneel-afwezig li span { flex: 1; font-weight: 500; }
-.paneel-afwezig li small { color: var(--kleur-tekst-zacht); }
-.paneel .zoek { width: 100%; margin: 0; }
+.paneel .zoek { width: 100%; margin: 0 0 0.6rem; }
+.paneel-knoppen { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.paneel-knoppen .knop { white-space: normal; }
+.instelling { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; font-weight: 600; }
+.instelling .stapper output { font-size: 1.4rem; }
+.instelling .knop-rond { width: 34px; height: 34px; font-size: 1.1rem; }
+.instelling select { font-weight: 600; }
+#modus-uitleg { margin: 0.2rem 0 0; font-size: 0.82rem; }
+.paneel-terug { margin: 0.6rem 0 0.4rem; }
+.kies-rij { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.3rem; border-bottom: 1px solid var(--kleur-achtergrond); cursor: pointer; }
+.kies-rij span { flex: 1; font-weight: 500; }
+.kies-rij small { color: var(--kleur-tekst-zacht); }
+.kies-rij:has(input:checked) { background: #F1F8F4; }
+.paneel-voet { position: sticky; bottom: 0; padding: 0.8rem 0 0.2rem; background: linear-gradient(transparent, var(--kleur-oppervlak) 30%); }
+.paneel-voet .knop { width: 100%; }
+.paneel-toegevoegd { list-style: none; padding: 0; margin: 0.8rem 0 0; color: var(--kleur-primair); font-weight: 600; }
+.kolom { display: grid; gap: 0.5rem; }

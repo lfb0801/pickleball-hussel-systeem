@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@700;900&display=swap">
-<link rel="stylesheet" href="thema.css?v=202610202146">
-<link rel="stylesheet" href="stijl.css?v=202610202146">
+<link rel="stylesheet" href="thema.css?v=202610202154">
+<link rel="stylesheet" href="stijl.css?v=202610202154">
 </head>
 <body>
 <header class="balk">
@@ -110,18 +110,6 @@
     <div class="ronde-kop">
       <h1><span data-t="ronde_titel"></span> <span id="ronde-nummer"></span></h1>
       <span id="ronde-status" class="pil"></span>
-      <div class="banen-keuze ronde-banen">
-        <span data-t="banen"></span>
-        <div class="stapper">
-          <button type="button" id="ronde-banen-min" class="knop-rond" aria-label="Minder banen">−</button>
-          <output id="ronde-banen">4</output>
-          <button type="button" id="ronde-banen-plus" class="knop-rond" aria-label="Meer banen">+</button>
-        </div>
-      </div>
-      <label class="banen-keuze ronde-banen ronde-modus">
-        <span data-t="modus"></span>
-        <select id="ronde-modus"></select>
-      </label>
       <div class="acties">
         <button type="button" id="opnieuw-loten" class="knop" data-t="opnieuw_loten"></button>
         <button type="button" id="start-ronde" class="knop knop-primair knop-groot"></button>
@@ -164,39 +152,74 @@
     <button type="button" id="paneel-sluit" class="knop-rond" aria-label="Sluiten">×</button>
   </header>
   <div class="paneel-inhoud">
-    <section class="paneel-sectie">
-      <h3 data-t="paneel_erbij"></h3>
+    <div id="paneel-overzicht">
+      <section class="paneel-sectie paneel-knoppen">
+        <button type="button" id="naar-kiezen" class="knop knop-primair" data-t="paneel_kiezen_knop"></button>
+        <button type="button" id="naar-nieuw" class="knop" data-t="paneel_nieuw_knop"></button>
+      </section>
+      <section class="paneel-sectie">
+        <h3 data-t="paneel_avond"></h3>
+        <div class="instelling">
+          <span data-t="banen"></span>
+          <div class="stapper">
+            <button type="button" id="ronde-banen-min" class="knop-rond" aria-label="Minder banen">−</button>
+            <output id="ronde-banen">4</output>
+            <button type="button" id="ronde-banen-plus" class="knop-rond" aria-label="Meer banen">+</button>
+          </div>
+        </div>
+        <label class="instelling">
+          <span data-t="modus"></span>
+          <select id="ronde-modus"></select>
+        </label>
+        <p id="modus-uitleg" class="uitleg"></p>
+      </section>
+      <section class="paneel-sectie">
+        <div class="paneel-sectiekop"><h3 data-t="paneel_vanavond"></h3><span id="paneel-aantal" class="pil pil-bezig"></span></div>
+        <div id="paneel-aanwezig"></div>
+      </section>
+      <section class="paneel-sectie">
+        <p id="paneel-verbinding" class="uitleg"></p>
+        <p id="lokaal-waarschuwing" class="uitleg waarschuwing-tekst" hidden data-t="lokaal_bestand"></p>
+        <button type="button" id="stop-avond" class="knop knop-gevaar" data-t="avond_afsluiten"></button>
+      </section>
+    </div>
+
+    <div id="paneel-kiezen" hidden>
+      <button type="button" class="knop-link paneel-terug" data-t="terug"></button>
+      <h3 data-t="paneel_kiezen_titel"></h3>
+      <p class="uitleg" data-t="paneel_kiezen_uitleg"></p>
       <input type="search" id="paneel-zoek" class="zoek" data-t-placeholder="paneel_zoek">
-      <ul id="paneel-afwezig" class="paneel-afwezig"></ul>
-      <form id="paneel-nieuw" class="regel">
+      <div id="paneel-afwezig" class="paneel-afwezig"></div>
+      <div class="paneel-voet">
+        <button type="button" id="kiezen-bevestig" class="knop knop-primair knop-groot"></button>
+      </div>
+    </div>
+
+    <div id="paneel-nieuw-weergave" hidden>
+      <button type="button" class="knop-link paneel-terug" data-t="terug"></button>
+      <h3 data-t="paneel_nieuw_knop"></h3>
+      <p class="uitleg" data-t="paneel_nieuw_uitleg"></p>
+      <form id="paneel-nieuw" class="kolom">
         <input type="text" id="paneel-nieuw-naam" maxlength="40" data-t-placeholder="paneel_nieuw" required>
         <select id="paneel-nieuw-groep"></select>
-        <button type="submit" class="knop" data-t="speler_toevoegen"></button>
+        <button type="submit" class="knop knop-primair" data-t="speler_toevoegen"></button>
       </form>
-    </section>
-    <section class="paneel-sectie">
-      <div class="paneel-sectiekop"><h3 data-t="paneel_vanavond"></h3><span id="paneel-aantal" class="pil pil-bezig"></span></div>
-      <div id="paneel-aanwezig"></div>
-    </section>
-    <section class="paneel-sectie">
-      <p id="paneel-verbinding" class="uitleg"></p>
-      <p id="lokaal-waarschuwing" class="uitleg waarschuwing-tekst" hidden data-t="lokaal_bestand"></p>
-      <button type="button" id="stop-avond" class="knop knop-gevaar" data-t="avond_afsluiten"></button>
-    </section>
+      <ul id="paneel-toegevoegd" class="paneel-toegevoegd"></ul>
+    </div>
   </div>
 </aside>
-<script src="teksten.js?v=202610202146"></script>
-<script src="peerjs.min.js?v=202610202146"></script>
-<script src="qrcode.js?v=202610202146"></script>
-<script src="hussel.js?v=202610202146"></script>
-<script src="presets.js?v=202610202146"></script>
-<script src="sessie.js?v=202610202146"></script>
-<script src="verbinding.js?v=202610202146"></script>
-<script src="opslag.js?v=202610202146"></script>
-<script src="scherm-spelers.js?v=202610202146"></script>
-<script src="scherm-avond.js?v=202610202146"></script>
-<script src="scherm-ronde.js?v=202610202146"></script>
-<script src="scherm-paneel.js?v=202610202146"></script>
-<script src="app.js?v=202610202146"></script>
+<script src="teksten.js?v=202610202154"></script>
+<script src="peerjs.min.js?v=202610202154"></script>
+<script src="qrcode.js?v=202610202154"></script>
+<script src="hussel.js?v=202610202154"></script>
+<script src="presets.js?v=202610202154"></script>
+<script src="sessie.js?v=202610202154"></script>
+<script src="verbinding.js?v=202610202154"></script>
+<script src="opslag.js?v=202610202154"></script>
+<script src="scherm-spelers.js?v=202610202154"></script>
+<script src="scherm-avond.js?v=202610202154"></script>
+<script src="scherm-ronde.js?v=202610202154"></script>
+<script src="scherm-paneel.js?v=202610202154"></script>
+<script src="app.js?v=202610202154"></script>
 </body>
 </html>

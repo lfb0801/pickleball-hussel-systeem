@@ -285,15 +285,15 @@
     });
     document.getElementById('ronde-modus').addEventListener('change', function () {
       App.wijzigModus(document.getElementById('ronde-modus').value);
-      SchermRonde.render();
+      App.renderHuidig();
     });
     document.getElementById('ronde-banen-min').addEventListener('click', function () {
       SchermRonde.wijzigBanen(-1);
-      SchermRonde.render();
+      App.renderHuidig();
     });
     document.getElementById('ronde-banen-plus').addEventListener('click', function () {
       SchermRonde.wijzigBanen(1);
-      SchermRonde.render();
+      App.renderHuidig();
     });
 
   });

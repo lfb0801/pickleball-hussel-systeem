@@ -1,7 +1,7 @@
 # Pickleball hussel systeem — ontwerp
 
 **Datum:** 2026-09-27
-**Bijgewerkt:** 2026-10-20 — gratis gehoste webapp, live sessie met telefoons, concept en publiceren, handmatig wisselen, presets, opmaak in de stijl van Pickleball Den Bosch.
+**Bijgewerkt:** 2026-10-20 — gebouwd; gratis gehoste webapp, live sessie met telefoons, concept en publiceren, handmatig wisselen, presets, opmaak in de stijl van Pickleball Den Bosch.
 
 ## Doel
 
@@ -42,8 +42,8 @@ Losse bestanden zonder build-stap, elk met één verantwoordelijkheid:
 | `thema.css` | De huisstijl als CSS-variabelen: kleuren en lettertypen. |
 | `stijl.css` | De opmaak, die alleen variabelen uit `thema.css` gebruikt. |
 | `index.html` | De laptop-app, die de bovenstaande bestanden inlaadt. |
-| `speler.html` / `speler.js` | De telefoon-app. |
-| `papaparse.min.js`, `peerjs.min.js`, `qrcode.min.js` | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
+| `speler.html` / `speler.js` / `speler.css` | De telefoon-app en zijn opmaak. |
+| `papaparse.min.js`, `peerjs.min.js` (1.5.4), `qrcode.js` (qrcode-generator 1.4.4) | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
 | `tests.js` | De testgevallen. |
 | `test.html` | Testrunner in de browser. |
 | `test-node.js` | Dezelfde tests via `node test-node.js`, voor gebruik zonder browser. |
@@ -63,10 +63,10 @@ De app levert de toestand aan en krijgt een indeling terug. Het algoritme leest 
 Daarnaast:
 
 ```
-wisselSpelers(ronde, idA, idB) -> ronde
+wisselSpelers(ronde, idA, idB, groepVan) -> ronde
 ```
 
-Wisselt twee spelers van plek: binnen een baan, tussen banen, of tussen een baan en de rustlijst. Leners en groepen per baan worden opnieuw bepaald.
+Wisselt twee spelers van plek: binnen een baan, tussen banen, of tussen een baan en de rustlijst. `groepVan` geeft per speler de groepsindex, zodat leners en groepen per baan opnieuw bepaald worden. Gepauzeerde spelers zijn niet te wisselen.
 
 ### Grens tussen sessie en netwerk
 
@@ -96,7 +96,7 @@ Per ronde, in vijf stappen:
 
 1. **Capaciteit bepalen.** Het aantal spelende plekken is `min(banen × 4, beschikbare spelers naar beneden afgerond op een veelvoud van 4)`. Wie de volgende ronde pauzeert, is niet beschikbaar.
 2. **Rust toewijzen.** Een harde regel: wie tot dan toe het meest gerust heeft, speelt. Gelijke stand wordt willekeurig gebroken. Het verschil in rustbeurten tussen spelers die niet pauzeren loopt daardoor nooit verder op dan één. Gepauzeerde spelers staan in de rustlijst en hun pauze telt als rustbeurt, zodat ze na terugkomst als eersten weer spelen.
-3. **Banen vullen.** De spelende spelers worden op niveauvolgorde op een rij gezet en in blokken van vier geknipt; elk blok wordt een baan. Binnen een groep is de volgorde willekeurig, zodat het per ronde wisselt wie er op een breukvlak terechtkomt. Waar een groep niet op een veelvoud van vier uitkomt, ontstaat vanzelf een baan met spelers uit twee naastliggende groepen. Baan 1 is het sterkst.
+3. **Banen vullen.** De spelende spelers worden op niveauvolgorde op een rij gezet (met de *menging* uit de preset, zie hieronder) en in blokken van vier geknipt; elk blok wordt een baan. Binnen een groep is de volgorde willekeurig, zodat het per ronde wisselt wie er op een breukvlak terechtkomt. Waar een groep niet op een veelvoud van vier uitkomt, ontstaat vanzelf een baan met spelers uit twee naastliggende groepen. Baan 1 is het sterkst.
 4. **Koppels binnen de baan.** Van de drie mogelijke teamindelingen binnen een viertal wordt de minst herhalende gekozen.
 5. **Scorend zoeken.** Stap 2 tot en met 4 draaien een paar honderd keer met andere willekeur. De indeling met de laagste strafscore wint.
 
@@ -117,11 +117,13 @@ Rustverdeling is geen strafpunt maar een harde regel in stap 2.
 
 De organisator kiest uit drie presets; losse gewichten zijn niet instelbaar in de app. De keuze geldt vanaf de volgende generatie.
 
-| Preset | Partner | Tegenstander | Niveaukloof | Lener | Bedoeling |
-|---|---|---|---|---|---|
-| Gebalanceerd (standaard) | 10 | 3 | 8 | 4 | De oorspronkelijke startwaarden. |
-| Sociaal mixen | 10 | 5 | 2 | 2 | Zoveel mogelijk nieuwe partners en tegenstanders, niveau telt minder. |
-| Binnen niveau | 6 | 2 | 30 | 6 | Banen zo zuiver mogelijk op niveau, herhaling neemt men voor lief. |
+| Preset | Partner | Tegenstander | Niveaukloof | Lener | Menging | Bedoeling |
+|---|---|---|---|---|---|---|
+| Gebalanceerd (standaard) | 10 | 3 | 8 | 4 | 0 | De oorspronkelijke startwaarden. |
+| Sociaal mixen | 10 | 5 | 2 | 2 | 1,2 | Zoveel mogelijk nieuwe partners en tegenstanders, niveau telt minder. |
+| Binnen niveau | 6 | 2 | 30 | 6 | 0 | Banen zo zuiver mogelijk op niveau, herhaling neemt men voor lief. |
+
+*Menging* bepaalt hoe streng de niveauvolgorde in stap 3 is. Elke speler krijgt als sorteerwaarde zijn groepsindex plus een willekeurig getal tussen 0 en de menging. Bij 0 blijft de volgorde strikt. Boven 1 kan een speler over het breukvlak naar een naastliggende groep schuiven, zodat de niveaukloof-strafpunten ook echt een afweging worden. Zonder menging ligt de niveauverdeling grotendeels vast door wie er speelt, en verschillen *Gebalanceerd* en *Binnen niveau* vooral bij wie rust en in de teamindeling.
 
 De waarden zijn een vertrekpunt en worden na een avond in de zaal bijgesteld in `presets.js`. Een test laat per preset zien dat de bedoeling ook uitkomt.
 
@@ -137,6 +139,8 @@ De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spe
 
 - *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Komt er tijdens het concept een pauze, vertrek of aanmelding binnen, dan krijgt de betrokken speler een badge en meldt het scherm dat opnieuw genereren nodig is.
 - *Gepubliceerd.* Met *Start ronde* wordt het concept de lopende ronde. Telefoons krijgen de indeling en een melding, precies één keer per ronde.
+
+Naast de rondetitel staat het aantal banen, met een min- en plusknop. Het aantal banen is tussen rondes aan te passen: de lopende ronde blijft staan en de wijziging geldt vanaf de volgende loting. Staat er een concept open, dan wordt dat meteen opnieuw geloot met het nieuwe aantal; handmatige wissels in dat concept vervallen dan. Op het avondscherm werkt de baanteller tijdens de avond op dezelfde manier.
 
 Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team tegen team. Daaronder wie deze ronde rust en wie pauzeert. Knoppen: *volgende ronde* (maakt een concept), *opnieuw genereren*, *start ronde*, *spelers aanpassen*, *avond afsluiten*. Een kleine QR-code in een hoek laat laatkomers ook tijdens de avond aansluiten.
 
@@ -191,7 +195,7 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 - De app staat op GitHub Pages, vanuit een publieke repository op de branch `master`.
 - In de repository staan geen namen of andere gegevens van leden. `docs/Pickleball Den Bosch_members/` staat in `.gitignore` of buiten de repository, vóór de eerste push.
 - Spelersnamen staan alleen in `localStorage` van de laptop en gaan rechtstreeks van laptop naar telefoon. De namen van de clublijst worden naar aangesloten telefoons gestuurd, zodat spelers zichzelf kunnen kiezen en aanmelden; andere gegevens dan naam en groep kent de app niet.
-- De publieke PeerJS-server ziet alleen verbindingsgegevens, geen namen of indelingen.
+- De publieke PeerJS-server ziet alleen verbindingsgegevens, geen namen of indelingen. PeerJS gebruikt standaard ook zijn eigen gratis TURN-servers voor telefoons die niet rechtstreeks kunnen verbinden; daar is geen account of sleutel voor nodig. Het verkeer daarlangs is versleuteld (WebRTC).
 
 ## Randgevallen
 
@@ -236,12 +240,13 @@ Tegen `sessie.js`:
 - Aanmelden van een laatkomer geeft het hoogste rustsaldo onder de aanwezigen.
 - Een gastverzoek voegt pas iemand toe nadat de organisator een groep kiest.
 - Een pauze vervalt bij het publiceren van de ronde waarvoor hij gold.
+- Het aantal banen wijzigen laat gespeelde rondes ongemoeid en geldt bij de volgende loting.
 
 De verbinding zelf (`verbinding.js`) wordt met de hand getest, volgens een vaste lijst: aansluiten via QR, laptop verversen, telefoon op wifi en op mobiele data, Android en iPhone.
 
 ## Buiten scope
 
-Scores, ranglijsten, klimmen en zakken tussen banen, enkelspel, historie over meerdere avonden, accounts, een eigen server of database, vaste of verboden koppels, een TURN-relay voor telefoons die niet rechtstreeks kunnen verbinden, bescherming tegen het claimen van andermans naam, niveaus inlezen uit een CSV-bestand, losse gewichten instellen in de app, meerdere talen.
+Scores, ranglijsten, klimmen en zakken tussen banen, enkelspel, historie over meerdere avonden, accounts, een eigen server of database, vaste of verboden koppels, een eigen of betaalde TURN-relay naast die van PeerJS, bescherming tegen het claimen van andermans naam, niveaus inlezen uit een CSV-bestand, losse gewichten instellen in de app, meerdere talen.
 
 ## Open punten
 

@@ -9,9 +9,10 @@
       this.renderSpelers();
     },
 
-    knop: function (tekst, bijKlik) {
+    knop: function (tekst, bijKlik, klasse) {
       const knop = document.createElement('button');
       knop.type = 'button';
+      knop.className = 'knop ' + (klasse || '');
       knop.textContent = tekst;
       knop.addEventListener('click', bijKlik);
       return knop;
@@ -35,11 +36,14 @@
       App.club.groepen.forEach(function (naam, index) {
         const item = document.createElement('li');
         const label = document.createElement('span');
-        label.textContent = naam + ' ';
+        label.className = 'groep-naam';
+        label.textContent = naam;
         item.appendChild(label);
-        item.appendChild(scherm.knop('Omhoog', function () { scherm.verplaatsGroep(index, -1); }));
-        item.appendChild(scherm.knop('Omlaag', function () { scherm.verplaatsGroep(index, 1); }));
-        item.appendChild(scherm.knop('Verwijder', function () { scherm.verwijderGroep(index); }));
+        item.appendChild(scherm.knop('↑', function () { scherm.verplaatsGroep(index, -1); }));
+        item.lastChild.title = T.omhoog;
+        item.appendChild(scherm.knop('↓', function () { scherm.verplaatsGroep(index, 1); }));
+        item.lastChild.title = T.omlaag;
+        item.appendChild(scherm.knop(T.verwijder, function () { scherm.verwijderGroep(index); }, 'knop-gevaar'));
         lijst.appendChild(item);
       });
     },
@@ -53,9 +57,15 @@
 
     renderSpelers: function () {
       const lichaam = document.querySelector('#spelers-tabel tbody');
+      const zoekterm = document.getElementById('spelers-zoek').value.trim().toLowerCase();
       const scherm = this;
       lichaam.textContent = '';
-      for (const speler of this.gesorteerdeSpelers()) {
+
+      const zichtbaar = this.gesorteerdeSpelers().filter(function (speler) {
+        return !zoekterm || speler.naam.toLowerCase().indexOf(zoekterm) !== -1;
+      });
+
+      for (const speler of zichtbaar) {
         const rij = document.createElement('tr');
 
         const naamCel = document.createElement('td');
@@ -67,18 +77,25 @@
         keuze.addEventListener('change', function () {
           speler.groep = Number(keuze.value);
           App.bewaarClub();
+          App.zendToestand();
           scherm.renderSpelers();
         });
         groepCel.appendChild(keuze);
 
         const actieCel = document.createElement('td');
-        actieCel.appendChild(this.knop('Verwijder', function () { scherm.verwijderSpeler(speler.id); }));
+        actieCel.appendChild(this.knop(T.verwijder, function () { scherm.verwijderSpeler(speler.id); }, 'knop-klein knop-gevaar'));
 
         rij.appendChild(naamCel);
         rij.appendChild(groepCel);
         rij.appendChild(actieCel);
         lichaam.appendChild(rij);
       }
+
+      document.getElementById('spelers-aantal').textContent = T.spelers_aantal(App.club.spelers.length);
+      const leeg = document.getElementById('spelers-leeg');
+      leeg.hidden = zichtbaar.length > 0;
+      leeg.textContent = App.club.spelers.length ? T.geen_treffers : T.geen_spelers;
+      document.querySelector('#spelers-tabel').hidden = zichtbaar.length === 0;
     },
 
     verplaatsGroep: function (index, richting) {
@@ -98,12 +115,12 @@
 
     verwijderGroep: function (index) {
       if (App.club.groepen.length === 1) {
-        App.waarschuw('Er moet minstens één groep overblijven.');
+        App.waarschuw(T.min_een_groep);
         return;
       }
       for (const speler of App.club.spelers) {
         if (speler.groep === index) {
-          App.waarschuw('Deze groep heeft nog spelers. Zet die eerst in een andere groep.');
+          App.waarschuw(T.groep_heeft_spelers);
           return;
         }
       }
@@ -118,7 +135,7 @@
 
     importeerNamen: function (namen, groep) {
       if (namen.length === 0) {
-        App.waarschuw('In dit bestand staan geen namen.');
+        App.waarschuw(T.import_leeg);
         return;
       }
 
@@ -130,27 +147,18 @@
       }
       App.bewaarClub();
       this.render();
-
-      const groepsnaam = App.club.groepen[groep];
-      let melding = verdeling.nieuw.length === 1
-        ? '1 speler toegevoegd in groep ' + groepsnaam + '.'
-        : verdeling.nieuw.length + ' spelers toegevoegd in groep ' + groepsnaam + '.';
-      if (verdeling.overgeslagen.length) {
-        melding += ' ' + verdeling.overgeslagen.length
-          + (verdeling.overgeslagen.length === 1 ? ' overgeslagen: die naam' : ' overgeslagen: die namen')
-          + ' stond er al.';
-      }
-      App.waarschuw(melding);
+      App.waarschuw(T.import_klaar(verdeling.nieuw.length, App.club.groepen[groep], verdeling.overgeslagen.length));
     },
 
     verwijderSpeler: function (id) {
+      const naam = App.naam(id);
       if (App.avond && App.avond.aanwezigen.indexOf(id) !== -1) {
-        App.avond.aanwezigen = App.avond.aanwezigen.filter(function (a) { return a !== id; });
-        App.bewaarAvond();
-        App.waarschuw('Deze speler deed mee aan de lopende avond. De gespeelde rondes blijven staan; vanaf de volgende ronde doet hij niet meer mee.');
+        App.avond = Sessie.ontkoppel(Sessie.meldAf(App.avond, id), id).avond;
+        App.waarschuw(T.speler_was_aanwezig(naam));
       }
       App.club.spelers = App.club.spelers.filter(function (s) { return s.id !== id; });
       App.bewaarClub();
+      if (App.avond) App.bewaarAvond();
       this.renderSpelers();
     },
   };
@@ -158,6 +166,10 @@
   window.SchermSpelers = SchermSpelers;
 
   window.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('spelers-zoek').addEventListener('input', function () {
+      SchermSpelers.renderSpelers();
+    });
+
     document.getElementById('groep-toevoegen').addEventListener('submit', function (gebeurtenis) {
       gebeurtenis.preventDefault();
       const veld = document.getElementById('groep-naam');
@@ -174,7 +186,7 @@
       const veld = document.getElementById('csv-bestand');
       const bestand = veld.files[0];
       if (!bestand) {
-        App.waarschuw('Kies eerst een bestand.');
+        App.waarschuw(T.kies_bestand);
         return;
       }
       const groep = Number(document.getElementById('import-groep').value);
@@ -184,7 +196,7 @@
         veld.value = '';
       });
       lezer.addEventListener('error', function () {
-        App.waarschuw('Het bestand kon niet gelezen worden.');
+        App.waarschuw(T.bestand_onleesbaar);
       });
       lezer.readAsText(bestand);
     });
@@ -200,8 +212,10 @@
         groep: Number(document.getElementById('nieuwe-speler-groep').value),
       });
       App.bewaarClub();
+      App.zendToestand();
       veld.value = '';
       SchermSpelers.render();
+      veld.focus();
     });
   });
 })();

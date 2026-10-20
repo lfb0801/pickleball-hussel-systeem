@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B1B2C">
+<title>Hussel — meedoen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@700;900&display=swap">
+<link rel="stylesheet" href="thema.css">
+<link rel="stylesheet" href="speler.css">
+</head>
+<body>
+<header class="tel-balk">
+  <span class="bal" aria-hidden="true"></span>
+  <span class="merk-tekst"><strong data-t="app"></strong><small data-t="club"></small></span>
+  <span id="tel-stip" class="tel-stip" aria-hidden="true"></span>
+</header>
+
+<div id="tel-status" class="tel-status" hidden>
+  <p id="tel-status-tekst"></p>
+  <p class="tel-status-knoppen">
+    <button type="button" id="tel-opnieuw" class="knop knop-klein" data-t="tel_opnieuw"></button>
+    <button type="button" id="tel-andere-code" class="knop-link" data-t="tel_andere_code"></button>
+  </p>
+</div>
+
+<main>
+  <section id="t-code" hidden>
+    <h1 data-t="tel_code_titel"></h1>
+    <p class="uitleg" data-t="tel_code_uitleg"></p>
+    <form id="code-formulier" class="kolom">
+      <input type="text" id="code-veld" class="code-veld" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+      <button type="submit" class="knop knop-primair knop-groot" data-t="tel_code_knop"></button>
+    </form>
+  </section>
+
+  <section id="t-verbinden" hidden>
+    <div class="laden" aria-hidden="true"></div>
+    <p class="midden" data-t="tel_verbinden"></p>
+  </section>
+
+  <section id="t-naam" hidden>
+    <h1 data-t="tel_kies_naam"></h1>
+    <p class="uitleg" data-t="tel_kies_uitleg"></p>
+    <input type="search" id="naam-zoek" class="zoek" data-t-placeholder="zoeken">
+    <ul id="namen" class="namen"></ul>
+    <div class="kaart">
+      <h2 data-t="tel_geen_naam"></h2>
+      <p class="uitleg" data-t="tel_gast_uitleg"></p>
+      <form id="gast-formulier" class="kolom">
+        <input type="text" id="gast-naam" data-t-placeholder="tel_gast_naam" maxlength="40" required>
+        <button type="submit" class="knop" data-t="tel_gast_knop"></button>
+      </form>
+    </div>
+  </section>
+
+  <section id="t-gastwacht" hidden>
+    <div class="laden" aria-hidden="true"></div>
+    <p id="gast-wacht-tekst" class="midden groot"></p>
+    <p class="midden"><button type="button" id="gast-annuleer" class="knop-link" data-t="tel_gast_annuleer"></button></p>
+  </section>
+
+  <section id="t-hoofd" hidden>
+    <p class="hoi"><span id="hoi"></span> <button type="button" id="niet-jij" class="knop-link" data-t="tel_niet_jij"></button></p>
+    <div id="mijn-kaart" class="mijn-kaart"></div>
+
+    <div id="niet-aanwezig" class="kaart" hidden>
+      <p id="niet-aanwezig-tekst"></p>
+      <button type="button" id="ik-ben-er" class="knop knop-primair knop-groot"></button>
+    </div>
+
+    <div id="bediening" class="kaart bediening">
+      <label class="schakelaar">
+        <span data-t="tel_pauze_schakelaar"></span>
+        <input type="checkbox" id="pauze-schakelaar" role="switch">
+        <span class="schuif" aria-hidden="true"></span>
+      </label>
+      <p id="pauze-uitleg" class="uitleg" hidden data-t="tel_pauze_aan"></p>
+      <button type="button" id="naar-huis" class="knop knop-gevaar" data-t="tel_naar_huis"></button>
+    </div>
+
+    <details id="hele-ronde" class="kaart" hidden>
+      <summary data-t="tel_hele_ronde"></summary>
+      <div id="hele-ronde-inhoud"></div>
+    </details>
+  </section>
+
+  <section id="t-einde" hidden>
+    <p class="midden groot" data-t="tel_einde"></p>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="teksten.js"></script>
+<script src="peerjs.min.js"></script>
+<script src="verbinding.js"></script>
+<script src="speler.js"></script>
+</body>
+</html>

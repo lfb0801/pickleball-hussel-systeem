@@ -1,127 +1,322 @@
 (function () {
   'use strict';
 
+  const TELEFOON_ICOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="18" r="1.3" fill="currentColor"/></svg>';
+
   const SchermAvond = {
+    // Vóór de start van de avond leeft de keuze alleen hier.
+    selectie: {},
+    banen: 4,
+    getekendeCode: null,
+
     render: function () {
-      if (App.avond) {
-        document.getElementById('aantal-banen').value = String(App.avond.banen);
-      }
-      this.renderAanwezigheid();
-      this.renderTeller();
+      document.getElementById('avond-kop').textContent = App.avond ? T.avond_titel : T.avond_nieuw_titel;
+      document.getElementById('aantal-banen').textContent = String(this.aantalBanen());
       document.getElementById('start-avond').hidden = Boolean(App.avond);
       document.getElementById('stop-avond').hidden = !App.avond;
+      this.renderPresets();
+      this.renderAanwezigheid();
+      this.renderTeller();
+      this.renderGasten();
+      this.renderAansluiten();
     },
 
-    geselecteerdeIds: function () {
-      const vinkjes = document.querySelectorAll('#aanwezigheid-lijst input:checked');
-      return Array.prototype.map.call(vinkjes, function (vinkje) { return vinkje.value; });
+    aantalBanen: function () {
+      return App.avond ? App.avond.banen : this.banen;
+    },
+
+    isAanwezig: function (id) {
+      return App.avond ? App.avond.aanwezigen.indexOf(id) !== -1 : this.selectie[id] === true;
+    },
+
+    renderPresets: function () {
+      const houder = document.getElementById('presets');
+      houder.textContent = '';
+      for (const preset of Presets.lijst) {
+        const tekst = T.presets[preset.sleutel];
+        const label = document.createElement('label');
+        label.className = 'preset';
+        const keuze = document.createElement('input');
+        keuze.type = 'radio';
+        keuze.name = 'preset';
+        keuze.value = preset.sleutel;
+        keuze.checked = App.club.preset === preset.sleutel;
+        keuze.addEventListener('change', function () {
+          App.club.preset = preset.sleutel;
+          App.bewaarClub();
+        });
+        const omschrijving = document.createElement('span');
+        const naam = document.createElement('strong');
+        naam.textContent = tekst.naam;
+        const uitleg = document.createElement('small');
+        uitleg.textContent = tekst.uitleg;
+        omschrijving.appendChild(naam);
+        omschrijving.appendChild(uitleg);
+        label.appendChild(keuze);
+        label.appendChild(omschrijving);
+        houder.appendChild(label);
+      }
     },
 
     renderAanwezigheid: function () {
-      const lijst = document.getElementById('aanwezigheid-lijst');
+      const houder = document.getElementById('aanwezigheid');
+      const zoekterm = document.getElementById('avond-zoek').value.trim().toLowerCase();
+      const alleenAanwezig = document.getElementById('alleen-aanwezig').checked;
       const scherm = this;
-      const aangevinkt = {};
-      const bronnen = App.avond ? App.avond.aanwezigen : this.geselecteerdeIds();
-      for (const id of bronnen) aangevinkt[id] = true;
+      houder.textContent = '';
 
-      lijst.textContent = '';
-      const gesorteerd = App.club.spelers.slice().sort(function (a, b) {
-        if (a.groep !== b.groep) return a.groep - b.groep;
-        return a.naam.localeCompare(b.naam, 'nl');
-      });
+      if (App.club.spelers.length === 0) {
+        const leeg = document.createElement('p');
+        leeg.className = 'leeg';
+        leeg.textContent = T.geen_spelers;
+        houder.appendChild(leeg);
+        return;
+      }
 
-      for (const speler of gesorteerd) {
-        const item = document.createElement('li');
-        const label = document.createElement('label');
-        const vinkje = document.createElement('input');
-        vinkje.type = 'checkbox';
-        vinkje.value = speler.id;
-        vinkje.checked = aangevinkt[speler.id] === true;
-        vinkje.addEventListener('change', function () {
-          scherm.bijWijziging(speler.id, vinkje.checked);
+      App.club.groepen.forEach(function (groepsnaam, groep) {
+        const inGroep = App.club.spelers
+          .filter(function (speler) { return speler.groep === groep; })
+          .sort(function (a, b) { return a.naam.localeCompare(b.naam, 'nl'); });
+        const zichtbaar = inGroep.filter(function (speler) {
+          if (zoekterm && speler.naam.toLowerCase().indexOf(zoekterm) === -1) return false;
+          if (alleenAanwezig && !scherm.isAanwezig(speler.id)) return false;
+          return true;
         });
-        label.appendChild(vinkje);
-        label.appendChild(document.createTextNode(' ' + speler.naam + ' — ' + App.club.groepen[speler.groep]));
-        item.appendChild(label);
+        if (zichtbaar.length === 0) return;
+
+        const blok = document.createElement('div');
+        blok.className = 'groep-blok';
+
+        const kop = document.createElement('div');
+        kop.className = 'groep-blok-kop';
+        const titel = document.createElement('h3');
+        titel.textContent = groepsnaam;
+        const telling = document.createElement('span');
+        telling.className = 'pil';
+        telling.textContent = inGroep.filter(function (s) { return scherm.isAanwezig(s.id); }).length + ' / ' + inGroep.length;
+        kop.appendChild(titel);
+        kop.appendChild(telling);
+        if (!App.avond) {
+          kop.appendChild(scherm.groepKnop(T.alles_aan, zichtbaar, true));
+          kop.appendChild(scherm.groepKnop(T.alles_uit, zichtbaar, false));
+        }
+        blok.appendChild(kop);
+
+        const raster = document.createElement('div');
+        raster.className = 'spelers-raster';
+        for (const speler of zichtbaar) raster.appendChild(scherm.tegel(speler));
+        blok.appendChild(raster);
+        houder.appendChild(blok);
+      });
+    },
+
+    groepKnop: function (tekst, spelers, aan) {
+      const scherm = this;
+      const knop = document.createElement('button');
+      knop.type = 'button';
+      knop.className = 'knop knop-klein';
+      knop.textContent = tekst;
+      knop.addEventListener('click', function () {
+        for (const speler of spelers) {
+          if (aan) scherm.selectie[speler.id] = true;
+          else delete scherm.selectie[speler.id];
+        }
+        scherm.render();
+      });
+      return knop;
+    },
+
+    tegel: function (speler) {
+      const scherm = this;
+      const aanwezig = this.isAanwezig(speler.id);
+      const pauzeert = Boolean(App.avond && App.avond.pauzes[speler.id]);
+
+      const tegel = document.createElement('div');
+      tegel.className = 'speler-tegel' + (aanwezig ? ' aanwezig' : '') + (pauzeert ? ' pauzeert' : '');
+
+      const label = document.createElement('label');
+      const vinkje = document.createElement('input');
+      vinkje.type = 'checkbox';
+      vinkje.checked = aanwezig;
+      vinkje.addEventListener('change', function () { scherm.bijWijziging(speler.id, vinkje.checked); });
+      const naam = document.createElement('span');
+      naam.className = 'naam';
+      naam.textContent = speler.naam;
+      label.appendChild(vinkje);
+      label.appendChild(naam);
+      tegel.appendChild(label);
+
+      if (!App.avond) return tegel;
+
+      const telefoon = App.telefoonVan(speler.id);
+      const acties = document.createElement('span');
+      acties.className = 'tegel-acties';
+      if (telefoon) {
+        const icoon = document.createElement('span');
+        icoon.className = 'telefoon' + (telefoon === 'aan' ? ' aan' : '');
+        icoon.title = telefoon === 'aan' ? T.telefoon_verbonden : T.telefoon_gekoppeld;
+        icoon.innerHTML = TELEFOON_ICOON;
+        acties.appendChild(icoon);
+        const los = document.createElement('button');
+        los.type = 'button';
+        los.className = 'knop-link';
+        los.textContent = T.ontkoppel;
+        los.addEventListener('click', function () {
+          App.ontkoppel(speler.id);
+          scherm.render();
+        });
+        acties.appendChild(los);
+      }
+      if (aanwezig) {
+        const pauze = document.createElement('button');
+        pauze.type = 'button';
+        pauze.className = 'pauze-knop' + (pauzeert ? ' aan' : '');
+        pauze.textContent = T.pauze_label;
+        pauze.title = T.pauze_uitleg;
+        pauze.addEventListener('click', function () {
+          App.wijzigAvond(Sessie.zetPauze(App.avond, speler.id, !pauzeert));
+          scherm.render();
+        });
+        acties.appendChild(pauze);
+      }
+      tegel.appendChild(acties);
+      return tegel;
+    },
+
+    bijWijziging: function (id, aanwezig) {
+      if (!App.avond) {
+        if (aanwezig) this.selectie[id] = true;
+        else delete this.selectie[id];
+        this.render();
+        return;
+      }
+      if (aanwezig) {
+        App.wijzigAvond(Sessie.meldAan(App.avond, id));
+        App.meld(T.doet_mee(App.naam(id)));
+      } else {
+        App.wijzigAvond(Sessie.meldAf(App.avond, id));
+        App.meld(T.doet_niet_meer_mee(App.naam(id)));
+      }
+      this.render();
+    },
+
+    renderTeller: function () {
+      const banen = this.aantalBanen();
+      const aanwezig = App.avond
+        ? App.avond.aanwezigen.length
+        : Object.keys(this.selectie).filter(function (id) { return App.spelerOp(id); }).length;
+      const pauzes = App.avond
+        ? Object.keys(App.avond.pauzes).filter(function (id) { return App.avond.aanwezigen.indexOf(id) !== -1; }).length
+        : 0;
+      const plekken = Hussel.aantalPlekken(aanwezig - pauzes, banen);
+      const teller = document.getElementById('avond-teller');
+      if (aanwezig - pauzes < 4) {
+        teller.textContent = T.teller_te_weinig(aanwezig - pauzes);
+      } else {
+        teller.innerHTML = T.teller(aanwezig, plekken, aanwezig - pauzes - plekken, plekken / 4, banen, pauzes);
+      }
+    },
+
+    renderGasten: function () {
+      const kaart = document.getElementById('gasten-kaart');
+      const lijst = document.getElementById('gasten-lijst');
+      const verzoeken = App.avond ? App.avond.gastverzoeken : [];
+      kaart.hidden = verzoeken.length === 0;
+      lijst.textContent = '';
+      for (const verzoek of verzoeken) {
+        const item = document.createElement('li');
+        const naam = document.createElement('strong');
+        naam.textContent = verzoek.naam;
+        const groep = document.createElement('select');
+        SchermSpelers.vulGroepKeuze(groep, App.club.groepen.length - 1);
+        const toelaten = document.createElement('button');
+        toelaten.type = 'button';
+        toelaten.className = 'knop knop-klein knop-primair';
+        toelaten.textContent = T.gast_toelaten;
+        toelaten.addEventListener('click', function () {
+          const uitkomst = Sessie.keurGastGoed(App.avond, App.club, verzoek.id, Number(groep.value), App.nieuwId());
+          App.club = uitkomst.club;
+          App.bewaarClub();
+          App.wijzigAvond(uitkomst.avond);
+          App.meld(T.gast_toegelaten(verzoek.naam));
+          SchermAvond.render();
+        });
+        const weigeren = document.createElement('button');
+        weigeren.type = 'button';
+        weigeren.className = 'knop knop-klein';
+        weigeren.textContent = T.gast_weigeren;
+        weigeren.addEventListener('click', function () {
+          App.wijzigAvond(Sessie.wijsGastAf(App.avond, verzoek.id));
+          SchermAvond.render();
+        });
+        item.appendChild(naam);
+        item.appendChild(groep);
+        item.appendChild(toelaten);
+        item.appendChild(weigeren);
         lijst.appendChild(item);
       }
     },
 
-    bijWijziging: function (id, aanwezig) {
-      if (App.avond) {
-        if (aanwezig) this.voegLaatkomerToe(id);
-        else this.verwijderAfhaker(id);
+    renderAansluiten: function () {
+      const kaart = document.getElementById('aansluiten-kaart');
+      kaart.hidden = !App.avond;
+      if (!App.avond) return;
+      const link = App.aansluitLink();
+      document.getElementById('code-groot').textContent = App.avond.sessiecode;
+      const anker = document.getElementById('aansluit-link');
+      anker.href = link;
+      anker.textContent = link;
+      document.getElementById('lokaal-waarschuwing').hidden = !App.isLokaal();
+      if (this.getekendeCode !== link) {
+        App.tekenQr(document.getElementById('qr-groot'), link);
+        this.getekendeCode = link;
       }
-      this.renderTeller();
+      this.renderVerbinding();
     },
 
-    // Een laatkomer staat op nul rustbeurten en zou daarmee als eerste
-    // moeten rusten. Het hoogste saldo onder de aanwezigen laat hem meteen
-    // meedraaien in de rotatie.
-    voegLaatkomerToe: function (id) {
-      if (App.avond.aanwezigen.indexOf(id) !== -1) return;
-      const stat = Hussel.maakHistorieStatistiek(App.avond.rondes, App.avond.rustcorrectie);
-      App.avond.rustcorrectie[id] = Hussel.hoogsteRustsaldo(stat, App.avond.aanwezigen);
-      App.avond.aanwezigen.push(id);
-      App.bewaarAvond();
-      const speler = App.spelerOp(id);
-      App.waarschuw((speler ? speler.naam : 'De speler') + ' doet mee vanaf de volgende ronde.');
-    },
-
-    verwijderAfhaker: function (id) {
-      App.avond.aanwezigen = App.avond.aanwezigen.filter(function (a) { return a !== id; });
-      App.bewaarAvond();
-      const speler = App.spelerOp(id);
-      App.waarschuw((speler ? speler.naam : 'De speler')
-        + ' doet niet meer mee. De lopende ronde blijft staan; de wijziging geldt vanaf de volgende ronde.');
-    },
-
-    renderTeller: function () {
-      const banen = Number(document.getElementById('aantal-banen').value) || 0;
-      const aanwezig = App.avond ? App.avond.aanwezigen.length : this.geselecteerdeIds().length;
-      const plekken = Hussel.aantalPlekken(aanwezig, banen);
-      const teller = document.getElementById('avond-teller');
-      if (aanwezig < 4) {
-        teller.textContent = aanwezig + ' aanwezig. Er zijn minstens vier spelers nodig.';
-      } else {
-        teller.textContent = aanwezig + ' aanwezig: ' + plekken + ' spelen, '
-          + (aanwezig - plekken) + ' rusten, ' + (plekken / 4) + ' van de ' + banen + ' banen in gebruik.';
-      }
+    renderVerbinding: function () {
+      const tekst = document.getElementById('verbinding-tekst');
+      tekst.textContent = T.verbinding_status[App.verbindingStatus] || '';
     },
   };
 
   window.SchermAvond = SchermAvond;
 
+  function wijzigBanen(stap) {
+    if (App.avond) {
+      SchermRonde.wijzigBanen(stap);
+    } else {
+      SchermAvond.banen = Math.min(20, Math.max(1, SchermAvond.banen + stap));
+    }
+    document.getElementById('aantal-banen').textContent = String(SchermAvond.aantalBanen());
+    SchermAvond.renderTeller();
+  }
+
   window.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('aantal-banen').addEventListener('input', function () {
-      if (App.avond) {
-        App.avond.banen = Number(document.getElementById('aantal-banen').value) || 1;
-        App.bewaarAvond();
-      }
-      SchermAvond.renderTeller();
-    });
+    document.getElementById('banen-min').addEventListener('click', function () { wijzigBanen(-1); });
+    document.getElementById('banen-plus').addEventListener('click', function () { wijzigBanen(1); });
+    document.getElementById('avond-zoek').addEventListener('input', function () { SchermAvond.renderAanwezigheid(); });
+    document.getElementById('alleen-aanwezig').addEventListener('change', function () { SchermAvond.renderAanwezigheid(); });
 
     document.getElementById('start-avond').addEventListener('click', function () {
-      const aanwezigen = SchermAvond.geselecteerdeIds();
-      const banen = Number(document.getElementById('aantal-banen').value) || 0;
+      const aanwezigen = Object.keys(SchermAvond.selectie).filter(function (id) { return App.spelerOp(id); });
       if (aanwezigen.length < 4) {
-        App.waarschuw('Er zijn minstens vier aanwezige spelers nodig.');
-        return;
-      }
-      if (banen < 1) {
-        App.waarschuw('Er is minstens één baan nodig.');
+        App.waarschuw(T.min_vier);
         return;
       }
       App.waarschuw('');
-      App.avond = { aanwezigen: aanwezigen, banen: banen, rondes: [], rustcorrectie: {} };
-      App.bewaarAvond();
+      App.wijzigAvond(Sessie.nieuweAvond(aanwezigen, SchermAvond.banen, Sessie.maakSessiecode()));
+      SchermAvond.selectie = {};
+      App.startSessie();
       App.toonScherm('ronde');
     });
 
     document.getElementById('stop-avond').addEventListener('click', function () {
-      if (!window.confirm('Avond afsluiten? De rondes van vanavond worden gewist.')) return;
+      if (!window.confirm(T.afsluiten_vraag)) return;
+      App.stopSessie();
       App.avond = null;
       Opslag.wisAvond();
+      SchermAvond.getekendeCode = null;
       App.waarschuw('');
       App.toonScherm('avond');
     });

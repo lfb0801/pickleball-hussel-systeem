@@ -2,33 +2,87 @@
   'use strict';
 
   const SchermRonde = {
-    huidigeRonde: function () {
-      if (!App.avond || App.avond.rondes.length === 0) return null;
-      return App.avond.rondes[App.avond.rondes.length - 1];
-    },
-
-    naam: function (id) {
-      const speler = App.spelerOp(id);
-      return speler ? speler.naam : 'onbekend';
-    },
+    // De eerste aangetikte naam bij handmatig wisselen. Blijft bewaard als
+    // het scherm opnieuw tekent door een bericht van een telefoon.
+    gekozen: null,
+    getekendeCode: null,
 
     render: function () {
       if (!App.avond) {
-        App.waarschuw('Start eerst een avond.');
+        App.waarschuw(T.start_eerst_avond);
         App.toonScherm('avond');
         return;
       }
-      if (App.avond.rondes.length === 0) this.genereer(false);
+      if (!App.avond.concept && App.avond.rondes.length === 0) this.genereer();
 
-      const ronde = this.huidigeRonde();
-      document.getElementById('ronde-nummer').textContent = ronde ? String(App.avond.rondes.length) : '';
-      this.renderBanen(ronde);
-      this.renderRustend(ronde);
+      const avond = App.avond;
+      const concept = avond.concept;
+      const ronde = concept || (avond.rondes.length ? avond.rondes[avond.rondes.length - 1] : null);
+      if (this.gekozen && (!concept || App.spelerOp(this.gekozen) === null)) this.gekozen = null;
+
+      document.getElementById('ronde-nummer').textContent = String(concept ? avond.rondes.length + 1 : avond.rondes.length);
+
+      const status = document.getElementById('ronde-status');
+      status.hidden = !ronde;
+      status.className = 'pil ' + (concept ? 'pil-concept' : 'pil-bezig');
+      status.textContent = concept ? T.concept : T.bezig;
+
+      document.getElementById('ronde-banen').textContent = String(avond.banen);
+      document.getElementById('opnieuw-loten').hidden = !concept;
+      const start = document.getElementById('start-ronde');
+      start.hidden = !concept;
+      start.textContent = T.start_ronde(avond.rondes.length + 1);
+      document.getElementById('volgende-ronde').hidden = Boolean(concept);
+
+      document.getElementById('concept-uitleg').textContent = concept
+        ? (this.gekozen ? T.gekozen_wissel(App.naam(this.gekozen)) : T.concept_uitleg)
+        : '';
+
+      document.getElementById('banen').classList.toggle('concept', Boolean(concept));
+      this.renderVerouderd(concept ? avond.verouderd : {});
+      this.renderBanen(ronde, Boolean(concept));
+      this.renderRustend(ronde, Boolean(concept));
+      this.renderAansluiten();
     },
 
-    renderBanen: function (ronde) {
-      const houder = document.getElementById('banen');
+    naamkaartje: function (id, opties) {
       const scherm = this;
+      const element = document.createElement(opties.wisselbaar ? 'button' : 'span');
+      element.className = 'naamkaartje';
+      if (opties.lener) element.classList.add('lener');
+      if (opties.wisselbaar) {
+        element.type = 'button';
+        if (this.gekozen === id) element.classList.add('gekozen');
+        if (App.avond.verouderd[id]) element.classList.add('badge');
+        element.addEventListener('click', function () { scherm.kies(id); });
+      }
+      element.textContent = App.naam(id);
+      if (opties.lener) element.title = T.lener;
+      return element;
+    },
+
+    renderVerouderd: function (verouderd) {
+      const kader = document.getElementById('verouderd');
+      const ids = Object.keys(verouderd);
+      kader.hidden = ids.length === 0;
+      kader.textContent = '';
+      if (ids.length === 0) return;
+      const titel = document.createElement('h3');
+      titel.textContent = T.verouderd_titel;
+      kader.appendChild(titel);
+      const regel = document.createElement('p');
+      regel.textContent = ids.map(function (id) {
+        return App.naam(id) + ' ' + T.verouderd_reden[verouderd[id]];
+      }).join(' · ');
+      kader.appendChild(regel);
+      const advies = document.createElement('p');
+      advies.className = 'uitleg';
+      advies.textContent = T.verouderd_advies;
+      kader.appendChild(advies);
+    },
+
+    renderBanen: function (ronde, wisselbaar) {
+      const houder = document.getElementById('banen');
       houder.textContent = '';
       if (!ronde) return;
 
@@ -36,70 +90,116 @@
         const kaart = document.createElement('article');
         kaart.className = 'baan';
 
-        const kop = document.createElement('h3');
-        kop.textContent = 'Baan ' + baan.baan;
+        const kop = document.createElement('header');
+        kop.className = 'baan-kop';
+        const nummer = document.createElement('span');
+        nummer.className = 'baan-nummer';
+        nummer.textContent = T.baan + ' ' + baan.baan;
+        const niveau = document.createElement('span');
+        niveau.className = 'baan-niveau';
+        niveau.textContent = baan.groepen.map(function (groep) { return App.club.groepen[groep] || '?'; }).join(' + ');
+        kop.appendChild(nummer);
+        kop.appendChild(niveau);
 
-        const niveau = document.createElement('p');
-        niveau.className = 'niveau';
-        niveau.textContent = baan.groepen.map(function (groep) {
-          return App.club.groepen[groep];
-        }).join(' + ');
-
-        const teamA = document.createElement('p');
-        teamA.className = 'team';
-        teamA.textContent = baan.teamA.map(function (id) { return scherm.naam(id); }).join(' & ');
-
-        const tegen = document.createElement('p');
-        tegen.className = 'tegen';
-        tegen.textContent = 'tegen';
-
-        const teamB = document.createElement('p');
-        teamB.className = 'team';
-        teamB.textContent = baan.teamB.map(function (id) { return scherm.naam(id); }).join(' & ');
+        const veld = document.createElement('div');
+        veld.className = 'veld';
+        veld.setAttribute('aria-label', T.tegen);
+        const helften = [['links', baan.teamA], ['rechts', baan.teamB]];
+        for (const [kant, team] of helften) {
+          const helft = document.createElement('div');
+          helft.className = 'helft ' + kant;
+          for (const id of team) {
+            helft.appendChild(this.naamkaartje(id, {
+              wisselbaar: wisselbaar,
+              lener: baan.leners.indexOf(id) !== -1,
+            }));
+          }
+          veld.appendChild(helft);
+        }
 
         kaart.appendChild(kop);
-        kaart.appendChild(niveau);
-        kaart.appendChild(teamA);
-        kaart.appendChild(tegen);
-        kaart.appendChild(teamB);
+        kaart.appendChild(veld);
         houder.appendChild(kaart);
       }
     },
 
-    renderRustend: function (ronde) {
-      const regel = document.getElementById('rustend');
+    renderRustend: function (ronde, wisselbaar) {
+      const balk = document.getElementById('rustbalk');
+      balk.textContent = '';
+      if (!ronde) return;
       const scherm = this;
-      if (!ronde || ronde.rustend.length === 0) {
-        regel.textContent = 'Deze ronde rust niemand.';
-        return;
+
+      function regel(label, ids, klasse, kanWisselen) {
+        const rij = document.createElement('div');
+        rij.className = 'rustregel ' + klasse;
+        const kop = document.createElement('span');
+        kop.className = 'label';
+        kop.textContent = label;
+        rij.appendChild(kop);
+        for (const id of ids) rij.appendChild(scherm.naamkaartje(id, { wisselbaar: kanWisselen }));
+        balk.appendChild(rij);
       }
-      regel.textContent = 'Rust deze ronde: ' + ronde.rustend.map(function (id) {
-        return scherm.naam(id);
-      }).join(', ');
+
+      if (ronde.rustend.length) regel(T.rust, ronde.rustend, '', wisselbaar);
+      if ((ronde.gepauzeerd || []).length) regel(T.pauzeert, ronde.gepauzeerd, 'pauze', false);
+      if (!ronde.rustend.length && !(ronde.gepauzeerd || []).length) {
+        const leeg = document.createElement('p');
+        leeg.className = 'uitleg';
+        leeg.textContent = T.niemand_rust;
+        balk.appendChild(leeg);
+      }
     },
 
-    // vervangHuidige: true laat de zichtbare ronde opnieuw loten in plaats
-    // van er een volgende achter te zetten.
-    genereer: function (vervangHuidige) {
-      const aanwezigen = App.aanwezigeSpelers();
-      if (aanwezigen.length < 4) {
-        App.waarschuw('Er zijn minstens vier aanwezige spelers nodig.');
+    renderAansluiten: function () {
+      const kaart = document.getElementById('ronde-zij');
+      kaart.hidden = !App.avond;
+      if (!App.avond) return;
+      const link = App.aansluitLink();
+      document.getElementById('code-klein').textContent = App.avond.sessiecode;
+      if (this.getekendeCode !== link) {
+        App.tekenQr(document.getElementById('qr-klein'), link);
+        this.getekendeCode = link;
+      }
+    },
+
+    kies: function (id) {
+      if (!App.avond.concept) return;
+      if (this.gekozen === null) {
+        this.gekozen = id;
+      } else if (this.gekozen === id) {
+        this.gekozen = null;
+      } else {
+        App.wijzigAvond(Sessie.wissel(App.avond, App.club, this.gekozen, id));
+        this.gekozen = null;
+      }
+      this.render();
+    },
+
+    genereer: function () {
+      const uitkomst = Sessie.maakConcept(App.avond, App.club, { gewichten: App.gewichten() });
+      if (uitkomst.fout) {
+        App.waarschuw(App.avond.aanwezigen.length < 4 ? T.min_vier : T.geen_ronde_mogelijk);
         return;
       }
-      const historie = vervangHuidige ? App.avond.rondes.slice(0, -1) : App.avond.rondes;
-      const ronde = Hussel.genereerRonde({
-        aanwezigen: aanwezigen,
-        banen: App.avond.banen,
-        historie: historie,
-        rustcorrectie: App.avond.rustcorrectie,
-      });
-      if (!ronde) {
-        App.waarschuw('Met dit aantal spelers en banen is er geen volledige baan te vullen.');
-        return;
-      }
-      App.avond.rondes = historie.concat([ronde]);
-      App.bewaarAvond();
+      this.gekozen = null;
       App.waarschuw('');
+      App.wijzigAvond(uitkomst.avond);
+    },
+
+    // Met een open concept wordt meteen opnieuw geloot: een concept met het
+    // verkeerde aantal banen heeft geen zin.
+    wijzigBanen: function (stap) {
+      const nieuw = Sessie.zetBanen(App.avond, App.avond.banen + stap);
+      if (nieuw.banen === App.avond.banen) return;
+      App.wijzigAvond(nieuw);
+      const concept = Boolean(App.avond.concept);
+      if (concept) this.genereer();
+      App.meld(T.banen_gewijzigd(nieuw.banen, concept));
+    },
+
+    publiceer: function () {
+      this.gekozen = null;
+      App.wijzigAvond(Sessie.publiceer(App.avond));
     },
   };
 
@@ -107,19 +207,27 @@
 
   window.addEventListener('DOMContentLoaded', function () {
     document.getElementById('volgende-ronde').addEventListener('click', function () {
-      SchermRonde.genereer(false);
+      SchermRonde.genereer();
       SchermRonde.render();
     });
-    document.getElementById('opnieuw-genereren').addEventListener('click', function () {
-      SchermRonde.genereer(true);
+    document.getElementById('opnieuw-loten').addEventListener('click', function () {
+      SchermRonde.genereer();
+      SchermRonde.render();
+    });
+    document.getElementById('start-ronde').addEventListener('click', function () {
+      SchermRonde.publiceer();
+      SchermRonde.render();
+    });
+    document.getElementById('ronde-banen-min').addEventListener('click', function () {
+      SchermRonde.wijzigBanen(-1);
+      SchermRonde.render();
+    });
+    document.getElementById('ronde-banen-plus').addEventListener('click', function () {
+      SchermRonde.wijzigBanen(1);
       SchermRonde.render();
     });
     document.getElementById('naar-avond').addEventListener('click', function () {
       App.toonScherm('avond');
-    });
-    document.getElementById('naar-afsluiten').addEventListener('click', function () {
-      App.toonScherm('avond');
-      document.getElementById('stop-avond').scrollIntoView({ block: 'center' });
     });
   });
 })();

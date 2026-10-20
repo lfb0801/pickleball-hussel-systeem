@@ -9,20 +9,32 @@
       lichaam.textContent = '';
 
       if (!App.avond) {
-        melding.textContent = 'Er loopt geen avond.';
-        tabel.hidden = true;
+        melding.textContent = T.geen_avond;
+        tabel.parentElement.hidden = true;
         return;
       }
 
-      melding.textContent = App.avond.rondes.length + ' gespeelde rondes.';
-      tabel.hidden = false;
+      melding.textContent = T.rondes_gespeeld(App.avond.rondes.length);
+      tabel.parentElement.hidden = false;
 
-      const regels = Hussel.maakOverzicht(App.avond.rondes, App.avond.aanwezigen).map(function (regel) {
+      // Ook wie vertrokken is maar al rondes speelde, blijft in de tabel.
+      const ids = App.avond.aanwezigen.slice();
+      for (const ronde of App.avond.rondes) {
+        for (const baan of ronde.banen) {
+          for (const id of baan.teamA.concat(baan.teamB)) {
+            if (ids.indexOf(id) === -1) ids.push(id);
+          }
+        }
+      }
+
+      const regels = Hussel.maakOverzicht(App.avond.rondes, ids).map(function (regel) {
         const speler = App.spelerOp(regel.id);
         return {
-          naam: speler ? speler.naam : 'onbekend',
+          naam: speler ? speler.naam : '?',
+          groep: speler ? App.club.groepen[speler.groep] : '',
           gespeeld: regel.gespeeld,
           gerust: regel.gerust,
+          gepauzeerd: regel.gepauzeerd,
         };
       });
 
@@ -33,9 +45,17 @@
 
       for (const regel of regels) {
         const rij = document.createElement('tr');
-        for (const waarde of [regel.naam, String(regel.gespeeld), String(regel.gerust)]) {
+        const cellen = [
+          [regel.naam, ''],
+          [regel.groep, ''],
+          [String(regel.gespeeld), 'getal'],
+          [String(regel.gerust), 'getal'],
+          [String(regel.gepauzeerd), 'getal'],
+        ];
+        for (const [waarde, klasse] of cellen) {
           const cel = document.createElement('td');
           cel.textContent = waarde;
+          cel.className = klasse;
           rij.appendChild(cel);
         }
         lichaam.appendChild(rij);

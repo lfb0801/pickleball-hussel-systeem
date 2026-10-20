@@ -3,87 +3,183 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pickleball hussel systeem</title>
+<title>Hussel — Pickleball Den Bosch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@700;900&display=swap">
+<link rel="stylesheet" href="thema.css">
 <link rel="stylesheet" href="stijl.css">
 </head>
 <body>
-<header>
-  <h1>Hussel</h1>
+<header class="balk">
+  <div class="merk">
+    <span class="bal" aria-hidden="true"></span>
+    <span class="merk-tekst"><strong data-t="app"></strong><small data-t="club"></small></span>
+  </div>
   <nav>
-    <button type="button" data-scherm="spelers">Spelers</button>
-    <button type="button" data-scherm="avond">Avond</button>
-    <button type="button" data-scherm="ronde">Ronde</button>
-    <button type="button" data-scherm="overzicht">Overzicht</button>
+    <button type="button" data-scherm="spelers" data-t="nav_spelers"></button>
+    <button type="button" data-scherm="avond" data-t="nav_avond"></button>
+    <button type="button" data-scherm="ronde" data-t="nav_ronde"></button>
+    <button type="button" data-scherm="overzicht" data-t="nav_overzicht"></button>
   </nav>
+  <div class="balk-rechts">
+    <span id="telefoon-status" class="pil pil-donker" hidden></span>
+    <button type="button" id="volledig-scherm" class="knop-icoon" data-t-title="volledig_scherm" aria-label="Volledig scherm">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+  </div>
 </header>
-<p id="waarschuwing" hidden></p>
+<p id="melding" hidden></p>
+
 <main>
   <section id="scherm-spelers" hidden>
-    <h2>Spelers en groepen</h2>
+    <div class="kolommen">
+      <div class="kaart smal">
+        <h2 data-t="groepen_titel"></h2>
+        <p class="uitleg" data-t="groepen_uitleg"></p>
+        <ol id="groepen-lijst" class="groepen"></ol>
+        <form id="groep-toevoegen" class="regel">
+          <input type="text" id="groep-naam" data-t-placeholder="groep_naam" required>
+          <button type="submit" class="knop" data-t="groep_toevoegen"></button>
+        </form>
+      </div>
 
-    <h3>Groepen, van sterk naar zwak</h3>
-    <ol id="groepen-lijst"></ol>
-    <form id="groep-toevoegen">
-      <input type="text" id="groep-naam" placeholder="Naam van de groep" required>
-      <button type="submit">Groep toevoegen</button>
-    </form>
+      <div class="kaart breed">
+        <div class="kaart-kop">
+          <h2 data-t="spelerslijst_titel"></h2>
+          <span id="spelers-aantal" class="pil"></span>
+          <input type="search" id="spelers-zoek" class="zoek" data-t-placeholder="zoeken">
+        </div>
+        <form id="speler-toevoegen" class="regel">
+          <input type="text" id="nieuwe-speler-naam" data-t-placeholder="speler_naam" required>
+          <select id="nieuwe-speler-groep"></select>
+          <button type="submit" class="knop knop-primair" data-t="speler_toevoegen"></button>
+        </form>
+        <div class="tabel-houder">
+          <table id="spelers-tabel">
+            <thead><tr><th data-t="kolom_naam"></th><th data-t="kolom_groep"></th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="spelers-leeg" class="leeg" hidden></p>
 
-    <h3>Spelers</h3>
-    <table id="spelers-tabel">
-      <thead><tr><th>Naam</th><th>Groep</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <form id="speler-toevoegen">
-      <input type="text" id="nieuwe-speler-naam" placeholder="Naam van de speler" required>
-      <select id="nieuwe-speler-groep"></select>
-      <button type="submit">Speler toevoegen</button>
-    </form>
-
-    <h3>Spelers uit een CSV-bestand</h3>
-    <form id="spelers-importeren">
-      <input type="file" id="csv-bestand" accept=".csv,text/csv,text/plain" required>
-      <select id="import-groep"></select>
-      <button type="submit">CSV inlezen</button>
-    </form>
-    <p class="uitleg">Eén naam per regel. Staat er meer op een regel, dan telt de eerste kolom als naam.</p>
+        <h3 data-t="import_titel"></h3>
+        <form id="spelers-importeren" class="regel">
+          <input type="file" id="csv-bestand" accept=".csv,text/csv,text/plain" required>
+          <select id="import-groep"></select>
+          <button type="submit" class="knop" data-t="import_knop"></button>
+        </form>
+        <p class="uitleg" data-t="import_uitleg"></p>
+      </div>
+    </div>
   </section>
 
   <section id="scherm-avond" hidden>
-    <h2>Avond</h2>
-    <p>
-      <label>Aantal banen <input type="number" id="aantal-banen" min="1" max="20" value="4"></label>
-    </p>
-    <p id="avond-teller"></p>
-    <ul id="aanwezigheid-lijst"></ul>
-    <p>
-      <button type="button" id="start-avond">Avond starten</button>
-      <button type="button" id="stop-avond">Avond afsluiten</button>
-    </p>
+    <div class="kolommen">
+      <div class="kaart breed">
+        <div class="kaart-kop">
+          <h2 data-t="aanwezig_titel"></h2>
+          <input type="search" id="avond-zoek" class="zoek" data-t-placeholder="zoeken">
+          <label class="schakel-label"><input type="checkbox" id="alleen-aanwezig"> <span data-t="alleen_aanwezig"></span></label>
+        </div>
+        <p class="uitleg" data-t="aanwezig_uitleg"></p>
+        <div id="aanwezigheid"></div>
+      </div>
+
+      <aside class="zijkolom">
+        <div class="kaart gasten-kaart" id="gasten-kaart" hidden>
+          <h2 data-t="gasten_titel"></h2>
+          <ul id="gasten-lijst" class="gasten"></ul>
+        </div>
+
+        <div class="kaart">
+          <h2 id="avond-kop"></h2>
+          <div class="banen-keuze">
+            <span data-t="banen"></span>
+            <div class="stapper">
+              <button type="button" id="banen-min" class="knop-rond" aria-label="Minder banen">−</button>
+              <output id="aantal-banen">4</output>
+              <button type="button" id="banen-plus" class="knop-rond" aria-label="Meer banen">+</button>
+            </div>
+          </div>
+          <p id="avond-teller" class="teller"></p>
+          <h3 data-t="preset_titel"></h3>
+          <div id="presets" class="presets"></div>
+          <p class="knoppen">
+            <button type="button" id="start-avond" class="knop knop-primair knop-groot" data-t="avond_starten"></button>
+            <button type="button" id="stop-avond" class="knop knop-gevaar" data-t="avond_afsluiten"></button>
+          </p>
+        </div>
+
+        <div class="kaart aansluiten" id="aansluiten-kaart" hidden>
+          <h2 data-t="aansluiten_titel"></h2>
+          <div class="qr" id="qr-groot"></div>
+          <p class="sessiecode"><span data-t="sessiecode"></span> <strong id="code-groot"></strong></p>
+          <p class="uitleg" data-t="aansluiten_uitleg"></p>
+          <p class="link"><a id="aansluit-link" target="_blank" rel="noopener"></a></p>
+          <p id="lokaal-waarschuwing" class="uitleg waarschuwing-tekst" hidden data-t="lokaal_bestand"></p>
+          <p id="verbinding-tekst" class="uitleg"></p>
+        </div>
+      </aside>
+    </div>
   </section>
 
   <section id="scherm-ronde" hidden>
-    <h2>Ronde <span id="ronde-nummer"></span></h2>
-    <div id="banen"></div>
-    <p id="rustend"></p>
-    <p>
-      <button type="button" id="volgende-ronde">Volgende ronde</button>
-      <button type="button" id="opnieuw-genereren">Opnieuw genereren</button>
-      <button type="button" id="naar-avond">Spelers aanpassen</button>
-      <button type="button" id="naar-afsluiten">Avond afsluiten</button>
-    </p>
+    <div class="ronde-kop">
+      <h1><span data-t="ronde_titel"></span> <span id="ronde-nummer"></span></h1>
+      <span id="ronde-status" class="pil"></span>
+      <div class="banen-keuze ronde-banen">
+        <span data-t="banen"></span>
+        <div class="stapper">
+          <button type="button" id="ronde-banen-min" class="knop-rond" aria-label="Minder banen">−</button>
+          <output id="ronde-banen">4</output>
+          <button type="button" id="ronde-banen-plus" class="knop-rond" aria-label="Meer banen">+</button>
+        </div>
+      </div>
+      <div class="acties">
+        <button type="button" id="opnieuw-loten" class="knop" data-t="opnieuw_loten"></button>
+        <button type="button" id="start-ronde" class="knop knop-primair knop-groot"></button>
+        <button type="button" id="volgende-ronde" class="knop knop-primair knop-groot" data-t="volgende_voorbereiden"></button>
+        <button type="button" id="naar-avond" class="knop" data-t="spelers_aanpassen"></button>
+      </div>
+    </div>
+    <p id="concept-uitleg" class="uitleg"></p>
+    <div id="verouderd" class="kaart verouderd" hidden></div>
+    <div class="ronde-lijf">
+      <div id="banen" class="banen"></div>
+      <aside id="ronde-zij" class="kaart aansluiten mini" hidden>
+        <div class="qr" id="qr-klein"></div>
+        <p class="sessiecode"><strong id="code-klein"></strong></p>
+        <p class="uitleg" data-t="aansluiten_kort"></p>
+      </aside>
+    </div>
+    <div id="rustbalk" class="rustbalk"></div>
   </section>
 
   <section id="scherm-overzicht" hidden>
-    <h2>Overzicht</h2>
-    <p id="overzicht-melding"></p>
-    <table id="overzicht-tabel">
-      <thead><tr><th>Speler</th><th>Gespeeld</th><th>Gerust</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div class="kaart">
+      <h2 data-t="overzicht_titel"></h2>
+      <p id="overzicht-melding"></p>
+      <div class="tabel-houder">
+        <table id="overzicht-tabel">
+          <thead><tr>
+            <th data-t="kolom_speler"></th><th data-t="kolom_groep"></th>
+            <th class="getal" data-t="kolom_gespeeld"></th><th class="getal" data-t="kolom_gerust"></th><th class="getal" data-t="kolom_gepauzeerd"></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 </main>
+<script src="teksten.js"></script>
 <script src="papaparse.min.js"></script>
+<script src="peerjs.min.js"></script>
+<script src="qrcode.js"></script>
 <script src="hussel.js"></script>
+<script src="presets.js"></script>
+<script src="sessie.js"></script>
+<script src="verbinding.js"></script>
 <script src="opslag.js"></script>
 <script src="csv.js"></script>
 <script src="scherm-spelers.js"></script>

@@ -4,16 +4,30 @@
   const STANDAARD_GROEPEN = ['Gevorderd', 'Midden', 'Beginner'];
 
   const App = {
-    club: { groepen: STANDAARD_GROEPEN.slice(), spelers: [] },
+    club: { groepen: STANDAARD_GROEPEN.slice(), spelers: [], preset: Presets.STANDAARD },
     avond: null,
+    huidigScherm: null,
+    verbinding: null,
+    verbindingStatus: '',
+    verbondenTelefoons: [],
+    wekslot: null,
+    meldingTimer: null,
 
     bewaarClub: function () {
       Opslag.bewaarClub(this.club);
     },
 
+    // Elke wijziging aan de avond gaat hierlangs, zodat telefoons altijd
+    // dezelfde toestand zien als de laptop.
     bewaarAvond: function () {
       if (this.avond) Opslag.bewaarAvond(this.avond);
       else Opslag.wisAvond();
+      this.zendToestand();
+    },
+
+    wijzigAvond: function (nieuweAvond) {
+      this.avond = nieuweAvond;
+      this.bewaarAvond();
     },
 
     spelerOp: function (id) {
@@ -23,53 +37,220 @@
       return null;
     },
 
-    aanwezigeSpelers: function () {
-      if (!this.avond) return [];
-      const spelers = [];
-      for (const id of this.avond.aanwezigen) {
-        const speler = this.spelerOp(id);
-        if (speler) spelers.push(speler);
-      }
-      return spelers;
+    naam: function (id) {
+      const speler = this.spelerOp(id);
+      return speler ? speler.naam : '?';
+    },
+
+    gewichten: function () {
+      return Presets.gewichten(this.club.preset);
     },
 
     toonScherm: function (naam) {
+      this.huidigScherm = naam;
       for (const sectie of document.querySelectorAll('main > section')) {
         sectie.hidden = sectie.id !== 'scherm-' + naam;
       }
       for (const knop of document.querySelectorAll('nav button')) {
         knop.classList.toggle('actief', knop.dataset.scherm === naam);
       }
+      this.renderHuidig();
+    },
+
+    renderHuidig: function () {
       const schermen = {
         spelers: window.SchermSpelers,
         avond: window.SchermAvond,
         ronde: window.SchermRonde,
         overzicht: window.SchermOverzicht,
       };
-      const scherm = schermen[naam];
+      const scherm = schermen[this.huidigScherm];
       if (scherm && scherm.render) scherm.render();
+      this.renderTelefoonStatus();
     },
 
-    waarschuw: function (tekst) {
-      const balk = document.getElementById('waarschuwing');
-      balk.textContent = tekst;
+    // Een melding die blijft staan tot de volgende, of na een paar seconden
+    // verdwijnt als blijvend false is.
+    waarschuw: function (tekst, blijvend) {
+      const balk = document.getElementById('melding');
+      clearTimeout(this.meldingTimer);
+      balk.textContent = tekst || '';
       balk.hidden = !tekst;
+      if (tekst && blijvend === false) {
+        this.meldingTimer = setTimeout(function () { balk.hidden = true; }, 6000);
+      }
+    },
+
+    meld: function (tekst) {
+      this.waarschuw(tekst, false);
     },
 
     nieuwId: function () {
       return 's' + Date.now().toString(36) + Math.floor(Math.random() * 1000000).toString(36);
     },
 
+    vulTeksten: function (wortel) {
+      for (const element of wortel.querySelectorAll('[data-t]')) {
+        element.textContent = T[element.dataset.t];
+      }
+      for (const element of wortel.querySelectorAll('[data-t-placeholder]')) {
+        element.placeholder = T[element.dataset.tPlaceholder];
+      }
+      for (const element of wortel.querySelectorAll('[data-t-title]')) {
+        element.title = T[element.dataset.tTitle];
+      }
+    },
+
+    // ---- Live sessie met telefoons ----
+
+    aansluitLink: function () {
+      if (!this.avond) return '';
+      return new URL('speler.html?sessie=' + this.avond.sessiecode, location.href).href;
+    },
+
+    isLokaal: function () {
+      return location.protocol === 'file:';
+    },
+
+    tekenQr: function (houder, tekst) {
+      houder.textContent = '';
+      if (typeof qrcode !== 'function' || !tekst) return;
+      const qr = qrcode(0, 'M');
+      qr.addData(tekst);
+      qr.make();
+      houder.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+    },
+
+    startSessie: function () {
+      if (!this.avond || this.verbinding) return;
+      const app = this;
+      this.verbinding = Verbinding.gastheer(this.avond.sessiecode, {
+        bijBericht: function (telefoon, bericht) { app.verwerkTelefoon(telefoon, bericht); },
+        bijStatus: function (status) {
+          app.verbindingStatus = status;
+          app.renderTelefoonStatus();
+          if (app.huidigScherm === 'avond') SchermAvond.renderVerbinding();
+        },
+        bijTelefoons: function (lijst) {
+          app.verbondenTelefoons = lijst;
+          app.renderHuidig();
+        },
+      });
+      this.houdSchermAan();
+    },
+
+    stopSessie: function () {
+      if (!this.verbinding) return;
+      const verbinding = this.verbinding;
+      verbinding.zendAlle(function () { return { type: 'toestand', avondLoopt: false }; });
+      this.verbinding = null;
+      this.verbondenTelefoons = [];
+      this.verbindingStatus = '';
+      setTimeout(function () { verbinding.stop(); }, 800);
+      this.laatSchermLos();
+      this.renderTelefoonStatus();
+    },
+
+    zendToestand: function () {
+      if (!this.verbinding) return;
+      const app = this;
+      this.verbinding.zendAlle(function (telefoon) {
+        return Sessie.toestandVoor(app.avond, app.club, telefoon);
+      });
+    },
+
+    verwerkTelefoon: function (telefoon, bericht) {
+      if (!this.avond) {
+        this.verbinding.zend(telefoon, { type: 'toestand', avondLoopt: false });
+        return;
+      }
+      const verzoek = Object.assign({}, bericht, { telefoon: telefoon });
+      const uitkomst = Sessie.pasVerzoekToe(this.avond, this.club, verzoek);
+      const voor = JSON.stringify(this.avond);
+      this.avond = uitkomst.avond;
+      if (uitkomst.antwoord) {
+        this.verbinding.zend(telefoon, { type: 'antwoord', fout: uitkomst.antwoord.fout });
+      }
+      if (JSON.stringify(this.avond) !== voor) {
+        this.bewaarAvond();
+        this.meldVerzoek(verzoek);
+        this.renderHuidig();
+      } else {
+        this.verbinding.zend(telefoon, Sessie.toestandVoor(this.avond, this.club, telefoon));
+      }
+    },
+
+    meldVerzoek: function (verzoek) {
+      const id = this.avond.koppelingen[verzoek.telefoon];
+      const naam = id ? this.naam(id) : '';
+      if (verzoek.type === 'vertrek') this.meld(T.doet_niet_meer_mee(naam));
+      else if (verzoek.type === 'aanmelden') this.meld(T.doet_mee(naam));
+      else if (verzoek.type === 'gast') this.meld(T.gasten_titel + ': ' + String(verzoek.naam).trim());
+    },
+
+    ontkoppel: function (spelerId) {
+      const uitkomst = Sessie.ontkoppel(this.avond, spelerId);
+      this.avond = uitkomst.avond;
+      if (uitkomst.telefoon && this.verbinding) {
+        this.verbinding.zend(uitkomst.telefoon, { type: 'ontkoppeld' });
+      }
+      this.bewaarAvond();
+      this.meld(T.ontkoppeld_melding(this.naam(spelerId)));
+    },
+
+    // Per speler: 'aan' als een telefoon verbonden is, 'gekoppeld' als er
+    // een telefoon bij hoort die nu niet verbonden is, anders null.
+    telefoonVan: function (spelerId) {
+      if (!this.avond) return null;
+      const telefoon = Sessie.telefoonVan(this.avond, spelerId);
+      if (!telefoon) return null;
+      return this.verbondenTelefoons.indexOf(telefoon) !== -1 ? 'aan' : 'gekoppeld';
+    },
+
+    renderTelefoonStatus: function () {
+      const pil = document.getElementById('telefoon-status');
+      if (!this.avond || !this.verbinding) {
+        pil.hidden = true;
+        return;
+      }
+      pil.hidden = false;
+      const online = this.verbindingStatus === 'online';
+      pil.innerHTML = '';
+      const stip = document.createElement('span');
+      stip.className = 'stip ' + (online ? 'aan' : 'uit');
+      pil.appendChild(stip);
+      pil.appendChild(document.createTextNode(online
+        ? T.verbonden_aantal(this.verbondenTelefoons.length)
+        : (T.verbinding_status[this.verbindingStatus] || '').split(' — ')[0]));
+    },
+
+    // Het scherm in de zaal mag tijdens een avond niet op slot gaan.
+    houdSchermAan: function () {
+      const app = this;
+      if (!('wakeLock' in navigator) || this.wekslot) return;
+      navigator.wakeLock.request('screen').then(function (slot) {
+        app.wekslot = slot;
+        slot.addEventListener('release', function () { app.wekslot = null; });
+      }).catch(function () {});
+    },
+
+    laatSchermLos: function () {
+      if (this.wekslot) this.wekslot.release();
+      this.wekslot = null;
+    },
+
     start: function () {
       const bewaardeClub = Opslag.laadClub();
       if (bewaardeClub && bewaardeClub.groepen && bewaardeClub.spelers) {
         this.club = bewaardeClub;
+        if (!this.club.preset) this.club.preset = Presets.STANDAARD;
       }
-      this.avond = Opslag.laadAvond();
+      const bewaardeAvond = Opslag.laadAvond();
+      this.avond = bewaardeAvond ? Sessie.vulAan(bewaardeAvond) : null;
 
-      if (!Opslag.beschikbaar()) {
-        this.waarschuw('De browser bewaart niets. De avond werkt door, maar gaat verloren als je de pagina sluit.');
-      }
+      this.vulTeksten(document);
+
+      if (!Opslag.beschikbaar()) this.waarschuw(T.opslag_weg);
 
       for (const knop of document.querySelectorAll('nav button')) {
         knop.addEventListener('click', function () {
@@ -77,7 +258,21 @@
         });
       }
 
-      this.toonScherm(this.avond && this.avond.rondes.length ? 'ronde' : 'spelers');
+      document.getElementById('volledig-scherm').addEventListener('click', function () {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+      });
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && App.avond) App.houdSchermAan();
+      });
+
+      if (this.avond) this.startSessie();
+
+      let scherm = 'spelers';
+      if (this.avond) scherm = 'ronde';
+      else if (this.club.spelers.length) scherm = 'avond';
+      this.toonScherm(scherm);
     },
   };
 

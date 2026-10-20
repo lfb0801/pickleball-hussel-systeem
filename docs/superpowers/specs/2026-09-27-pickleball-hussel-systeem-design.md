@@ -139,7 +139,7 @@ De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spe
 
 - *Wachtruimte.* Zolang er nog geen eerste ronde is, toont het scherm een grote QR-code met de sessiecode en, per niveau, wie er al binnen is. Nieuwe namen lichten even op. Een teller meldt hoeveel spelers er nog nodig zijn; de knop *Eerste ronde voorbereiden* werkt vanaf vier beschikbare spelers. Er wordt niets vanzelf geloot, zodat de organisator wacht tot iedereen binnen is.
 
-- *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Komt er tijdens het concept een pauze, vertrek of aanmelding binnen, dan krijgt de betrokken speler een badge en meldt het scherm dat opnieuw genereren nodig is.
+- *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Wie zich aanmeldt terwijl het concept openstaat, moet de volgende ronde meteen mee kunnen doen: het concept wordt dan vanzelf opnieuw geloot, met de nieuwkomer erin. Dat gebeurt niet als de organisator al met de hand in het concept gewisseld heeft; dan blijft het staan, krijgt de nieuwkomer een badge en meldt het scherm dat opnieuw loten nodig is. Een pauze of vertrek tijdens het concept geeft altijd die badge en melding.
 - *Gepubliceerd.* Met *Start ronde* wordt het concept de lopende ronde. Telefoons krijgen de indeling en een melding, precies één keer per ronde.
 
 Naast de rondetitel staat het aantal banen, met een min- en plusknop. Het aantal banen is tussen rondes aan te passen: de lopende ronde blijft staan en de wijziging geldt vanaf de volgende loting. Staat er een concept open, dan wordt dat meteen opnieuw geloot met het nieuwe aantal; handmatige wissels in dat concept vervallen dan. Op het avondscherm werkt de baanteller tijdens de avond op dezelfde manier.
@@ -219,7 +219,8 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 | Nieuwe speler kiest een naam die al bestaat | Geweigerd, met de vraag de naam in de lijst aan te tikken of de achternaam toe te voegen. |
 | Iemand meldt een verzonnen naam aan | De organisator verwijdert die speler op het spelersscherm. Er is geen bescherming tegen; dat is bewust. |
 | Tweede telefoon kiest een al gekoppelde naam | Geweigerd, met de melding dat die naam al gekoppeld is en dat de organisator kan ontkoppelen. |
-| Pauze, vertrek of aanmelding tijdens het concept | Badge bij de speler en een melding op de laptop dat opnieuw genereren nodig is. |
+| Aanmelding tijdens het concept | Het concept wordt vanzelf opnieuw geloot met de nieuwkomer erin, tenzij er al met de hand in gewisseld is; dan een badge en een melding. |
+| Pauze of vertrek tijdens het concept | Badge bij de speler en een melding op de laptop dat opnieuw genereren nodig is. |
 | Pauze na publiceren | Geldt voor de ronde daarna. |
 | Handmatige wissel brengt de rustverdeling uit balans | Toegestaan. De volgende rondes herstellen de balans via de regel uit stap 2. |
 | Iedereen pauzeert tegelijk, minder dan vier over | Melding, geen ronde gegenereerd. |
@@ -250,6 +251,8 @@ Tegen `sessie.js`:
 - Je eigen naam aantikken meldt je aan; opnieuw verbinden doet dat niet.
 - Een pauze vervalt bij het publiceren van de ronde waarvoor hij gold.
 - Het aantal banen wijzigen laat gespeelde rondes ongemoeid en geldt bij de volgende loting.
+- Een nieuwkomer rust niet in de eerstvolgende ronde.
+- Een aanmelding tijdens een concept vraagt om een nieuw concept, behalve als er met de hand in gewisseld is.
 
 De verbinding zelf (`verbinding.js`) wordt met de hand getest, volgens een vaste lijst: aansluiten via QR, laptop verversen, telefoon op wifi en op mobiele data, Android en iPhone.
 

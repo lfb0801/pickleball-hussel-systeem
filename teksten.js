@@ -76,6 +76,10 @@
     telefoon_gekoppeld: 'Telefoon gekoppeld, nu niet verbonden',
     ontkoppel: 'Ontkoppel',
     ontkoppeld_melding: function (naam) { return 'De telefoon van ' + naam + ' is ontkoppeld.'; },
+    concept_bijgewerkt: function (namen) {
+      return namen.join(', ') + (namen.length === 1 ? ' is' : ' zijn') + ' erbij gekomen. Het concept is opnieuw geloot, zodat '
+        + (namen.length === 1 ? 'die meteen meedoet.' : 'zij meteen meedoen.');
+    },
     nieuw_aangemeld: function (naam, groep) { return naam + ' heeft zich aangemeld (' + groep + ').'; },
     avond_geen_spelers: 'Nog geen spelers. Start de avond: spelers melden zich aan met hun telefoon via de QR-code.',
 
@@ -127,7 +131,7 @@
       'vertrek': 'is vertrokken',
       'aanmelding': 'is erbij gekomen',
     },
-    verouderd_advies: 'Loot opnieuw om dit mee te nemen, of start de ronde zo.',
+    verouderd_advies: 'Je hebt in dit concept met de hand gewisseld, dus het is niet vanzelf opnieuw geloot. Loot opnieuw om dit mee te nemen, of start de ronde zo.',
     lener: 'speelt een niveau anders',
     banen_gewijzigd: function (n, concept) {
       return n + (n === 1 ? ' baan' : ' banen') + (concept

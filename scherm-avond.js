@@ -192,6 +192,7 @@
       if (aanwezig) {
         App.wijzigAvond(Sessie.meldAan(App.avond, id));
         App.meld(T.doet_mee(App.naam(id)));
+        App.werkConceptBij();
       } else {
         App.wijzigAvond(Sessie.meldAf(App.avond, id));
         App.meld(T.doet_niet_meer_mee(App.naam(id)));

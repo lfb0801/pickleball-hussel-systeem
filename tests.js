@@ -895,3 +895,41 @@ test('sessie: het aantal banen blijft tussen één en twintig', function () {
   assertGelijk(Sessie.zetBanen(avond, 0).banen, 1);
   assertGelijk(Sessie.zetBanen(avond, 25).banen, 20);
 });
+
+test('sessie: wie zich aanmeldt terwijl er een concept openstaat, komt in een vernieuwd concept', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond;
+  assertGelijk(Sessie.moetConceptVernieuwen(avond), false);
+  avond = Sessie.meldAan(avond, 'p9');
+  assertGelijk(Sessie.nieuwkomersBuitenConcept(avond), ['p9']);
+  assertGelijk(Sessie.moetConceptVernieuwen(avond), true);
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(2), pogingen: 5 }).avond;
+  assertGelijk(Sessie.nieuwkomersBuitenConcept(avond), []);
+});
+
+test('sessie: een nieuwkomer speelt de eerstvolgende ronde', function () {
+  const club = maakTestClub(14);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  for (let i = 0; i < 3; i += 1) {
+    avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(i), pogingen: 5 }).avond);
+  }
+  avond = Sessie.meldAan(avond, 'p13');
+  for (let zaad = 0; zaad < 15; zaad += 1) {
+    const concept = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(100 + zaad), pogingen: 5 }).avond.concept;
+    assert(concept.rustend.indexOf('p13') === -1, 'nieuwkomer rust meteen bij zaad ' + zaad);
+  }
+});
+
+test('sessie: een concept met handmatige wissels wordt niet vanzelf vernieuwd', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 9), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond;
+  const opBaan = avond.concept.banen[0].teamA[0];
+  avond = Sessie.wissel(avond, club, opBaan, avond.concept.rustend[0]);
+  avond = Sessie.meldAan(avond, 'p9');
+  assertGelijk(Sessie.moetConceptVernieuwen(avond), false);
+  assertGelijk(avond.verouderd, { p9: 'aanmelding' });
+  avond = Sessie.publiceer(avond);
+  assertGelijk(avond.rondes[0].handmatig, undefined);
+});

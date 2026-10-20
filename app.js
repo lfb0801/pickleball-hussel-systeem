@@ -179,10 +179,23 @@
       if (JSON.stringify(this.avond) !== voorAvond) {
         this.bewaarAvond();
         this.meldVerzoek(verzoek, this.avond.aanwezigen.length - voorAanwezig);
+        this.werkConceptBij();
         this.renderHuidig();
       } else {
         this.verbinding.zend(telefoon, Sessie.toestandVoor(this.avond, this.club, telefoon));
       }
+    },
+
+    // Nieuwkomers horen meteen in de volgende ronde: een open concept wordt
+    // opnieuw geloot, tenzij er al met de hand in gewisseld is.
+    werkConceptBij: function () {
+      if (!this.avond || !Sessie.moetConceptVernieuwen(this.avond)) return;
+      const namen = Sessie.nieuwkomersBuitenConcept(this.avond).map(this.naam.bind(this));
+      const uitkomst = Sessie.maakConcept(this.avond, this.club, { gewichten: this.gewichten() });
+      if (uitkomst.fout) return;
+      if (window.SchermRonde) SchermRonde.gekozen = null;
+      this.wijzigAvond(uitkomst.avond);
+      this.meld(T.concept_bijgewerkt(namen));
     },
 
     meldVerzoek: function (verzoek, erbij) {

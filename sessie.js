@@ -139,7 +139,26 @@
     const nieuw = kopie(avond);
     if (!nieuw.concept) return nieuw;
     nieuw.concept = Hussel.wisselSpelers(nieuw.concept, idA, idB, groepVan(club));
+    nieuw.concept.handmatig = true;
     return nieuw;
+  }
+
+  // Wie zich aanmeldt terwijl er een concept openstaat, moet in de volgende
+  // ronde mee kunnen doen. Het concept wordt dan opnieuw geloot, behalve
+  // als de organisator er al met de hand in gewisseld heeft: dan blijft het
+  // staan en toont de laptop een badge. Geeft de nieuwkomers terug.
+  function nieuwkomersBuitenConcept(avond) {
+    if (!avond.concept) return [];
+    const ingedeeld = {};
+    for (const baan of avond.concept.banen) {
+      for (const id of baan.teamA.concat(baan.teamB)) ingedeeld[id] = true;
+    }
+    for (const id of avond.concept.rustend.concat(avond.concept.gepauzeerd || [])) ingedeeld[id] = true;
+    return avond.aanwezigen.filter(function (id) { return !ingedeeld[id] && !avond.pauzes[id]; });
+  }
+
+  function moetConceptVernieuwen(avond) {
+    return Boolean(avond.concept) && !avond.concept.handmatig && nieuwkomersBuitenConcept(avond).length > 0;
   }
 
   // Een pauze geldt voor de eerstvolgende gepubliceerde ronde waarin hij
@@ -147,6 +166,7 @@
   function publiceer(avond) {
     const nieuw = kopie(avond);
     if (!nieuw.concept) return nieuw;
+    delete nieuw.concept.handmatig;
     nieuw.rondes.push(nieuw.concept);
     for (const id of nieuw.concept.gepauzeerd || []) delete nieuw.pauzes[id];
     nieuw.concept = null;
@@ -336,6 +356,8 @@
     aanwezigeSpelers: aanwezigeSpelers,
     maakConcept: maakConcept,
     wissel: wissel,
+    nieuwkomersBuitenConcept: nieuwkomersBuitenConcept,
+    moetConceptVernieuwen: moetConceptVernieuwen,
     publiceer: publiceer,
     telefoonVan: telefoonVan,
     ontkoppel: ontkoppel,

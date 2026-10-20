@@ -34,8 +34,6 @@
     if (!volledig.pauzes) volledig.pauzes = {};
     if (!volledig.verouderd) volledig.verouderd = {};
     if (!volledig.koppelingen) volledig.koppelingen = {};
-    if (!volledig.gastverzoeken) volledig.gastverzoeken = [];
-    if (!volledig.volgnummer) volledig.volgnummer = 0;
     if (!volledig.sessiecode) volledig.sessiecode = maakSessiecode();
     return volledig;
   }
@@ -182,56 +180,70 @@
     return naam.trim().toLowerCase();
   }
 
-  function keurGastGoed(avond, club, verzoekId, groep, nieuwId) {
-    let verzoek = null;
-    for (const kandidaat of avond.gastverzoeken) {
-      if (kandidaat.id === verzoekId) verzoek = kandidaat;
-    }
-    if (!verzoek) return { avond: avond, club: club };
+  const MAX_NAAMLENGTE = 40;
 
-    const nieuweClub = kopie(club);
-    nieuweClub.spelers.push({ id: nieuwId, naam: verzoek.naam, groep: groep });
-
-    let nieuw = kopie(avond);
-    nieuw.gastverzoeken = nieuw.gastverzoeken.filter(function (v) { return v.id !== verzoekId; });
-    nieuw = meldAan(nieuw, nieuwId);
-    nieuw.koppelingen[verzoek.telefoon] = nieuwId;
-    return { avond: nieuw, club: nieuweClub };
+  function schoneNaam(naam) {
+    return String(naam || '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAAMLENGTE);
   }
 
-  function wijsGastAf(avond, verzoekId) {
-    const nieuw = kopie(avond);
-    nieuw.gastverzoeken = nieuw.gastverzoeken.filter(function (v) { return v.id !== verzoekId; });
-    return nieuw;
+  function naamBestaat(club, naam, behalveId) {
+    for (const speler of club.spelers) {
+      if (speler.id !== behalveId && vergelijkbaar(speler.naam) === vergelijkbaar(naam)) return true;
+    }
+    return false;
+  }
+
+  // Een nieuwe speler meldt zich met de telefoon zelf aan, met naam en
+  // niveau. Hij komt in de spelerslijst, staat meteen op de aanwezigheids-
+  // lijst en is aan die telefoon gekoppeld.
+  function registreer(avond, club, telefoon, naam, groep, nieuwId) {
+    const schoon = schoneNaam(naam);
+    if (!schoon) return { avond: avond, club: club, fout: 'lege-naam' };
+    if (naamBestaat(club, schoon)) return { avond: avond, club: club, fout: 'naam-bestaat' };
+    if (!(Number.isInteger(groep) && groep >= 0 && groep < club.groepen.length)) {
+      return { avond: avond, club: club, fout: 'onbekend-niveau' };
+    }
+    const nieuweClub = kopie(club);
+    nieuweClub.spelers.push({ id: nieuwId, naam: schoon, groep: groep });
+    const nieuw = meldAan(avond, nieuwId);
+    nieuw.koppelingen[telefoon] = nieuwId;
+    return { avond: nieuw, club: nieuweClub, fout: null };
   }
 
   // Verwerkt één bericht van een telefoon. antwoord is null of een foutcode
-  // die alleen aan die telefoon wordt teruggemeld.
-  function pasVerzoekToe(avond, club, verzoek) {
+  // die alleen aan die telefoon wordt teruggemeld. nieuwId is nodig voor een
+  // registratie, zodat deze functie puur blijft.
+  function pasVerzoekToe(avond, club, verzoek, nieuwId) {
     const telefoon = verzoek.telefoon;
     const ik = avond.koppelingen[telefoon] || null;
-    function uitkomst(nieuweAvond, fout) {
-      return { avond: nieuweAvond, club: club, antwoord: fout ? { fout: fout } : null };
+    function uitkomst(nieuweAvond, fout, nieuweClub) {
+      return { avond: nieuweAvond, club: nieuweClub || club, antwoord: fout ? { fout: fout } : null };
     }
 
     switch (verzoek.type) {
       case 'hallo': {
+        // Een bekende telefoon wordt weer gekoppeld, maar niet vanzelf
+        // aangemeld: wie vertrokken is, blijft vertrokken.
         if (ik || !verzoek.speler || !spelerOp(club, verzoek.speler)) return uitkomst(avond, null);
         const poging = koppel(avond, telefoon, verzoek.speler);
         return uitkomst(poging.avond, null);
       }
       case 'claim': {
+        // Je eigen naam aantikken betekent: ik ben er.
         if (!spelerOp(club, verzoek.speler)) return uitkomst(avond, 'onbekend');
         const poging = koppel(avond, telefoon, verzoek.speler);
         if (poging.fout) return uitkomst(avond, poging.fout);
-        const nieuw = poging.avond;
-        nieuw.gastverzoeken = nieuw.gastverzoeken.filter(function (v) { return v.telefoon !== telefoon; });
-        return uitkomst(nieuw, null);
+        return uitkomst(meldAan(poging.avond, verzoek.speler), null);
+      }
+      case 'registreer': {
+        if (!nieuwId) return uitkomst(avond, 'onbekend-verzoek');
+        const poging = registreer(avond, club, telefoon, verzoek.naam, verzoek.groep, nieuwId);
+        if (poging.fout) return uitkomst(avond, poging.fout);
+        return uitkomst(poging.avond, null, poging.club);
       }
       case 'loslaten': {
         const nieuw = kopie(avond);
         delete nieuw.koppelingen[telefoon];
-        nieuw.gastverzoeken = nieuw.gastverzoeken.filter(function (v) { return v.telefoon !== telefoon; });
         return uitkomst(nieuw, null);
       }
       case 'pauze':
@@ -244,19 +256,6 @@
       case 'aanmelden':
         if (!ik) return uitkomst(avond, 'geen-naam');
         return uitkomst(meldAan(avond, ik), null);
-      case 'gast': {
-        const naam = String(verzoek.naam || '').trim();
-        if (!naam) return uitkomst(avond, 'lege-naam');
-        for (const speler of club.spelers) {
-          if (vergelijkbaar(speler.naam) === vergelijkbaar(naam)) return uitkomst(avond, 'naam-bestaat');
-        }
-        const nieuw = kopie(avond);
-        delete nieuw.koppelingen[telefoon];
-        nieuw.gastverzoeken = nieuw.gastverzoeken.filter(function (v) { return v.telefoon !== telefoon; });
-        nieuw.volgnummer += 1;
-        nieuw.gastverzoeken.push({ id: 'v' + nieuw.volgnummer, naam: naam, telefoon: telefoon });
-        return uitkomst(nieuw, null);
-      }
       default:
         return uitkomst(avond, 'onbekend-verzoek');
     }
@@ -295,11 +294,6 @@
     if (!avond) return { type: 'toestand', avondLoopt: false };
 
     const ronde = avond.rondes.length ? avond.rondes[avond.rondes.length - 1] : null;
-    let gastverzoek = null;
-    for (const verzoek of avond.gastverzoeken) {
-      if (verzoek.telefoon === telefoon) gastverzoek = verzoek.naam;
-    }
-
     const spelers = club.spelers
       .map(function (speler) {
         return { id: speler.id, naam: speler.naam, aanwezig: isAanwezig(avond, speler.id) };
@@ -318,7 +312,7 @@
       ikNaam: ik ? naamVan(club, ik) : null,
       aanwezig: ik ? isAanwezig(avond, ik) : false,
       pauzeertVolgende: ik ? Boolean(avond.pauzes[ik]) : false,
-      gastverzoek: gastverzoek,
+      groepen: club.groepen.slice(),
       ronde: ronde ? {
         nummer: avond.rondes.length,
         banen: ronde.banen.map(function (baan) {
@@ -345,8 +339,9 @@
     publiceer: publiceer,
     telefoonVan: telefoonVan,
     ontkoppel: ontkoppel,
-    keurGastGoed: keurGastGoed,
-    wijsGastAf: wijsGastAf,
+    registreer: registreer,
+    schoneNaam: schoneNaam,
+    naamBestaat: naamBestaat,
     pasVerzoekToe: pasVerzoekToe,
     toestandVoor: toestandVoor,
   };

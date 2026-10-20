@@ -556,63 +556,6 @@ test('opslag geeft null bij beschadigde inhoud', function () {
   assertGelijk(maakOpslag(store).laadClub(), null);
 });
 
-test('leesNamen leest één naam per regel', function () {
-  assertGelijk(leesNamen('Anna\nBram\nCarla'), ['Anna', 'Bram', 'Carla']);
-});
-
-test('leesNamen negeert lege regels en spaties eromheen', function () {
-  assertGelijk(leesNamen('  Anna  \n\n\nBram\n   \n'), ['Anna', 'Bram']);
-});
-
-test('leesNamen slaat een kopregel met naam over', function () {
-  assertGelijk(leesNamen('naam\nAnna\nBram'), ['Anna', 'Bram']);
-  assertGelijk(leesNamen('Naam\nAnna'), ['Anna']);
-  assertGelijk(leesNamen('Anna\nBram'), ['Anna', 'Bram'], 'Anna is ten onrechte als kopregel gezien');
-});
-
-test('leesNamen neemt de eerste kolom bij een komma als scheidingsteken', function () {
-  assertGelijk(leesNamen('Anna,Midden\nBram,Gevorderd'), ['Anna', 'Bram']);
-});
-
-test('leesNamen neemt de eerste kolom bij een puntkomma als scheidingsteken', function () {
-  assertGelijk(leesNamen('Anna;Midden\nBram;Gevorderd'), ['Anna', 'Bram']);
-});
-
-test('leesNamen houdt een naam met een komma tussen aanhalingstekens heel', function () {
-  assertGelijk(leesNamen('"Zaalen, Anna van",Midden\nBram,Beginner'), ['Zaalen, Anna van', 'Bram']);
-});
-
-test('leesNamen verwijdert de bytevolgordemarkering van Excel', function () {
-  assertGelijk(leesNamen('﻿Anna\nBram'), ['Anna', 'Bram']);
-});
-
-test('leesNamen verwerkt regeleindes van Windows', function () {
-  assertGelijk(leesNamen('Anna\r\nBram\r\n'), ['Anna', 'Bram']);
-});
-
-test('leesNamen geeft een lege lijst bij een leeg bestand', function () {
-  assertGelijk(leesNamen(''), []);
-  assertGelijk(leesNamen('   \n\n'), []);
-  assertGelijk(leesNamen('naam\n'), []);
-});
-
-test('filterNieuweNamen laat namen weg die al in de lijst staan', function () {
-  const uitkomst = filterNieuweNamen(['Anna', 'Bram', 'Carla'], ['Bram']);
-  assertGelijk(uitkomst.nieuw, ['Anna', 'Carla']);
-  assertGelijk(uitkomst.overgeslagen, ['Bram']);
-});
-
-test('filterNieuweNamen vergelijkt zonder op hoofdletters of spaties te letten', function () {
-  const uitkomst = filterNieuweNamen(['anna', 'BRAM'], ['Anna ', 'bram']);
-  assertGelijk(uitkomst.nieuw, []);
-  assertGelijk(uitkomst.overgeslagen, ['anna', 'BRAM']);
-});
-
-test('filterNieuweNamen houdt een dubbele naam binnen het bestand zelf maar één keer', function () {
-  const uitkomst = filterNieuweNamen(['Anna', 'anna', 'Bram'], []);
-  assertGelijk(uitkomst.nieuw, ['Anna', 'Bram']);
-  assertGelijk(uitkomst.overgeslagen, ['anna']);
-});
 
 function alleIngedeeld(ronde) {
   const ids = [];
@@ -817,8 +760,9 @@ test('sessie: pauze, vertrek en aanmelden via de telefoon geven dezelfde avond a
   const vertrek = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'vertrek' }).avond;
   assertGelijk(vertrek, Sessie.meldAf(avond, 'p1'));
 
-  const aanmelding = Sessie.pasVerzoekToe(avond, club, { telefoon: 't9', type: 'aanmelden' }).avond;
-  assertGelijk(aanmelding, Sessie.meldAan(avond, 'p9'));
+  const weg = Sessie.meldAf(avond, 'p9');
+  const aanmelding = Sessie.pasVerzoekToe(weg, club, { telefoon: 't9', type: 'aanmelden' }).avond;
+  assertGelijk(aanmelding, Sessie.meldAan(weg, 'p9'));
 });
 
 test('sessie: pauze zonder gekoppelde naam wordt geweigerd', function () {
@@ -841,28 +785,53 @@ test('sessie: een laatkomer krijgt het hoogste rustsaldo onder de aanwezigen', f
   assertGelijk(Hussel.aantal(na.rust, 'p9'), hoogste);
 });
 
-test('sessie: een gastverzoek voegt pas iemand toe nadat de organisator een groep kiest', function () {
+test('sessie: een nieuwe speler meldt zich aan met naam en niveau en doet meteen mee', function () {
   const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'gast', naam: ' Gerda ' });
+  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: '  Gerda   de  Vries ', groep: 1 }, 'nieuw1');
+  assertGelijk(uitkomst.antwoord, null);
+  assertGelijk(uitkomst.club.spelers.length, 9);
+  assertGelijk(uitkomst.club.spelers[8], { id: 'nieuw1', naam: 'Gerda de Vries', groep: 1 });
+  assertGelijk(club.spelers.length, 8, 'originele club is gewijzigd');
   avond = uitkomst.avond;
-  assertGelijk(uitkomst.club.spelers.length, 8, 'gast staat al in de club');
-  assertGelijk(avond.gastverzoeken.length, 1);
-  assertGelijk(avond.gastverzoeken[0].naam, 'Gerda');
-
-  const goed = Sessie.keurGastGoed(avond, club, avond.gastverzoeken[0].id, 1, 'nieuw1');
-  assertGelijk(goed.club.spelers.length, 9);
-  assertGelijk(goed.club.spelers[8], { id: 'nieuw1', naam: 'Gerda', groep: 1 });
-  assert(goed.avond.aanwezigen.indexOf('nieuw1') !== -1, 'gast is niet aanwezig');
-  assertGelijk(goed.avond.koppelingen.t7, 'nieuw1');
-  assertGelijk(goed.avond.gastverzoeken, []);
+  assertGelijk(avond.aanwezigen, ['nieuw1']);
+  assertGelijk(avond.koppelingen.t7, 'nieuw1');
 });
 
-test('sessie: een gast met een bestaande naam wordt naar de lijst verwezen', function () {
+test('sessie: registreren met een bestaande naam verwijst naar de lijst', function () {
   const club = maakTestClub(8);
-  const avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'gast', naam: 'speler 3' });
+  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: 'speler 3', groep: 0 }, 'nieuw1');
   assertGelijk(uitkomst.antwoord, { fout: 'naam-bestaat' });
+  assertGelijk(uitkomst.club.spelers.length, 8);
+});
+
+test('sessie: registreren zonder naam of met een onbekend niveau wordt geweigerd', function () {
+  const club = maakTestClub(8);
+  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  assertGelijk(Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: '   ', groep: 0 }, 'n1').antwoord, { fout: 'lege-naam' });
+  assertGelijk(Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: 'Bob', groep: 5 }, 'n1').antwoord, { fout: 'onbekend-niveau' });
+  assertGelijk(Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: 'Bob', groep: '0' }, 'n1').antwoord, { fout: 'onbekend-niveau' });
+});
+
+test('sessie: een te lange naam wordt ingekort', function () {
+  assertGelijk(Sessie.schoneNaam('x'.repeat(60)).length, 40);
+});
+
+test('sessie: je eigen naam aantikken meldt je aan', function () {
+  const club = maakTestClub(8);
+  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p2' });
+  assertGelijk(uitkomst.avond.aanwezigen, ['p2']);
+});
+
+test('sessie: hallo koppelt opnieuw maar meldt een vertrokken speler niet vanzelf aan', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(['p2'], 2, 'ABCDEF');
+  avond = Sessie.meldAf(avond, 'p2');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p2' });
+  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p2' });
+  assertGelijk(uitkomst.avond.aanwezigen, []);
 });
 
 test('sessie: het concept telt niet mee in de historie', function () {

@@ -6,6 +6,8 @@
     // het scherm opnieuw tekent door een bericht van een telefoon.
     gekozen: null,
     getekendeCode: null,
+    getekendeLobbyCode: null,
+    lobbyGezien: {},
 
     render: function () {
       if (!App.avond) {
@@ -13,36 +15,89 @@
         App.toonScherm('avond');
         return;
       }
-      if (!App.avond.concept && App.avond.rondes.length === 0) this.genereer();
-
       const avond = App.avond;
       const concept = avond.concept;
       const ronde = concept || (avond.rondes.length ? avond.rondes[avond.rondes.length - 1] : null);
+      // Zolang er nog geen ronde is, is dit scherm de wachtruimte.
+      const wachtruimte = !ronde;
       if (this.gekozen && (!concept || App.spelerOp(this.gekozen) === null)) this.gekozen = null;
 
       document.getElementById('ronde-nummer').textContent = String(concept ? avond.rondes.length + 1 : avond.rondes.length);
 
       const status = document.getElementById('ronde-status');
-      status.hidden = !ronde;
-      status.className = 'pil ' + (concept ? 'pil-concept' : 'pil-bezig');
-      status.textContent = concept ? T.concept : T.bezig;
+      status.className = 'pil ' + (concept || wachtruimte ? 'pil-concept' : 'pil-bezig');
+      status.textContent = concept ? T.concept : (wachtruimte ? T.lobby_status : T.bezig);
+      if (wachtruimte) document.getElementById('ronde-nummer').textContent = '1';
 
       document.getElementById('ronde-banen').textContent = String(avond.banen);
       document.getElementById('opnieuw-loten').hidden = !concept;
       const start = document.getElementById('start-ronde');
       start.hidden = !concept;
       start.textContent = T.start_ronde(avond.rondes.length + 1);
-      document.getElementById('volgende-ronde').hidden = Boolean(concept);
+      const volgende = document.getElementById('volgende-ronde');
+      volgende.hidden = Boolean(concept);
+      volgende.textContent = wachtruimte ? T.eerste_ronde : T.volgende_voorbereiden;
+      volgende.disabled = wachtruimte && this.beschikbaar() < 4;
 
       document.getElementById('concept-uitleg').textContent = concept
         ? (this.gekozen ? T.gekozen_wissel(App.naam(this.gekozen)) : T.concept_uitleg)
         : '';
 
+      document.getElementById('lobby').hidden = !wachtruimte;
+      document.querySelector('#scherm-ronde .ronde-lijf').hidden = wachtruimte;
+      document.getElementById('rustbalk').hidden = wachtruimte;
       document.getElementById('banen').classList.toggle('concept', Boolean(concept));
       this.renderVerouderd(concept ? avond.verouderd : {});
+      if (wachtruimte) {
+        this.renderLobby();
+        return;
+      }
       this.renderBanen(ronde, Boolean(concept));
       this.renderRustend(ronde, Boolean(concept));
       this.renderAansluiten();
+    },
+
+    beschikbaar: function () {
+      return App.avond.aanwezigen.filter(function (id) { return !App.avond.pauzes[id]; }).length;
+    },
+
+    renderLobby: function () {
+      const link = App.aansluitLink();
+      document.getElementById('code-lobby').textContent = App.avond.sessiecode;
+      if (this.getekendeLobbyCode !== link) {
+        App.tekenQr(document.getElementById('qr-lobby'), link);
+        this.getekendeLobbyCode = link;
+      }
+
+      const aanwezigen = App.avond.aanwezigen.map(function (id) { return App.spelerOp(id); }).filter(Boolean);
+      const tekort = 4 - this.beschikbaar();
+      document.getElementById('lobby-aantal').textContent = String(aanwezigen.length);
+      document.getElementById('lobby-hint').textContent = tekort > 0 ? T.lobby_te_weinig(tekort) : T.lobby_klaar;
+
+      const houder = document.getElementById('lobby-spelers');
+      houder.textContent = '';
+      App.club.groepen.forEach(function (groepsnaam, groep) {
+        const inGroep = aanwezigen
+          .filter(function (speler) { return speler.groep === groep; })
+          .sort(function (a, b) { return a.naam.localeCompare(b.naam, 'nl'); });
+        if (!inGroep.length) return;
+        const blok = document.createElement('div');
+        blok.className = 'lobby-groep';
+        const kop = document.createElement('h3');
+        kop.textContent = groepsnaam + ' · ' + inGroep.length;
+        const namen = document.createElement('div');
+        namen.className = 'lobby-namen';
+        for (const speler of inGroep) {
+          const kaartje = document.createElement('span');
+          kaartje.className = 'naamkaartje' + (SchermRonde.lobbyGezien[speler.id] ? '' : ' nieuw');
+          SchermRonde.lobbyGezien[speler.id] = true;
+          kaartje.textContent = speler.naam;
+          namen.appendChild(kaartje);
+        }
+        blok.appendChild(kop);
+        blok.appendChild(namen);
+        houder.appendChild(blok);
+      });
     },
 
     naamkaartje: function (id, opties) {

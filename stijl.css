@@ -139,6 +139,7 @@ main { padding: 1.25rem; max-width: 96rem; margin: 0 auto; }
 .knop:hover { border-color: var(--kleur-tekst-zacht); }
 .knop-primair { background: var(--kleur-primair); border-color: var(--kleur-primair); color: #fff; }
 .knop-primair:hover { background: var(--kleur-primair-licht); border-color: var(--kleur-primair-licht); }
+.knop:disabled { opacity: 0.45; cursor: not-allowed; }
 .knop-gevaar { color: var(--kleur-gevaar); }
 .knop-gevaar:hover { border-color: var(--kleur-gevaar); }
 .knop-groot { font-size: 1.05rem; padding: 0.8rem 1.4rem; }
@@ -182,6 +183,8 @@ th { position: sticky; top: 0; background: var(--kleur-achtergrond); font-size: 
 tr:last-child td { border-bottom: 0; }
 td.getal, th.getal { text-align: right; font-variant-numeric: tabular-nums; }
 td select { padding: 0.3rem 0.5rem; }
+.naam-veld { width: 100%; border-color: transparent; background: transparent; padding: 0.3rem 0.5rem; font-weight: 500; }
+.naam-veld:hover { border-color: var(--kleur-rand); }
 td:last-child { text-align: right; }
 
 /* Groepen */
@@ -257,9 +260,6 @@ td:last-child { text-align: right; }
 .preset strong { display: block; }
 .preset small { color: var(--kleur-tekst-zacht); }
 
-.gasten { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
-.gasten li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.5rem; border: 1.5px dashed var(--kleur-accent); border-radius: var(--radius-klein); }
-.gasten li strong { flex: 1 1 100%; }
 
 .aansluiten { text-align: center; }
 .qr { display: grid; place-items: center; }
@@ -370,4 +370,15 @@ button.naamkaartje:hover { border-color: var(--kleur-accent); }
   .zoek { min-width: 0; width: 100%; }
   h1 { font-size: 1.7rem; }
 }
-.gasten-kaart { border: 2px solid var(--kleur-accent); }
+
+/* Wachtruimte: groot QR-scherm voor de zaal, zoals bij Kahoot. */
+.lobby { display: grid; grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.lobby-qr .qr svg { max-width: 22rem; }
+.lobby-qr .sessiecode strong { font-size: 2.4rem; }
+.lobby-groep { margin-bottom: 1rem; }
+.lobby-groep h3 { margin: 0 0 0.5rem; }
+.lobby-namen { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.lobby-namen .naamkaartje { background: var(--kleur-achtergrond); box-shadow: none; font-size: 1.1rem; }
+.lobby-namen .naamkaartje.nieuw { animation: binnen 0.4s ease-out; background: #FFF4C2; }
+@keyframes binnen { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (max-width: 1000px) { .lobby { grid-template-columns: 1fr; } }

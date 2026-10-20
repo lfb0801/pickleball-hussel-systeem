@@ -152,3 +152,11 @@ details summary { font-weight: 600; cursor: pointer; }
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
   font-weight: 600; text-align: center;
 }
+
+.niveaus { border: 0; padding: 0; margin: 0.3rem 0 0; }
+.niveaus legend { font-weight: 600; margin-bottom: 0.4rem; padding: 0; }
+.niveaus .uitleg { margin: 0.5rem 0 0; font-size: 0.85rem; }
+.niveau-keuze { display: grid; gap: 0.4rem; }
+.niveau { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 0.9rem; border: 1.5px solid var(--kleur-rand); border-radius: var(--radius-klein); background: var(--kleur-oppervlak); font-weight: 600; cursor: pointer; }
+.niveau input { width: 1.15rem; height: 1.15rem; padding: 0; accent-color: var(--kleur-primair); }
+.niveau:has(input:checked) { border-color: var(--kleur-primair); background: #F1F8F4; }

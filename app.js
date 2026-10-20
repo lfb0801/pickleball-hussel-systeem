@@ -165,27 +165,33 @@
         return;
       }
       const verzoek = Object.assign({}, bericht, { telefoon: telefoon });
-      const uitkomst = Sessie.pasVerzoekToe(this.avond, this.club, verzoek);
-      const voor = JSON.stringify(this.avond);
+      const voorAvond = JSON.stringify(this.avond);
+      const voorAanwezig = this.avond.aanwezigen.length;
+      const uitkomst = Sessie.pasVerzoekToe(this.avond, this.club, verzoek, this.nieuwId());
       this.avond = uitkomst.avond;
+      if (uitkomst.club !== this.club) {
+        this.club = uitkomst.club;
+        this.bewaarClub();
+      }
       if (uitkomst.antwoord) {
         this.verbinding.zend(telefoon, { type: 'antwoord', fout: uitkomst.antwoord.fout });
       }
-      if (JSON.stringify(this.avond) !== voor) {
+      if (JSON.stringify(this.avond) !== voorAvond) {
         this.bewaarAvond();
-        this.meldVerzoek(verzoek);
+        this.meldVerzoek(verzoek, this.avond.aanwezigen.length - voorAanwezig);
         this.renderHuidig();
       } else {
         this.verbinding.zend(telefoon, Sessie.toestandVoor(this.avond, this.club, telefoon));
       }
     },
 
-    meldVerzoek: function (verzoek) {
+    meldVerzoek: function (verzoek, erbij) {
       const id = this.avond.koppelingen[verzoek.telefoon];
-      const naam = id ? this.naam(id) : '';
-      if (verzoek.type === 'vertrek') this.meld(T.doet_niet_meer_mee(naam));
-      else if (verzoek.type === 'aanmelden') this.meld(T.doet_mee(naam));
-      else if (verzoek.type === 'gast') this.meld(T.gasten_titel + ': ' + String(verzoek.naam).trim());
+      const speler = id ? this.spelerOp(id) : null;
+      if (!speler) return;
+      if (verzoek.type === 'vertrek') this.meld(T.doet_niet_meer_mee(speler.naam));
+      else if (verzoek.type === 'registreer') this.meld(T.nieuw_aangemeld(speler.naam, this.club.groepen[speler.groep]));
+      else if (erbij > 0) this.meld(T.doet_mee(speler.naam));
     },
 
     ontkoppel: function (spelerId) {
@@ -269,10 +275,7 @@
 
       if (this.avond) this.startSessie();
 
-      let scherm = 'spelers';
-      if (this.avond) scherm = 'ronde';
-      else if (this.club.spelers.length) scherm = 'avond';
-      this.toonScherm(scherm);
+      this.toonScherm(this.avond ? 'ronde' : 'avond');
     },
   };
 

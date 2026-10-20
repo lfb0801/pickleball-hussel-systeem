@@ -5,7 +5,6 @@
     render: function () {
       this.renderGroepen();
       this.vulGroepKeuze(document.getElementById('nieuwe-speler-groep'), 0);
-      this.vulGroepKeuze(document.getElementById('import-groep'), 0);
       this.renderSpelers();
     },
 
@@ -68,8 +67,27 @@
       for (const speler of zichtbaar) {
         const rij = document.createElement('tr');
 
+        // Spelers typen hun naam zelf in; hier is een tikfout te herstellen.
         const naamCel = document.createElement('td');
-        naamCel.textContent = speler.naam;
+        const naamVeld = document.createElement('input');
+        naamVeld.type = 'text';
+        naamVeld.className = 'naam-veld';
+        naamVeld.value = speler.naam;
+        naamVeld.maxLength = 40;
+        naamVeld.setAttribute('aria-label', T.kolom_naam);
+        naamVeld.addEventListener('change', function () {
+          const nieuw = Sessie.schoneNaam(naamVeld.value);
+          if (!nieuw || Sessie.naamBestaat(App.club, nieuw, speler.id)) {
+            App.waarschuw(nieuw ? T.naam_bestaat_al(nieuw) : T.naam_leeg);
+            naamVeld.value = speler.naam;
+            return;
+          }
+          speler.naam = nieuw;
+          App.bewaarClub();
+          App.zendToestand();
+          scherm.renderSpelers();
+        });
+        naamCel.appendChild(naamVeld);
 
         const groepCel = document.createElement('td');
         const keuze = document.createElement('select');
@@ -133,23 +151,6 @@
       this.render();
     },
 
-    importeerNamen: function (namen, groep) {
-      if (namen.length === 0) {
-        App.waarschuw(T.import_leeg);
-        return;
-      }
-
-      const bestaande = App.club.spelers.map(function (speler) { return speler.naam; });
-      const verdeling = filterNieuweNamen(namen, bestaande);
-
-      for (const naam of verdeling.nieuw) {
-        App.club.spelers.push({ id: App.nieuwId(), naam: naam, groep: groep });
-      }
-      App.bewaarClub();
-      this.render();
-      App.waarschuw(T.import_klaar(verdeling.nieuw.length, App.club.groepen[groep], verdeling.overgeslagen.length));
-    },
-
     verwijderSpeler: function (id) {
       const naam = App.naam(id);
       if (App.avond && App.avond.aanwezigen.indexOf(id) !== -1) {
@@ -179,26 +180,6 @@
       App.bewaarClub();
       veld.value = '';
       SchermSpelers.render();
-    });
-
-    document.getElementById('spelers-importeren').addEventListener('submit', function (gebeurtenis) {
-      gebeurtenis.preventDefault();
-      const veld = document.getElementById('csv-bestand');
-      const bestand = veld.files[0];
-      if (!bestand) {
-        App.waarschuw(T.kies_bestand);
-        return;
-      }
-      const groep = Number(document.getElementById('import-groep').value);
-      const lezer = new FileReader();
-      lezer.addEventListener('load', function () {
-        SchermSpelers.importeerNamen(leesNamen(String(lezer.result)), groep);
-        veld.value = '';
-      });
-      lezer.addEventListener('error', function () {
-        App.waarschuw(T.bestand_onleesbaar);
-      });
-      lezer.readAsText(bestand);
     });
 
     document.getElementById('speler-toevoegen').addEventListener('submit', function (gebeurtenis) {

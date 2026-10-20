@@ -63,13 +63,6 @@
         </div>
         <p id="spelers-leeg" class="leeg" hidden></p>
 
-        <h3 data-t="import_titel"></h3>
-        <form id="spelers-importeren" class="regel">
-          <input type="file" id="csv-bestand" accept=".csv,text/csv,text/plain" required>
-          <select id="import-groep"></select>
-          <button type="submit" class="knop" data-t="import_knop"></button>
-        </form>
-        <p class="uitleg" data-t="import_uitleg"></p>
       </div>
     </div>
   </section>
@@ -87,10 +80,6 @@
       </div>
 
       <aside class="zijkolom">
-        <div class="kaart gasten-kaart" id="gasten-kaart" hidden>
-          <h2 data-t="gasten_titel"></h2>
-          <ul id="gasten-lijst" class="gasten"></ul>
-        </div>
 
         <div class="kaart">
           <h2 id="avond-kop"></h2>
@@ -144,6 +133,19 @@
       </div>
     </div>
     <p id="concept-uitleg" class="uitleg"></p>
+    <div id="lobby" class="lobby" hidden>
+      <div class="kaart aansluiten lobby-qr">
+        <h2 data-t="lobby_titel"></h2>
+        <div class="qr" id="qr-lobby"></div>
+        <p class="sessiecode"><span data-t="sessiecode"></span> <strong id="code-lobby"></strong></p>
+        <p class="uitleg" data-t="lobby_uitleg"></p>
+      </div>
+      <div class="kaart lobby-lijst">
+        <div class="kaart-kop"><h2 data-t="lobby_binnen"></h2><span id="lobby-aantal" class="pil pil-bezig"></span></div>
+        <p id="lobby-hint" class="uitleg"></p>
+        <div id="lobby-spelers"></div>
+      </div>
+    </div>
     <div id="verouderd" class="kaart verouderd" hidden></div>
     <div class="ronde-lijf">
       <div id="banen" class="banen"></div>
@@ -173,7 +175,6 @@
   </section>
 </main>
 <script src="teksten.js"></script>
-<script src="papaparse.min.js"></script>
 <script src="peerjs.min.js"></script>
 <script src="qrcode.js"></script>
 <script src="hussel.js"></script>
@@ -181,7 +182,6 @@
 <script src="sessie.js"></script>
 <script src="verbinding.js"></script>
 <script src="opslag.js"></script>
-<script src="csv.js"></script>
 <script src="scherm-spelers.js"></script>
 <script src="scherm-avond.js"></script>
 <script src="scherm-ronde.js"></script>

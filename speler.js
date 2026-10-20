@@ -88,13 +88,13 @@
     if (bericht.type === 'toestand') {
       laatste = bericht;
       if (!bericht.avondLoopt) {
-        staat.speler = null;
+        // De speler blijft bewaard voor de volgende avond.
         staat.laatsteRonde = null;
         bewaarStaat();
         toon('einde');
         return;
       }
-      if (staat.speler && !bericht.ik && !bericht.gastverzoek) {
+      if (staat.speler && !bericht.ik) {
         // De naam is elders gekoppeld of ontkoppeld: opnieuw kiezen.
         staat.speler = null;
       }
@@ -133,12 +133,10 @@
 
   function render() {
     if (!laatste || !laatste.avondLoopt) return;
-    if (laatste.gastverzoek) {
-      $('gast-wacht-tekst').textContent = T.tel_gast_wacht(laatste.gastverzoek);
-      toon('gastwacht');
-    } else if (!laatste.ik) {
+    if (!laatste.ik) {
       toon('naam');
       renderNamen();
+      renderNiveaus();
     } else {
       toon('hoofd');
       renderHoofd();
@@ -149,15 +147,12 @@
     const lijst = $('namen');
     const zoekterm = $('naam-zoek').value.trim().toLowerCase();
     lijst.textContent = '';
-    const spelers = laatste.spelers
+    const zichtbaar = laatste.spelers
       .filter(function (s) { return !zoekterm || s.naam.toLowerCase().indexOf(zoekterm) !== -1; })
-      .sort(function (a, b) {
-        if (a.aanwezig !== b.aanwezig) return a.aanwezig ? -1 : 1;
-        return a.naam.localeCompare(b.naam, 'nl');
-      });
-    // Zonder zoekterm alleen de aanwezigen; wie later komt, zoekt zijn naam.
-    const zichtbaar = zoekterm ? spelers : spelers.filter(function (s) { return s.aanwezig; });
-    for (const speler of zichtbaar.slice(0, 80)) {
+      .sort(function (a, b) { return a.naam.localeCompare(b.naam, 'nl'); });
+    $('naam-zoek').hidden = laatste.spelers.length < 12;
+    $('naam-lijst-kop').hidden = laatste.spelers.length === 0;
+    for (const speler of zichtbaar.slice(0, 100)) {
       const item = document.createElement('li');
       const knop = document.createElement('button');
       knop.type = 'button';
@@ -168,12 +163,39 @@
       item.appendChild(knop);
       lijst.appendChild(item);
     }
-    if (!zichtbaar.length) {
+    if (!zichtbaar.length && laatste.spelers.length) {
       const leeg = document.createElement('li');
       leeg.className = 'leeg';
       leeg.textContent = T.geen_treffers;
       lijst.appendChild(leeg);
     }
+  }
+
+  // Alleen opnieuw tekenen als de groepen veranderen, zodat een gekozen
+  // niveau blijft staan terwijl er berichten binnenkomen.
+  let getekendeNiveaus = null;
+  function renderNiveaus() {
+    const sleutel = JSON.stringify(laatste.groepen);
+    if (sleutel === getekendeNiveaus) return;
+    getekendeNiveaus = sleutel;
+    const houder = $('niveau-keuze');
+    const gekozen = houder.querySelector('input:checked');
+    houder.textContent = '';
+    laatste.groepen.forEach(function (naam, index) {
+      const label = document.createElement('label');
+      label.className = 'niveau';
+      const keuze = document.createElement('input');
+      keuze.type = 'radio';
+      keuze.name = 'niveau';
+      keuze.value = String(index);
+      keuze.required = true;
+      if (gekozen && gekozen.value === String(index)) keuze.checked = true;
+      const tekst = document.createElement('span');
+      tekst.textContent = naam;
+      label.appendChild(keuze);
+      label.appendChild(tekst);
+      houder.appendChild(label);
+    });
   }
 
   function regel(klasse, tekst) {
@@ -266,10 +288,11 @@
   function start() {
     vulTeksten();
 
+    // De gekozen speler blijft over avonden heen bewaard: volgende week is
+    // één tik op 'Ik ben er' genoeg.
     const code = sessieUitAdres() || staat.sessie || null;
     if (code !== staat.sessie) {
       staat.sessie = code;
-      staat.speler = null;
       staat.laatsteRonde = null;
       staat.vertrokken = false;
       bewaarStaat();
@@ -280,8 +303,8 @@
       const nieuw = $('code-veld').value.trim().toUpperCase();
       if (!nieuw) return;
       staat.sessie = nieuw;
-      staat.speler = null;
       staat.laatsteRonde = null;
+      staat.vertrokken = false;
       bewaarStaat();
       history.replaceState(null, '', '?sessie=' + encodeURIComponent(nieuw));
       startVerbinding(nieuw);
@@ -296,7 +319,6 @@
       verbinding = null;
       laatste = null;
       staat.sessie = null;
-      staat.speler = null;
       bewaarStaat();
       history.replaceState(null, '', location.pathname);
       $('tel-status').hidden = true;
@@ -305,14 +327,19 @@
 
     $('naam-zoek').addEventListener('input', renderNamen);
 
-    $('gast-formulier').addEventListener('submit', function (gebeurtenis) {
+    $('nieuw-formulier').addEventListener('submit', function (gebeurtenis) {
       gebeurtenis.preventDefault();
-      const naam = $('gast-naam').value.trim();
-      if (naam) zend({ type: 'gast', naam: naam });
-    });
-
-    $('gast-annuleer').addEventListener('click', function () {
-      zend({ type: 'loslaten' });
+      const naam = $('nieuw-naam').value.trim();
+      const niveau = document.querySelector('#niveau-keuze input:checked');
+      if (!naam) return;
+      if (!niveau) {
+        toast(T.tel_fouten['onbekend-niveau']);
+        return;
+      }
+      if (zend({ type: 'registreer', naam: naam, groep: Number(niveau.value) })) {
+        staat.vertrokken = false;
+        bewaarStaat();
+      }
     });
 
     $('niet-jij').addEventListener('click', function () {

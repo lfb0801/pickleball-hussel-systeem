@@ -17,7 +17,6 @@
       this.renderPresets();
       this.renderAanwezigheid();
       this.renderTeller();
-      this.renderGasten();
       this.renderAansluiten();
     },
 
@@ -68,7 +67,7 @@
       if (App.club.spelers.length === 0) {
         const leeg = document.createElement('p');
         leeg.className = 'leeg';
-        leeg.textContent = T.geen_spelers;
+        leeg.textContent = T.avond_geen_spelers;
         houder.appendChild(leeg);
         return;
       }
@@ -217,46 +216,6 @@
       }
     },
 
-    renderGasten: function () {
-      const kaart = document.getElementById('gasten-kaart');
-      const lijst = document.getElementById('gasten-lijst');
-      const verzoeken = App.avond ? App.avond.gastverzoeken : [];
-      kaart.hidden = verzoeken.length === 0;
-      lijst.textContent = '';
-      for (const verzoek of verzoeken) {
-        const item = document.createElement('li');
-        const naam = document.createElement('strong');
-        naam.textContent = verzoek.naam;
-        const groep = document.createElement('select');
-        SchermSpelers.vulGroepKeuze(groep, App.club.groepen.length - 1);
-        const toelaten = document.createElement('button');
-        toelaten.type = 'button';
-        toelaten.className = 'knop knop-klein knop-primair';
-        toelaten.textContent = T.gast_toelaten;
-        toelaten.addEventListener('click', function () {
-          const uitkomst = Sessie.keurGastGoed(App.avond, App.club, verzoek.id, Number(groep.value), App.nieuwId());
-          App.club = uitkomst.club;
-          App.bewaarClub();
-          App.wijzigAvond(uitkomst.avond);
-          App.meld(T.gast_toegelaten(verzoek.naam));
-          SchermAvond.render();
-        });
-        const weigeren = document.createElement('button');
-        weigeren.type = 'button';
-        weigeren.className = 'knop knop-klein';
-        weigeren.textContent = T.gast_weigeren;
-        weigeren.addEventListener('click', function () {
-          App.wijzigAvond(Sessie.wijsGastAf(App.avond, verzoek.id));
-          SchermAvond.render();
-        });
-        item.appendChild(naam);
-        item.appendChild(groep);
-        item.appendChild(toelaten);
-        item.appendChild(weigeren);
-        lijst.appendChild(item);
-      }
-    },
-
     renderAansluiten: function () {
       const kaart = document.getElementById('aansluiten-kaart');
       kaart.hidden = !App.avond;
@@ -299,11 +258,9 @@
     document.getElementById('alleen-aanwezig').addEventListener('change', function () { SchermAvond.renderAanwezigheid(); });
 
     document.getElementById('start-avond').addEventListener('click', function () {
+      // Starten kan ook zonder aanwezigen: spelers melden zich daarna met
+      // hun telefoon aan in de wachtruimte.
       const aanwezigen = Object.keys(SchermAvond.selectie).filter(function (id) { return App.spelerOp(id); });
-      if (aanwezigen.length < 4) {
-        App.waarschuw(T.min_vier);
-        return;
-      }
       App.waarschuw('');
       App.wijzigAvond(Sessie.nieuweAvond(aanwezigen, SchermAvond.banen, Sessie.maakSessiecode()));
       SchermAvond.selectie = {};

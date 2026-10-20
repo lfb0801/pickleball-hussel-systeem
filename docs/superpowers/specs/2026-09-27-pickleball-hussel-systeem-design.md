@@ -7,7 +7,7 @@
 
 Een indelingssysteem voor pickleball-clubavonden. Het bepaalt per ronde wie met en tegen wie speelt op welke baan, ingedeeld op niveau. Het houdt geen scores bij en berekent geen ranglijst.
 
-Het draait als gratis gehoste webapp. Eén laptop of tablet in de zaal leidt de avond; spelers kunnen met hun telefoon aansluiten, zoals bij Kahoot, om hun baan te zien en zelf te pauzeren, te vertrekken of zich aan te melden.
+Het draait als gratis gehoste webapp. Eén laptop of tablet in de zaal leidt de avond; spelers sluiten met hun telefoon aan via een QR-code, zoals bij Kahoot. Ze melden zich daar zelf aan met naam en niveau, zien hun baan en kunnen zelf pauzeren of vertrekken. De organisator hoeft geen namen in te voeren.
 
 ## Uitgangspunten
 
@@ -16,7 +16,7 @@ Het draait als gratis gehoste webapp. Eén laptop of tablet in de zaal leidt de 
 - Komt een groep niet uit op een veelvoud van vier, dan wordt aangevuld uit een naastliggende groep.
 - Blijft er daarna nog een rest over, dan rusten die spelers die ronde. Rustbeurten worden eerlijk gerouleerd.
 - Het schema wordt per ronde gegenereerd, niet vooraf voor de hele avond. Laatkomers, pauzes en afhakers kunnen tussendoor verwerkt worden.
-- Tussen avonden blijft alleen de spelerslijst met groepsindeling bewaard, plus de gekozen preset. Het hussel-geheugen begint elke avond blanco.
+- Tussen avonden blijft alleen de spelerslijst met groepsindeling bewaard, plus de gekozen preset. De spelerslijst groeit vanzelf doordat spelers zich met hun telefoon aanmelden. Het hussel-geheugen begint elke avond blanco.
 - De laptop in de zaal is de enige bron van waarheid. Telefoons sturen alleen verzoeken; de laptop past ze toe en stuurt de nieuwe toestand terug.
 - Er is geen eigen server en geen database. De app is een verzameling statische bestanden. Telefoons verbinden rechtstreeks met de laptop (WebRTC via PeerJS); alleen het vinden van elkaar loopt via de gratis publieke PeerJS-server.
 - De laptop werkt ook zonder internet en zonder telefoons: alles wat een telefoon kan, kan de laptop ook. Telefoons zijn gemak, geen voorwaarde.
@@ -43,7 +43,7 @@ Losse bestanden zonder build-stap, elk met één verantwoordelijkheid:
 | `stijl.css` | De opmaak, die alleen variabelen uit `thema.css` gebruikt. |
 | `index.html` | De laptop-app, die de bovenstaande bestanden inlaadt. |
 | `speler.html` / `speler.js` / `speler.css` | De telefoon-app en zijn opmaak. |
-| `papaparse.min.js`, `peerjs.min.js` (1.5.4), `qrcode.js` (qrcode-generator 1.4.4) | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
+| `peerjs.min.js` (1.5.4), `qrcode.js` (qrcode-generator 1.4.4) | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
 | `tests.js` | De testgevallen. |
 | `test.html` | Testrunner in de browser. |
 | `test-node.js` | Dezelfde tests via `node test-node.js`, voor gebruik zonder browser. |
@@ -131,11 +131,13 @@ De waarden zijn een vertrekpunt en worden na een avond in de zaal bijgesteld in 
 
 De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spelers op kijken. De opmaak is daarom gericht op een liggend scherm, met grote baankaarten die van een paar meter afstand leesbaar zijn. Tijdens een lopende avond vraagt de app de browser het scherm aan te houden (Wake Lock), waar de browser dat ondersteunt.
 
-**Spelersbeheer.** Groepen benoemen, op volgorde zetten, toevoegen en verwijderen. Spelers toevoegen met naam en groep, later te bewerken of te verwijderen. Spelers importeren uit een CSV-bestand: de eerste kolom is de naam, alle geïmporteerde spelers komen in één gekozen groep. Dit is, met de preset, het enige dat tussen avonden bewaard blijft.
+**Spelersbeheer.** Groepen benoemen, op volgorde zetten, toevoegen en verwijderen. De groepen zijn ook de niveaus waaruit spelers op hun telefoon kiezen. Spelers melden zich normaal zelf aan; hier kan de organisator er ook een toevoegen, een naam verbeteren (spelers typen hem zelf in), het niveau aanpassen of een speler verwijderen. Een naam is uniek, zonder op hoofdletters of spaties te letten. Dit is, met de preset, het enige dat tussen avonden bewaard blijft. Er is geen import uit een bestand.
 
-**Avond starten.** Aanwezigen aanvinken uit de bewaarde lijst, het aantal banen instellen en een preset kiezen. Een teller toont hoeveel spelers per ronde spelen en hoeveel er rusten, zodat het aantal banen vóór aanvang bijgesteld kan worden. Bij het starten krijgt de avond een sessiecode; het scherm toont een QR-code en de korte code waarmee telefoons aansluiten.
+**Avond starten.** Het aantal banen instellen en een preset kiezen. Aanvinken uit de bewaarde lijst kan, maar hoeft niet: een avond kan ook zonder aanwezigen starten, waarna spelers zich met hun telefoon aanmelden. Een teller toont hoeveel spelers per ronde spelen en hoeveel er rusten, zodat het aantal banen vóór aanvang bijgesteld kan worden. Bij het starten krijgt de avond een sessiecode; het scherm toont een QR-code en de korte code waarmee telefoons aansluiten.
 
-**Ronde-scherm.** Het scherm dat de hele avond openstaat. Het kent twee toestanden:
+**Ronde-scherm.** Het scherm dat de hele avond openstaat. Het kent drie toestanden:
+
+- *Wachtruimte.* Zolang er nog geen eerste ronde is, toont het scherm een grote QR-code met de sessiecode en, per niveau, wie er al binnen is. Nieuwe namen lichten even op. Een teller meldt hoeveel spelers er nog nodig zijn; de knop *Eerste ronde voorbereiden* werkt vanaf vier beschikbare spelers. Er wordt niets vanzelf geloot, zodat de organisator wacht tot iedereen binnen is.
 
 - *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Komt er tijdens het concept een pauze, vertrek of aanmelding binnen, dan krijgt de betrokken speler een badge en meldt het scherm dat opnieuw genereren nodig is.
 - *Gepubliceerd.* Met *Start ronde* wordt het concept de lopende ronde. Telefoons krijgen de indeling en een melding, precies één keer per ronde.
@@ -146,30 +148,34 @@ Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team te
 
 **Spelers aanpassen tijdens de avond.** Een laatkomer aanvinken, een afhaker uitvinken of een speler voor de volgende ronde laten pauzeren. De lopende ronde blijft ongewijzigd; de aanpassing geldt vanaf de volgende ronde. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.
 
-Hier staat ook per aanwezige of er een telefoon aan gekoppeld is. De organisator kan een telefoon ontkoppelen, bijvoorbeeld als iemand per ongeluk de verkeerde naam koos. Gastverzoeken van telefoons verschijnen hier; de organisator kiest een groep en de gast komt in de spelerslijst en op de aanwezigheidslijst.
+Hier staat ook per aanwezige of er een telefoon aan gekoppeld is. De organisator kan een telefoon ontkoppelen, bijvoorbeeld als iemand per ongeluk de verkeerde naam koos.
 
 **Overzicht.** Een tabel met per speler het aantal gespeelde rondes, rustbeurten en pauzes, om bij twijfel te laten zien dat de verdeling klopt.
 
 ## De telefoon
 
-Een speler scant de QR-code of opent de link met sessiecode en kiest zijn naam uit de lijst. Er zijn geen accounts en geen pincodes: de app vertrouwt op de gekozen naam. Een naam kan door één telefoon tegelijk geclaimd worden. De telefoon onthoudt sessiecode en naam, zodat hij na een verbroken verbinding vanzelf opnieuw aansluit.
+Een speler scant de QR-code of opent de link met sessiecode. Wie al eerder meedeed, tikt zijn naam aan en is daarmee aangemeld. Wie nieuw is, vult naam en niveau in en is meteen aangemeld: zonder goedkeuring van de organisator, die achteraf een naam of niveau kan aanpassen of iemand kan verwijderen. Bestaat de naam al, dan wordt de speler naar de lijst verwezen. Er zijn geen accounts en geen pincodes: de app vertrouwt op de gekozen naam. Een naam kan door één telefoon tegelijk gekoppeld worden.
+
+De telefoon onthoudt welke speler hij is, ook na het afsluiten van de avond. Bij een verbroken verbinding sluit hij vanzelf weer aan; bij een volgende avond is één tik op *Ik ben er* genoeg. Opnieuw verbinden meldt niemand vanzelf aan, zodat wie vertrokken is ook vertrokken blijft.
 
 Wat een telefoon kan:
 
 - **Mijn baan zien.** Het hoofdscherm toont de lopende ronde vanuit de speler: baan, partner en tegenstanders, of dat hij rust. Bij een nieuwe gepubliceerde ronde trilt de telefoon waar de browser dat kan (Android); op een iPhone is de melding alleen zichtbaar.
 - **Pauzeren.** *Volgende ronde sla ik over.* De pauze geldt voor één ronde en vervalt zodra die ronde gepubliceerd is. Opnieuw tikken pauzeert ook de ronde daarna. Intrekken kan zolang de ronde nog niet gepubliceerd is.
 - **Vertrekken.** *Ik ga naar huis*, met een bevestiging tegen mistikken. Werkt als het uitvinken door de organisator.
-- **Aanmelden.** Een laatkomer uit de clublijst meldt zich zelf aanwezig, met dezelfde rustcorrectie als bij aanvinken op de laptop. Een gast die niet in de lijst staat, typt een naam; die komt als verzoek op de laptop.
+- **Aanmelden.** Naam aantikken, *Ik ben er*, of nieuw aanmelden met naam en niveau. Een laatkomer krijgt dezelfde rustcorrectie als bij aanvinken op de laptop.
 
 ### Berichten
 
 | Van | Bericht | Gevolg |
 |---|---|---|
-| Telefoon | `claim` met speler | Koppelt de telefoon aan de speler, of weigert als een andere telefoon die naam al heeft. |
+| Telefoon | `hallo` met telefoon-id en bewaarde speler | Stelt de telefoon voor en koppelt de bewaarde speler opnieuw, zonder aan te melden. |
+| Telefoon | `claim` met speler | Koppelt de telefoon aan de speler en meldt hem aan, of weigert als een andere telefoon die naam al heeft. |
+| Telefoon | `registreer` met naam en niveau | Nieuwe speler in de spelerslijst, aangemeld en gekoppeld; geweigerd bij een lege of bestaande naam of een onbekend niveau. |
+| Telefoon | `loslaten` | Koppelt de telefoon los (*Niet jij?*). De speler blijft aangemeld. |
 | Telefoon | `pauze` aan of uit | Zet of wist de pauze voor de volgende ronde. |
 | Telefoon | `vertrek` | Haalt de speler van de aanwezigheidslijst vanaf de volgende ronde. |
 | Telefoon | `aanmelden` met speler | Zet een speler uit de clublijst op de aanwezigheidslijst, met rustcorrectie. |
-| Telefoon | `gast` met naam | Gastverzoek op de laptop. |
 | Laptop | `toestand` | De namen van de clublijst, wie aanwezig is, de lopende ronde en de eigen status van de speler. Na elke wijziging naar alle telefoons. |
 | Laptop | `ontkoppeld` | De telefoon gaat terug naar het naamkeuzescherm. |
 
@@ -210,7 +216,9 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 | PeerJS-server onbereikbaar | De laptop werkt door zonder telefoons en toont dat aansluiten nu niet lukt. |
 | Telefoon kan geen verbinding maken (bijvoorbeeld op mobiele data) | Vriendelijke melding met *opnieuw proberen* en de tip om de organisator te vragen of de wifi van de zaal te gebruiken. De organisator doet het dan op de laptop. |
 | Sessiecode na verversen nog bezet bij de PeerJS-server | De laptop probeert het met dezelfde code opnieuw tot die vrij is. |
-| Tweede telefoon kiest een al geclaimde naam | Geweigerd, met de melding dat die naam al gekoppeld is en dat de organisator kan ontkoppelen. |
+| Nieuwe speler kiest een naam die al bestaat | Geweigerd, met de vraag de naam in de lijst aan te tikken of de achternaam toe te voegen. |
+| Iemand meldt een verzonnen naam aan | De organisator verwijdert die speler op het spelersscherm. Er is geen bescherming tegen; dat is bewust. |
+| Tweede telefoon kiest een al gekoppelde naam | Geweigerd, met de melding dat die naam al gekoppeld is en dat de organisator kan ontkoppelen. |
 | Pauze, vertrek of aanmelding tijdens het concept | Badge bij de speler en een melding op de laptop dat opnieuw genereren nodig is. |
 | Pauze na publiceren | Geldt voor de ronde daarna. |
 | Handmatige wissel brengt de rustverdeling uit balans | Toegestaan. De volgende rondes herstellen de balans via de regel uit stap 2. |
@@ -238,7 +246,8 @@ Tegen `sessie.js`:
 - Een claim op een vrije naam lukt; een tweede claim op dezelfde naam wordt geweigerd; na ontkoppelen lukt hij weer.
 - Pauze aan en uit, vertrek en aanmelden geven dezelfde avond als dezelfde handeling op de laptop.
 - Aanmelden van een laatkomer geeft het hoogste rustsaldo onder de aanwezigen.
-- Een gastverzoek voegt pas iemand toe nadat de organisator een groep kiest.
+- Registreren met naam en niveau zet de speler in de lijst, meldt hem aan en koppelt de telefoon; een bestaande naam, een lege naam of een onbekend niveau wordt geweigerd.
+- Je eigen naam aantikken meldt je aan; opnieuw verbinden doet dat niet.
 - Een pauze vervalt bij het publiceren van de ronde waarvoor hij gold.
 - Het aantal banen wijzigen laat gespeelde rondes ongemoeid en geldt bij de volgende loting.
 
@@ -246,7 +255,7 @@ De verbinding zelf (`verbinding.js`) wordt met de hand getest, volgens een vaste
 
 ## Buiten scope
 
-Scores, ranglijsten, klimmen en zakken tussen banen, enkelspel, historie over meerdere avonden, accounts, een eigen server of database, vaste of verboden koppels, een eigen of betaalde TURN-relay naast die van PeerJS, bescherming tegen het claimen van andermans naam, niveaus inlezen uit een CSV-bestand, losse gewichten instellen in de app, meerdere talen.
+Scores, ranglijsten, klimmen en zakken tussen banen, enkelspel, historie over meerdere avonden, accounts, een eigen server of database, vaste of verboden koppels, een eigen of betaalde TURN-relay naast die van PeerJS, bescherming tegen het claimen van andermans naam, spelers importeren uit een bestand, goedkeuren van aanmeldingen, losse gewichten instellen in de app, meerdere talen.
 
 ## Open punten
 

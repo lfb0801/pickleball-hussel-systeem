@@ -42,24 +42,25 @@
   </section>
 
   <section id="t-naam" hidden>
-    <h1 data-t="tel_kies_naam"></h1>
-    <p class="uitleg" data-t="tel_kies_uitleg"></p>
-    <input type="search" id="naam-zoek" class="zoek" data-t-placeholder="zoeken">
-    <ul id="namen" class="namen"></ul>
-    <div class="kaart">
-      <h2 data-t="tel_geen_naam"></h2>
-      <p class="uitleg" data-t="tel_gast_uitleg"></p>
-      <form id="gast-formulier" class="kolom">
-        <input type="text" id="gast-naam" data-t-placeholder="tel_gast_naam" maxlength="40" required>
-        <button type="submit" class="knop" data-t="tel_gast_knop"></button>
+    <h1 data-t="tel_welkom"></h1>
+    <div id="naam-lijst-kop">
+      <p class="uitleg" data-t="tel_kies_uitleg"></p>
+      <input type="search" id="naam-zoek" class="zoek" data-t-placeholder="zoeken">
+      <ul id="namen" class="namen"></ul>
+    </div>
+    <div class="kaart" id="nieuw-kaart">
+      <h2 data-t="tel_nieuw_titel"></h2>
+      <p class="uitleg" data-t="tel_nieuw_uitleg"></p>
+      <form id="nieuw-formulier" class="kolom">
+        <input type="text" id="nieuw-naam" data-t-placeholder="tel_nieuw_naam" maxlength="40" autocomplete="name" required>
+        <fieldset class="niveaus">
+          <legend data-t="tel_niveau"></legend>
+          <div id="niveau-keuze" class="niveau-keuze"></div>
+          <p class="uitleg" data-t="tel_niveau_uitleg"></p>
+        </fieldset>
+        <button type="submit" class="knop knop-primair knop-groot" data-t="tel_nieuw_knop"></button>
       </form>
     </div>
-  </section>
-
-  <section id="t-gastwacht" hidden>
-    <div class="laden" aria-hidden="true"></div>
-    <p id="gast-wacht-tekst" class="midden groot"></p>
-    <p class="midden"><button type="button" id="gast-annuleer" class="knop-link" data-t="tel_gast_annuleer"></button></p>
   </section>
 
   <section id="t-hoofd" hidden>

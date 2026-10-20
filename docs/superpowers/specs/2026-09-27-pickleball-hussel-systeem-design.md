@@ -130,6 +130,8 @@ De waarden zijn een vertrekpunt en worden na een avond in de zaal bijgesteld in 
 
 ## Schermen op de laptop
 
+Het scherm in de zaal toont nooit niveaus: geen niveau per baan, geen markering van wie op een ander niveau speelt en geen indeling per niveau in de wachtruimte. Niemand hoort steeds met zijn niveau geconfronteerd te worden. Niveaus staan alleen in het zijpaneel *Beheer* en bij het aanmelden op de telefoon.
+
 Zodra de avond loopt, is er maar één scherm: het ronde-scherm. De tabbladen verdwijnen; al het beheer zit in een zijpaneel dat over de banen heen schuift en standaard dicht is, zodat het scherm in de zaal alleen de banen toont. Na het afsluiten komen de tabbladen *Spelers* en *Avond* terug.
 
 Gewone meldingen (iemand meldt zich aan, een niveau is gewijzigd, een concept is opnieuw geloot) verschijnen een paar seconden onderin en schuiven niets op. Alleen een blijvend probleem, zoals opslag die niet werkt, staat als balk bovenin, met een knop om hem weg te klikken.
@@ -142,14 +144,14 @@ De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spe
 
 **Ronde-scherm.** Het scherm dat de hele avond openstaat. Het kent drie toestanden:
 
-- *Wachtruimte.* Zolang er nog geen eerste ronde is, toont het scherm een grote QR-code met de sessiecode en, per niveau, wie er al binnen is. Nieuwe namen lichten even op. Een teller meldt hoeveel spelers er nog nodig zijn; de knop *Eerste ronde voorbereiden* werkt vanaf vier beschikbare spelers. Er wordt niets vanzelf geloot, zodat de organisator wacht tot iedereen binnen is.
+- *Wachtruimte.* Zolang er nog geen eerste ronde is, toont het scherm een grote QR-code met de sessiecode en, op alfabet, wie er al binnen is. Nieuwe namen lichten even op. Een teller meldt hoeveel spelers er nog nodig zijn; de knop *Eerste ronde voorbereiden* werkt vanaf vier beschikbare spelers. Er wordt niets vanzelf geloot, zodat de organisator wacht tot iedereen binnen is.
 
 - *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Wie zich aanmeldt terwijl het concept openstaat, moet de volgende ronde meteen mee kunnen doen: het concept wordt dan vanzelf opnieuw geloot, met de nieuwkomer erin. Dat gebeurt niet als de organisator al met de hand in het concept gewisseld heeft; dan blijft het staan, krijgt de nieuwkomer een badge en meldt het scherm dat opnieuw loten nodig is. Een pauze of vertrek tijdens het concept wordt opgelost met een invaller (zie *Invallers*).
 - *Gepubliceerd.* Met *Start ronde* wordt het concept de lopende ronde. Telefoons krijgen de indeling en een melding, precies één keer per ronde.
 
 De modus (de preset) en het aantal banen staan in het zijpaneel *Beheer*. De modus is tijdens de avond te wisselen; een open concept zonder handmatige wissels wordt dan meteen opnieuw geloot, anders geldt de nieuwe modus vanaf de volgende loting. Het aantal banen is tussen rondes aan te passen: de lopende ronde blijft staan en de wijziging geldt vanaf de volgende loting. Staat er een concept open, dan wordt dat meteen opnieuw geloot met het nieuwe aantal; handmatige wissels in dat concept vervallen dan. Op het avondscherm werkt de baanteller tijdens de avond op dezelfde manier.
 
-Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team tegen team. Daaronder wie deze ronde rust en wie pauzeert. Knoppen: *volgende ronde* (maakt een concept), *opnieuw genereren*, *start ronde*, *spelers aanpassen*, *avond afsluiten*. Een kleine QR-code in een hoek laat laatkomers ook tijdens de avond aansluiten.
+Grote kaarten per baan met baannummer en team tegen team, zonder niveau. Daaronder wie deze ronde rust en wie pauzeert. Knoppen: *volgende ronde* (maakt een concept), *opnieuw genereren*, *start ronde*, *spelers aanpassen*, *avond afsluiten*. Een kleine QR-code in een hoek laat laatkomers ook tijdens de avond aansluiten.
 
 **Zijpaneel *Beheer*.** Te openen met de knop *Beheer* op het ronde-scherm, die ook het aantal aanwezigen toont. Te sluiten met het kruisje, een tik ernaast of Escape (Escape gaat in een deelweergave eerst terug). De kop van het ronde-scherm houdt zo alleen de ronde, de status en de knoppen voor de ronde. Het paneel bevat, van boven naar beneden:
 

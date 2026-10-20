@@ -306,7 +306,6 @@ td:last-child { text-align: right; }
 .baan { background: var(--kleur-oppervlak); border-radius: var(--radius); box-shadow: var(--schaduw); overflow: hidden; }
 .baan-kop { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; padding: 0.65rem 1rem; }
 .baan-nummer { font: 900 1.5rem var(--font-kop); }
-.baan-niveau { font-size: 0.85rem; font-weight: 600; color: var(--kleur-tekst-zacht); text-align: right; }
 
 /* Het veld van bovenaf: twee helften met keukenzone en net in het midden. */
 .veld {
@@ -354,7 +353,6 @@ button.naamkaartje { cursor: pointer; }
 button.naamkaartje:hover { border-color: var(--kleur-accent); }
 .naamkaartje.gekozen { background: var(--kleur-accent); border-color: var(--kleur-donker); }
 .naamkaartje.badge { border-color: var(--kleur-accent); border-style: dashed; }
-.naamkaartje.lener { box-shadow: 0 0 0 3px rgba(248, 210, 11, 0.6), 0 2px 6px rgba(0, 0, 0, 0.18); }
 
 .concept .baan { outline: 3px dashed var(--kleur-accent); outline-offset: -3px; }
 
@@ -389,8 +387,6 @@ button.naamkaartje:hover { border-color: var(--kleur-accent); }
 .lobby { display: grid; grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
 .lobby-qr .qr svg { max-width: 22rem; }
 .lobby-qr .sessiecode strong { font-size: 2.4rem; }
-.lobby-groep { margin-bottom: 1rem; }
-.lobby-groep h3 { margin: 0 0 0.5rem; }
 .lobby-namen { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .lobby-namen .naamkaartje { background: var(--kleur-achtergrond); box-shadow: none; font-size: 1.1rem; }
 .lobby-namen .naamkaartje.nieuw { animation: binnen 0.4s ease-out; background: #FFF4C2; }

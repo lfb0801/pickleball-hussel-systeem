@@ -167,7 +167,6 @@
       'niveau': 'speelt nu op een ander niveau',
     },
     verouderd_advies: 'Je hebt in dit concept met de hand gewisseld, dus het is niet vanzelf opnieuw geloot. Loot opnieuw om dit mee te nemen, of start de ronde zo.',
-    lener: 'speelt een niveau anders',
     banen_gewijzigd: function (n, concept) {
       return n + (n === 1 ? ' baan' : ' banen') + (concept
         ? '. Het concept is opnieuw geloot.'

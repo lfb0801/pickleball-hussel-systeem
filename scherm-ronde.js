@@ -85,37 +85,26 @@
       document.getElementById('lobby-aantal').textContent = String(aanwezigen.length);
       document.getElementById('lobby-hint').textContent = tekort > 0 ? T.lobby_te_weinig(tekort) : T.lobby_klaar;
 
+      // Het scherm in de zaal toont nooit niveaus: alleen wie er is.
       const houder = document.getElementById('lobby-spelers');
       houder.textContent = '';
-      App.club.groepen.forEach(function (groepsnaam, groep) {
-        const inGroep = aanwezigen
-          .filter(function (speler) { return speler.groep === groep; })
-          .sort(function (a, b) { return a.naam.localeCompare(b.naam, 'nl'); });
-        if (!inGroep.length) return;
-        const blok = document.createElement('div');
-        blok.className = 'lobby-groep';
-        const kop = document.createElement('h3');
-        kop.textContent = groepsnaam + ' · ' + inGroep.length;
-        const namen = document.createElement('div');
-        namen.className = 'lobby-namen';
-        for (const speler of inGroep) {
-          const kaartje = document.createElement('span');
-          kaartje.className = 'naamkaartje' + (SchermRonde.lobbyGezien[speler.id] ? '' : ' nieuw');
-          SchermRonde.lobbyGezien[speler.id] = true;
-          kaartje.textContent = speler.naam;
-          namen.appendChild(kaartje);
-        }
-        blok.appendChild(kop);
-        blok.appendChild(namen);
-        houder.appendChild(blok);
-      });
+      const namen = document.createElement('div');
+      namen.className = 'lobby-namen';
+      aanwezigen.sort(function (a, b) { return a.naam.localeCompare(b.naam, 'nl'); });
+      for (const speler of aanwezigen) {
+        const kaartje = document.createElement('span');
+        kaartje.className = 'naamkaartje' + (SchermRonde.lobbyGezien[speler.id] ? '' : ' nieuw');
+        SchermRonde.lobbyGezien[speler.id] = true;
+        kaartje.textContent = speler.naam;
+        namen.appendChild(kaartje);
+      }
+      houder.appendChild(namen);
     },
 
     naamkaartje: function (id, opties) {
       const scherm = this;
       const element = document.createElement(opties.wisselbaar ? 'button' : 'span');
       element.className = 'naamkaartje';
-      if (opties.lener) element.classList.add('lener');
       if (opties.wisselbaar) {
         element.type = 'button';
         if (this.gekozen === id) element.classList.add('gekozen');
@@ -123,7 +112,6 @@
         element.addEventListener('click', function () { scherm.kies(id); });
       }
       element.textContent = App.naam(id);
-      if (opties.lener) element.title = T.lener;
       return element;
     },
 
@@ -161,11 +149,7 @@
         const nummer = document.createElement('span');
         nummer.className = 'baan-nummer';
         nummer.textContent = T.baan + ' ' + baan.baan;
-        const niveau = document.createElement('span');
-        niveau.className = 'baan-niveau';
-        niveau.textContent = baan.groepen.map(function (groep) { return App.club.groepen[groep] || '?'; }).join(' + ');
         kop.appendChild(nummer);
-        kop.appendChild(niveau);
 
         const veld = document.createElement('div');
         veld.className = 'veld';
@@ -177,7 +161,6 @@
           for (const id of team) {
             helft.appendChild(this.naamkaartje(id, {
               wisselbaar: wisselbaar,
-              lener: baan.leners.indexOf(id) !== -1,
             }));
           }
           veld.appendChild(helft);

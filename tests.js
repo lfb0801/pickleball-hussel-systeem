@@ -482,17 +482,17 @@ test('maakOverzicht telt gespeelde rondes en rustbeurten per speler', function (
   ];
   const overzicht = Hussel.maakOverzicht(rondes, ['a', 'b', 'c', 'd', 'e']);
   assertGelijk(overzicht, [
-    { id: 'a', gespeeld: 2, gerust: 0 },
-    { id: 'b', gespeeld: 2, gerust: 0 },
-    { id: 'c', gespeeld: 2, gerust: 0 },
-    { id: 'd', gespeeld: 1, gerust: 1 },
-    { id: 'e', gespeeld: 1, gerust: 1 },
+    { id: 'a', gespeeld: 2, gerust: 0, gepauzeerd: 0 },
+    { id: 'b', gespeeld: 2, gerust: 0, gepauzeerd: 0 },
+    { id: 'c', gespeeld: 2, gerust: 0, gepauzeerd: 0 },
+    { id: 'd', gespeeld: 1, gerust: 1, gepauzeerd: 0 },
+    { id: 'e', gespeeld: 1, gerust: 1, gepauzeerd: 0 },
   ]);
 });
 
 test('maakOverzicht toont een speler zonder rondes als nul', function () {
   const overzicht = Hussel.maakOverzicht([], ['a']);
-  assertGelijk(overzicht, [{ id: 'a', gespeeld: 0, gerust: 0 }]);
+  assertGelijk(overzicht, [{ id: 'a', gespeeld: 0, gerust: 0, gepauzeerd: 0 }]);
 });
 
 function maakNepStore() {
@@ -612,4 +612,317 @@ test('filterNieuweNamen houdt een dubbele naam binnen het bestand zelf maar éé
   const uitkomst = filterNieuweNamen(['Anna', 'anna', 'Bram'], []);
   assertGelijk(uitkomst.nieuw, ['Anna', 'Bram']);
   assertGelijk(uitkomst.overgeslagen, ['anna']);
+});
+
+function alleIngedeeld(ronde) {
+  const ids = [];
+  for (const baan of ronde.banen) {
+    for (const id of baan.teamA.concat(baan.teamB)) ids.push(id);
+  }
+  return ids.concat(ronde.rustend, ronde.gepauzeerd || []);
+}
+
+test('genereerRonde zet een gepauzeerde speler nooit op een baan', function () {
+  const spelers = maakSpelers([9]);
+  for (let zaad = 0; zaad < 20; zaad += 1) {
+    const ronde = Hussel.genereerRonde({
+      aanwezigen: spelers,
+      gepauzeerd: ['g0n0', 'g0n1'],
+      banen: 2,
+      rng: Hussel.maakRng(zaad),
+      pogingen: 10,
+    });
+    assertGelijk(ronde.gepauzeerd, ['g0n0', 'g0n1']);
+    for (const baan of ronde.banen) {
+      for (const id of baan.teamA.concat(baan.teamB)) {
+        assert(id !== 'g0n0' && id !== 'g0n1', id + ' staat op een baan terwijl hij pauzeert');
+      }
+    }
+    assertGelijk(ronde.rustend.length, 3, 'zeven beschikbaar op twee banen: drie rusten');
+    assertGelijk(new Set(alleIngedeeld(ronde)).size, 9, 'niet iedereen precies één keer ingedeeld');
+  }
+});
+
+test('genereerRonde geeft null als er door pauzes geen viertal over is', function () {
+  const spelers = maakSpelers([5]);
+  const ronde = Hussel.genereerRonde({
+    aanwezigen: spelers,
+    gepauzeerd: ['g0n0', 'g0n1'],
+    banen: 2,
+    rng: Hussel.maakRng(1),
+  });
+  assertGelijk(ronde, null);
+});
+
+test('een pauze telt als rustbeurt en wie terugkomt speelt de volgende ronde', function () {
+  const spelers = maakSpelers([10]);
+  const rondes = [];
+  rondes.push(Hussel.genereerRonde({
+    aanwezigen: spelers, gepauzeerd: ['g0n3'], banen: 2, historie: rondes, rng: Hussel.maakRng(5), pogingen: 20,
+  }));
+  const stat = Hussel.maakHistorieStatistiek(rondes);
+  assertGelijk(Hussel.aantal(stat.rust, 'g0n3'), 1, 'pauze telt niet als rust');
+  for (let zaad = 0; zaad < 10; zaad += 1) {
+    const volgende = Hussel.genereerRonde({
+      aanwezigen: spelers, banen: 2, historie: rondes, rng: Hussel.maakRng(zaad), pogingen: 20,
+    });
+    assert(volgende.rustend.indexOf('g0n3') === -1, 'teruggekeerde speler rust opnieuw');
+  }
+});
+
+test('wisselSpelers wisselt tussen twee banen en bepaalt groepen en leners opnieuw', function () {
+  const ronde = {
+    banen: [
+      { baan: 1, teamA: ['a1', 'a2'], teamB: ['a3', 'a4'], thuisgroep: 0, groepen: [0], leners: [] },
+      { baan: 2, teamA: ['b1', 'b2'], teamB: ['b3', 'b4'], thuisgroep: 1, groepen: [1], leners: [] },
+    ],
+    rustend: ['r1'],
+    gepauzeerd: [],
+  };
+  const groepVan = { a1: 0, a2: 0, a3: 0, a4: 0, b1: 1, b2: 1, b3: 1, b4: 1, r1: 1 };
+  const gewisseld = Hussel.wisselSpelers(ronde, 'a1', 'b1', groepVan);
+  assertGelijk(gewisseld.banen[0].teamA, ['b1', 'a2']);
+  assertGelijk(gewisseld.banen[1].teamA, ['a1', 'b2']);
+  assertGelijk(gewisseld.banen[0].groepen, [0, 1]);
+  assertGelijk(gewisseld.banen[0].leners, ['b1']);
+  assertGelijk(gewisseld.banen[1].leners, ['a1']);
+  assertGelijk(ronde.banen[0].teamA, ['a1', 'a2'], 'origineel is gewijzigd');
+});
+
+test('wisselSpelers wisselt een speler op een baan met een rustende speler', function () {
+  const ronde = {
+    banen: [{ baan: 1, teamA: ['a', 'b'], teamB: ['c', 'd'], thuisgroep: 0, groepen: [0], leners: [] }],
+    rustend: ['e'],
+    gepauzeerd: ['f'],
+  };
+  const gewisseld = Hussel.wisselSpelers(ronde, 'e', 'c', { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 });
+  assertGelijk(gewisseld.banen[0].teamB, ['e', 'd']);
+  assertGelijk(gewisseld.rustend, ['c']);
+  assertGelijk(gewisseld.gepauzeerd, ['f']);
+  assertGelijk(new Set(alleIngedeeld(gewisseld)).size, 6);
+});
+
+test('wisselSpelers laat een gepauzeerde speler ongemoeid', function () {
+  const ronde = {
+    banen: [{ baan: 1, teamA: ['a', 'b'], teamB: ['c', 'd'], thuisgroep: 0, groepen: [0], leners: [] }],
+    rustend: [],
+    gepauzeerd: ['f'],
+  };
+  const gewisseld = Hussel.wisselSpelers(ronde, 'f', 'a', { a: 0, b: 0, c: 0, d: 0, f: 0 });
+  assertGelijk(gewisseld.banen[0].teamA, ['a', 'b']);
+  assertGelijk(gewisseld.gepauzeerd, ['f']);
+});
+
+function meetAvond(sleutel) {
+  const spelers = maakSpelers([6, 6, 6, 6]);
+  const rondes = [];
+  for (let i = 0; i < 10; i += 1) {
+    rondes.push(Hussel.genereerRonde({
+      aanwezigen: spelers,
+      banen: 6,
+      historie: rondes,
+      gewichten: Presets.gewichten(sleutel),
+      rng: Hussel.maakRng(900 + i),
+      pogingen: 100,
+    }));
+  }
+  let kloof = 0;
+  let herhaling = 0;
+  const gezien = { partner: {}, tegenstander: {} };
+  for (const ronde of rondes) {
+    for (const baan of ronde.banen) {
+      kloof += baan.groepen[baan.groepen.length - 1] - baan.groepen[0];
+      for (const team of [baan.teamA, baan.teamB]) {
+        const s = Hussel.sleutel(team[0], team[1]);
+        if (gezien.partner[s]) herhaling += 1;
+        gezien.partner[s] = true;
+      }
+      for (const a of baan.teamA) {
+        for (const b of baan.teamB) {
+          const s = Hussel.sleutel(a, b);
+          if (gezien.tegenstander[s]) herhaling += 1;
+          gezien.tegenstander[s] = true;
+        }
+      }
+    }
+  }
+  return { kloof: kloof, herhaling: herhaling };
+}
+
+test('presets: Binnen niveau geeft minder niveaukloof dan Sociaal mixen', function () {
+  const niveau = meetAvond('niveau');
+  const sociaal = meetAvond('sociaal');
+  assert(niveau.kloof < sociaal.kloof, 'kloof niveau ' + niveau.kloof + ', sociaal ' + sociaal.kloof);
+});
+
+test('presets: Sociaal mixen geeft minder herhaling dan Binnen niveau', function () {
+  const niveau = meetAvond('niveau');
+  const sociaal = meetAvond('sociaal');
+  assert(sociaal.herhaling < niveau.herhaling, 'herhaling sociaal ' + sociaal.herhaling + ', niveau ' + niveau.herhaling);
+});
+
+test('presets: een onbekende sleutel valt terug op de standaard', function () {
+  assertGelijk(Presets.op('bestaat-niet').sleutel, Presets.STANDAARD);
+});
+
+function maakTestClub(aantal) {
+  const spelers = [];
+  for (let i = 0; i < aantal; i += 1) spelers.push({ id: 'p' + i, naam: 'Speler ' + i, groep: i % 2 });
+  return { groepen: ['Sterk', 'Zwak'], spelers: spelers };
+}
+
+function idsVan(club, aantal) {
+  return club.spelers.slice(0, aantal).map(function (s) { return s.id; });
+}
+
+test('sessie: een claim op een vrije naam lukt, een tweede claim wordt geweigerd', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  let uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p0' });
+  assertGelijk(uitkomst.antwoord, null);
+  avond = uitkomst.avond;
+  uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'claim', speler: 'p0' });
+  assertGelijk(uitkomst.antwoord, { fout: 'bezet' });
+  avond = Sessie.ontkoppel(avond, 'p0').avond;
+  uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'claim', speler: 'p0' });
+  assertGelijk(uitkomst.antwoord, null);
+  assertGelijk(uitkomst.avond.koppelingen, { t2: 'p0' });
+});
+
+test('sessie: een telefoon claimt één naam tegelijk', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p0' }).avond;
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p1' }).avond;
+  assertGelijk(avond.koppelingen, { t1: 'p1' });
+});
+
+test('sessie: hallo met een onthouden naam koppelt opnieuw', function () {
+  const club = maakTestClub(8);
+  const avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p3' });
+  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p3' });
+});
+
+test('sessie: pauze, vertrek en aanmelden via de telefoon geven dezelfde avond als op de laptop', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond);
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p1' }).avond;
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't9', type: 'claim', speler: 'p9' }).avond;
+
+  const viaTelefoon = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'pauze', aan: true }).avond;
+  assertGelijk(viaTelefoon, Sessie.zetPauze(avond, 'p1', true));
+
+  const vertrek = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'vertrek' }).avond;
+  assertGelijk(vertrek, Sessie.meldAf(avond, 'p1'));
+
+  const aanmelding = Sessie.pasVerzoekToe(avond, club, { telefoon: 't9', type: 'aanmelden' }).avond;
+  assertGelijk(aanmelding, Sessie.meldAan(avond, 'p9'));
+});
+
+test('sessie: pauze zonder gekoppelde naam wordt geweigerd', function () {
+  const club = maakTestClub(8);
+  const avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'pauze', aan: true });
+  assertGelijk(uitkomst.antwoord, { fout: 'geen-naam' });
+});
+
+test('sessie: een laatkomer krijgt het hoogste rustsaldo onder de aanwezigen', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 9), 2, 'ABCDEF');
+  for (let i = 0; i < 3; i += 1) {
+    avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(i), pogingen: 5 }).avond);
+  }
+  const stat = Hussel.maakHistorieStatistiek(avond.rondes, avond.rustcorrectie);
+  const hoogste = Hussel.hoogsteRustsaldo(stat, avond.aanwezigen);
+  avond = Sessie.meldAan(avond, 'p9');
+  const na = Hussel.maakHistorieStatistiek(avond.rondes, avond.rustcorrectie);
+  assertGelijk(Hussel.aantal(na.rust, 'p9'), hoogste);
+});
+
+test('sessie: een gastverzoek voegt pas iemand toe nadat de organisator een groep kiest', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'gast', naam: ' Gerda ' });
+  avond = uitkomst.avond;
+  assertGelijk(uitkomst.club.spelers.length, 8, 'gast staat al in de club');
+  assertGelijk(avond.gastverzoeken.length, 1);
+  assertGelijk(avond.gastverzoeken[0].naam, 'Gerda');
+
+  const goed = Sessie.keurGastGoed(avond, club, avond.gastverzoeken[0].id, 1, 'nieuw1');
+  assertGelijk(goed.club.spelers.length, 9);
+  assertGelijk(goed.club.spelers[8], { id: 'nieuw1', naam: 'Gerda', groep: 1 });
+  assert(goed.avond.aanwezigen.indexOf('nieuw1') !== -1, 'gast is niet aanwezig');
+  assertGelijk(goed.avond.koppelingen.t7, 'nieuw1');
+  assertGelijk(goed.avond.gastverzoeken, []);
+});
+
+test('sessie: een gast met een bestaande naam wordt naar de lijst verwezen', function () {
+  const club = maakTestClub(8);
+  const avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'gast', naam: 'speler 3' });
+  assertGelijk(uitkomst.antwoord, { fout: 'naam-bestaat' });
+});
+
+test('sessie: het concept telt niet mee in de historie', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
+  assert(avond.concept !== null, 'geen concept');
+  assertGelijk(avond.rondes.length, 0);
+  avond = Sessie.publiceer(avond);
+  assertGelijk(avond.rondes.length, 1);
+  assertGelijk(avond.concept, null);
+});
+
+test('sessie: een pauze vervalt bij het publiceren van de ronde waarvoor hij gold', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.zetPauze(avond, 'p2', true);
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
+  assertGelijk(avond.concept.gepauzeerd, ['p2']);
+  avond = Sessie.publiceer(avond);
+  assertGelijk(avond.pauzes, {});
+});
+
+test('sessie: een pauze na het concept wordt gemarkeerd en schuift door als het concept zo gepubliceerd wordt', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
+  avond = Sessie.zetPauze(avond, 'p4', true);
+  assertGelijk(avond.verouderd, { p4: 'pauze' });
+  avond = Sessie.publiceer(avond);
+  assertGelijk(avond.pauzes, { p4: true });
+  assertGelijk(avond.verouderd, {});
+});
+
+test('sessie: de telefoon ziet alleen de gepubliceerde ronde en zijn eigen plek', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p0' }).avond;
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
+  assertGelijk(Sessie.toestandVoor(avond, club, 't1').ronde, null, 'concept is zichtbaar');
+  avond = Sessie.publiceer(avond);
+  const toestand = Sessie.toestandVoor(avond, club, 't1');
+  assertGelijk(toestand.ronde.nummer, 1);
+  assertGelijk(toestand.ikNaam, 'Speler 0');
+  assertGelijk(toestand.mijn.status, 'speelt');
+  assertGelijk(toestand.mijn.tegen.length, 2);
+});
+
+test('sessie: het aantal banen wijzigen laat de gespeelde rondes staan en geldt bij de volgende loting', function () {
+  const club = maakTestClub(16);
+  let avond = Sessie.nieuweAvond(idsVan(club, 16), 2, 'ABCDEF');
+  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond);
+  avond = Sessie.zetBanen(avond, 4);
+  assertGelijk(avond.rondes[0].banen.length, 2, 'gespeelde ronde is veranderd');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(2), pogingen: 5 }).avond;
+  assertGelijk(avond.concept.banen.length, 4);
+});
+
+test('sessie: het aantal banen blijft tussen één en twintig', function () {
+  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  assertGelijk(Sessie.zetBanen(avond, 0).banen, 1);
+  assertGelijk(Sessie.zetBanen(avond, 25).banen, 20);
 });

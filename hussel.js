@@ -7,6 +7,27 @@
   const GEWICHT_LENER = 4;
   const AANTAL_POGINGEN = 300;
 
+  // Menging 0 houdt de banen strikt op niveauvolgorde. Hogere waarden laten
+  // spelers met een kans over het breukvlak naar een naastliggende groep
+  // schuiven, zodat de presets ook echt kunnen mengen.
+  const STANDAARD_GEWICHTEN = {
+    partner: GEWICHT_PARTNER,
+    tegenstander: GEWICHT_TEGENSTANDER,
+    niveaukloof: GEWICHT_NIVEAUKLOOF,
+    lener: GEWICHT_LENER,
+    menging: 0,
+  };
+
+  function vulGewichten(gewichten) {
+    const volledig = {};
+    for (const naam of Object.keys(STANDAARD_GEWICHTEN)) {
+      volledig[naam] = gewichten && typeof gewichten[naam] === 'number'
+        ? gewichten[naam]
+        : STANDAARD_GEWICHTEN[naam];
+    }
+    return volledig;
+  }
+
   // Mulberry32: klein, snel en reproduceerbaar. Nodig omdat elke ronde
   // honderden keren met andere willekeur wordt gegenereerd, en tests dat
   // moeten kunnen herhalen.
@@ -55,7 +76,9 @@
     }
 
     for (const ronde of rondes) {
-      for (const id of ronde.rustend) {
+      // Een vrijwillige pauze telt als rustbeurt, zodat wie terugkomt als
+      // eerste weer speelt.
+      for (const id of ronde.rustend.concat(ronde.gepauzeerd || [])) {
         tel(stat.rust, id);
       }
       for (const baan of ronde.banen) {
@@ -105,9 +128,14 @@
   // Eerst husselen, dan stabiel sorteren op groep: de groepsvolgorde ligt
   // vast, maar binnen een groep wisselt de volgorde per ronde. Daardoor
   // rouleert vanzelf wie er op een breukvlak tussen twee groepen valt.
-  function verdeelOverBanen(spelend, rng) {
-    const rij = husselLijst(spelend, rng).sort(function (a, b) {
-      return a.groep - b.groep;
+  function verdeelOverBanen(spelend, rng, menging) {
+    const gehusseld = husselLijst(spelend, rng);
+    const rang = {};
+    for (const speler of gehusseld) {
+      rang[speler.id] = menging > 0 ? speler.groep + rng() * menging : speler.groep;
+    }
+    const rij = gehusseld.sort(function (a, b) {
+      return rang[a.id] - rang[b.id];
     });
     const banen = [];
     for (let i = 0; i + 4 <= rij.length; i += 4) {
@@ -142,37 +170,38 @@
     return getal * getal;
   }
 
-  function scoorViertal(teamA, teamB, stat) {
+  function scoorViertal(teamA, teamB, stat, gewichten) {
+    const g = gewichten === undefined ? STANDAARD_GEWICHTEN : gewichten;
     let score = 0;
 
-    score += GEWICHT_PARTNER * kwadraat(aantal(stat.partner, sleutel(teamA[0].id, teamA[1].id)));
-    score += GEWICHT_PARTNER * kwadraat(aantal(stat.partner, sleutel(teamB[0].id, teamB[1].id)));
+    score += g.partner * kwadraat(aantal(stat.partner, sleutel(teamA[0].id, teamA[1].id)));
+    score += g.partner * kwadraat(aantal(stat.partner, sleutel(teamB[0].id, teamB[1].id)));
 
     for (const a of teamA) {
       for (const b of teamB) {
-        score += GEWICHT_TEGENSTANDER * kwadraat(aantal(stat.tegenstander, sleutel(a.id, b.id)));
+        score += g.tegenstander * kwadraat(aantal(stat.tegenstander, sleutel(a.id, b.id)));
       }
     }
 
     const viertal = teamA.concat(teamB);
     const groepen = viertal.map(function (speler) { return speler.groep; });
     const kloof = Math.max.apply(null, groepen) - Math.min.apply(null, groepen);
-    score += GEWICHT_NIVEAUKLOOF * kwadraat(kloof);
+    score += g.niveaukloof * kwadraat(kloof);
 
     for (const lener of bepaalLeners(viertal).leners) {
-      score += GEWICHT_LENER * kwadraat(aantal(stat.lener, lener.id));
+      score += g.lener * kwadraat(aantal(stat.lener, lener.id));
     }
 
     return score;
   }
 
-  function kiesTeams(viertal, stat) {
+  function kiesTeams(viertal, stat, gewichten) {
     let beste = null;
     let besteScore = Infinity;
     for (const verdeling of TEAMVERDELINGEN) {
       const teamA = [viertal[verdeling[0][0]], viertal[verdeling[0][1]]];
       const teamB = [viertal[verdeling[1][0]], viertal[verdeling[1][1]]];
-      const score = scoorViertal(teamA, teamB, stat);
+      const score = scoorViertal(teamA, teamB, stat, gewichten);
       if (score < besteScore) {
         besteScore = score;
         beste = { teamA: teamA, teamB: teamB };
@@ -207,21 +236,27 @@
       ? maakRng(Math.floor(Math.random() * 4294967296))
       : invoer.rng;
 
+    const gewichten = vulGewichten(invoer.gewichten);
+    const gepauzeerd = invoer.gepauzeerd === undefined ? [] : invoer.gepauzeerd;
+    const pauzeert = {};
+    for (const id of gepauzeerd) pauzeert[id] = true;
+    const beschikbaar = aanwezigen.filter(function (speler) { return !pauzeert[speler.id]; });
+
     const stat = maakHistorieStatistiek(historie, invoer.rustcorrectie);
-    const plekken = aantalPlekken(aanwezigen.length, invoer.banen);
+    const plekken = aantalPlekken(beschikbaar.length, invoer.banen);
     if (plekken === 0) return null;
 
     let beste = null;
     let besteScore = Infinity;
 
     for (let poging = 0; poging < pogingen; poging += 1) {
-      const keuze = kiesSpelenden(aanwezigen, plekken, stat, rng);
-      const viertallen = verdeelOverBanen(keuze.spelend, rng);
-      const teamsPerBaan = viertallen.map(function (viertal) { return kiesTeams(viertal, stat); });
+      const keuze = kiesSpelenden(beschikbaar, plekken, stat, rng);
+      const viertallen = verdeelOverBanen(keuze.spelend, rng, gewichten.menging);
+      const teamsPerBaan = viertallen.map(function (viertal) { return kiesTeams(viertal, stat, gewichten); });
 
       let score = 0;
       for (const teams of teamsPerBaan) {
-        score += scoorViertal(teams.teamA, teams.teamB, stat);
+        score += scoorViertal(teams.teamA, teams.teamB, stat, gewichten);
       }
 
       if (score < besteScore) {
@@ -233,27 +268,75 @@
     return {
       banen: beste.teamsPerBaan.map(function (teams, index) { return maakBaan(index + 1, teams); }),
       rustend: beste.rustend.map(function (speler) { return speler.id; }),
+      gepauzeerd: aanwezigen
+        .filter(function (speler) { return pauzeert[speler.id]; })
+        .map(function (speler) { return speler.id; }),
     };
   }
 
+  // Wisselt twee spelers van plek: binnen een baan, tussen banen, of tussen
+  // een baan en de rustlijst. groepVan geeft per id de groepsindex, zodat
+  // groepen, thuisgroep en leners per baan opnieuw kloppen.
+  function wisselSpelers(ronde, idA, idB, groepVan) {
+    const kopie = JSON.parse(JSON.stringify(ronde));
+    if (idA === idB) return kopie;
+
+    const lijsten = [kopie.rustend];
+    for (const baan of kopie.banen) lijsten.push(baan.teamA, baan.teamB);
+
+    function vind(id) {
+      for (const lijst of lijsten) {
+        const index = lijst.indexOf(id);
+        if (index !== -1) return { lijst: lijst, index: index };
+      }
+      return null;
+    }
+
+    const plekA = vind(idA);
+    const plekB = vind(idB);
+    if (!plekA || !plekB) return kopie;
+    plekA.lijst[plekA.index] = idB;
+    plekB.lijst[plekB.index] = idA;
+
+    function alsSpeler(id) {
+      return { id: id, groep: groepVan[id] === undefined ? 0 : groepVan[id] };
+    }
+
+    kopie.banen = kopie.banen.map(function (baan) {
+      return maakBaan(baan.baan, {
+        teamA: baan.teamA.map(alsSpeler),
+        teamB: baan.teamB.map(alsSpeler),
+      });
+    });
+    return kopie;
+  }
+
   function maakOverzicht(rondes, ids) {
-    const stat = maakHistorieStatistiek(rondes);
     const gespeeld = {};
+    const gerust = {};
+    const gepauzeerd = {};
     for (const ronde of rondes) {
       for (const baan of ronde.banen) {
-        for (const id of baan.teamA.concat(baan.teamB)) {
-          gespeeld[id] = aantal(gespeeld, id) + 1;
-        }
+        for (const id of baan.teamA.concat(baan.teamB)) tel(gespeeld, id);
       }
+      for (const id of ronde.rustend) tel(gerust, id);
+      for (const id of ronde.gepauzeerd || []) tel(gepauzeerd, id);
     }
     return ids.map(function (id) {
-      return { id: id, gespeeld: aantal(gespeeld, id), gerust: aantal(stat.rust, id) };
+      return {
+        id: id,
+        gespeeld: aantal(gespeeld, id),
+        gerust: aantal(gerust, id),
+        gepauzeerd: aantal(gepauzeerd, id),
+      };
     });
   }
 
   globalThis.Hussel = {
     maakOverzicht: maakOverzicht,
     genereerRonde: genereerRonde,
+    wisselSpelers: wisselSpelers,
+    STANDAARD_GEWICHTEN: STANDAARD_GEWICHTEN,
     scoorViertal: scoorViertal,
     kiesTeams: kiesTeams,
     verdeelOverBanen: verdeelOverBanen,

@@ -758,7 +758,7 @@ test('sessie: pauze, vertrek en aanmelden via de telefoon geven dezelfde avond a
   assertGelijk(viaTelefoon, Sessie.zetPauze(avond, 'p1', true));
 
   const vertrek = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'vertrek' }).avond;
-  assertGelijk(vertrek, Sessie.meldAf(avond, 'p1'));
+  assertGelijk(vertrek, Sessie.vertrek(avond, club, 'p1').avond);
 
   const weg = Sessie.meldAf(avond, 'p9');
   const aanmelding = Sessie.pasVerzoekToe(weg, club, { telefoon: 't9', type: 'aanmelden' }).avond;
@@ -992,4 +992,115 @@ test('sessie: aanvinken op de laptop maakt niemand de eerste', function () {
   avond = Sessie.meldAan(avond, 'p0');
   avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p0' }).avond;
   assertGelijk(avond.eerste, undefined);
+});
+
+function opBaan(ronde) {
+  return ronde.banen.flatMap(function (b) { return b.teamA.concat(b.teamB); });
+}
+
+function preciesEenKeer(ronde, aanwezigen) {
+  const ids = opBaan(ronde).concat(ronde.rustend, ronde.gepauzeerd || []);
+  assertGelijk(ids.slice().sort(), aanwezigen.slice().sort(), 'niet iedereen precies één keer ingedeeld');
+}
+
+test('invallen: een pauze in het concept vervangt alleen die speler', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
+  const voor = avond.concept;
+  const uit = voor.banen[1].teamA[0];
+  const gevolg = Sessie.pauzeer(avond, club, uit, true, false);
+  const na = gevolg.avond.concept;
+  assertGelijk(gevolg.invallen.length, 1);
+  assertGelijk(gevolg.invallen[0].waar, 'concept');
+  assert(voor.rustend.indexOf(gevolg.invallen[0].in) !== -1, 'invaller rustte niet');
+  assertGelijk(na.banen[0].teamA.concat(na.banen[0].teamB), voor.banen[0].teamA.concat(voor.banen[0].teamB), 'andere baan veranderde');
+  assertGelijk(na.banen[1].teamA[0], gevolg.invallen[0].in);
+  assertGelijk(na.gepauzeerd, [uit]);
+  assertGelijk(gevolg.avond.verouderd, {});
+  preciesEenKeer(na, gevolg.avond.aanwezigen);
+  assertGelijk(Sessie.publiceer(gevolg.avond).pauzes, {}, 'pauze niet verbruikt bij publiceren');
+});
+
+test('invallen: handmatige wissels in het concept blijven staan', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
+  const a = avond.concept.banen[0].teamA[0];
+  const b = avond.concept.banen[1].teamB[1];
+  avond = Sessie.wissel(avond, club, a, b);
+  const uit = avond.concept.banen[1].teamA[0];
+  const na = Sessie.pauzeer(avond, club, uit, true, false).avond.concept;
+  assertGelijk(na.banen[0].teamA[0], b, 'handmatige wissel is weg');
+  assertGelijk(na.banen[1].teamB[1], a, 'handmatige wissel is weg');
+});
+
+test('invallen: zonder rustende spelers wordt het concept opnieuw geloot', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
+  const gevolg = Sessie.pauzeer(avond, club, 'p3', true, false);
+  assertGelijk(gevolg.avond.concept.banen.length, 1);
+  assertGelijk(gevolg.avond.concept.gepauzeerd, ['p3']);
+  preciesEenKeer(gevolg.avond.concept, gevolg.avond.aanwezigen);
+});
+
+test('invallen: nu meteen pauzeren vervangt de speler in de lopende ronde', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond);
+  const lopend = avond.rondes[0];
+  const uit = lopend.banen[0].teamB[1];
+  const gevolg = Sessie.pauzeer(avond, club, uit, true, true);
+  const na = gevolg.avond.rondes[0];
+  assertGelijk(gevolg.invallen[0].waar, 'ronde');
+  assertGelijk(na.banen[0].teamB[1], gevolg.invallen[0].in);
+  assertGelijk(na.gepauzeerd, [uit]);
+  assertGelijk(gevolg.avond.pauzes, {}, 'pauze geldt ook nog voor de volgende ronde');
+  preciesEenKeer(na, gevolg.avond.aanwezigen);
+  const stat = Hussel.maakOverzicht(gevolg.avond.rondes, [uit, gevolg.invallen[0].in]);
+  assertGelijk([stat[0].gespeeld, stat[0].gepauzeerd, stat[1].gespeeld], [0, 1, 1]);
+});
+
+test('invallen: wie naar huis gaat, wordt in concept en lopende ronde vervangen', function () {
+  const club = maakTestClub(12);
+  let avond = Sessie.nieuweAvond(idsVan(club, 12), 2, 'ABCDEF');
+  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond);
+  const uit = avond.rondes[0].banen[0].teamA[1];
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(5), pogingen: 5 }).avond;
+  const gevolg = Sessie.vertrek(avond, club, uit);
+  assert(gevolg.avond.aanwezigen.indexOf(uit) === -1, 'nog aanwezig');
+  const lopend = gevolg.avond.rondes[0];
+  assert(opBaan(lopend).concat(lopend.rustend, lopend.gepauzeerd).indexOf(uit) === -1, 'staat nog in de lopende ronde');
+  const concept = gevolg.avond.concept;
+  assert(opBaan(concept).concat(concept.rustend, concept.gepauzeerd).indexOf(uit) === -1, 'staat nog in het concept');
+  preciesEenKeer(lopend, gevolg.avond.aanwezigen);
+  preciesEenKeer(concept, gevolg.avond.aanwezigen);
+});
+
+test('invallen: de invaller is wie het meest rustte, dan wie het dichtst bij het niveau zit', function () {
+  const club = { groepen: ['A', 'B', 'C'], spelers: [
+    { id: 'a1', naam: 'a1', groep: 0 }, { id: 'a2', naam: 'a2', groep: 0 }, { id: 'a3', naam: 'a3', groep: 0 }, { id: 'a4', naam: 'a4', groep: 0 },
+    { id: 'b1', naam: 'b1', groep: 1 }, { id: 'c1', naam: 'c1', groep: 2 }, { id: 'c2', naam: 'c2', groep: 2 },
+  ] };
+  let avond = Sessie.nieuweAvond(['a1', 'a2', 'a3', 'a4', 'b1', 'c1', 'c2'], 1, 'ABCDEF');
+  avond.concept = {
+    banen: [{ baan: 1, teamA: ['a1', 'a2'], teamB: ['a3', 'a4'], thuisgroep: 0, groepen: [0], leners: [] }],
+    rustend: ['c1', 'b1', 'c2'], gepauzeerd: [],
+  };
+  assertGelijk(Sessie.pauzeer(avond, club, 'a1', true, false).invallen[0].in, 'b1', 'dichtstbijzijnd niveau');
+  avond.rustcorrectie = { c2: 2 };
+  assertGelijk(Sessie.pauzeer(avond, club, 'a1', true, false).invallen[0].in, 'c2', 'meeste rust gaat voor');
+});
+
+test('invallen: pauze intrekken zet de speler in het concept terug bij de rustenden', function () {
+  const club = maakTestClub(10);
+  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
+  const uit = avond.concept.banen[0].teamA[0];
+  avond = Sessie.pauzeer(avond, club, uit, true, false).avond;
+  avond = Sessie.pauzeer(avond, club, uit, false, false).avond;
+  assertGelijk(avond.concept.gepauzeerd, []);
+  assert(avond.concept.rustend.indexOf(uit) !== -1, 'niet terug bij de rustenden');
+  preciesEenKeer(avond.concept, avond.aanwezigen);
 });

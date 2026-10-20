@@ -86,7 +86,118 @@
     if (aan) nieuw.pauzes[id] = true;
     else delete nieuw.pauzes[id];
     markeer(nieuw, id, aan ? 'pauze' : 'terug');
+    // Wie zijn pauze intrekt terwijl het concept hem al als pauzerend
+    // heeft, staat daarin weer gewoon bij de rustenden.
+    if (!aan && nieuw.concept && (nieuw.concept.gepauzeerd || []).indexOf(id) !== -1) {
+      nieuw.concept.gepauzeerd = nieuw.concept.gepauzeerd.filter(function (g) { return g !== id; });
+      nieuw.concept.rustend.push(id);
+    }
     return nieuw;
+  }
+
+  function baanVan(ronde, id) {
+    for (const baan of ronde.banen) {
+      if (baan.teamA.indexOf(id) !== -1 || baan.teamB.indexOf(id) !== -1) return baan.baan;
+    }
+    return null;
+  }
+
+  // De invaller is de rustende speler die het meest gerust heeft; bij
+  // gelijke stand die het dichtst bij het niveau van de uitvaller zit.
+  function invallerVoor(ronde, avond, club, historie, id) {
+    const groepen = groepVan(club);
+    const stat = Hussel.maakHistorieStatistiek(historie, avond.rustcorrectie);
+    let beste = null;
+    let besteRust = -1;
+    let besteAfstand = Infinity;
+    for (const kandidaat of ronde.rustend) {
+      if (kandidaat === id || !isAanwezig(avond, kandidaat) || avond.pauzes[kandidaat]) continue;
+      const rust = Hussel.aantal(stat.rust, kandidaat);
+      const afstand = Math.abs((groepen[kandidaat] || 0) - (groepen[id] || 0));
+      if (rust > besteRust || (rust === besteRust && afstand < besteAfstand)) {
+        beste = kandidaat;
+        besteRust = rust;
+        besteAfstand = afstand;
+      }
+    }
+    return beste;
+  }
+
+  // Haalt de uitvaller uit de rustlijst van een ronde. Bij een pauze komt
+  // hij bij de pauzerenden, zodat het als rustbeurt telt; wie vertrekt,
+  // verdwijnt uit de ronde.
+  function haalUit(ronde, id, reden) {
+    ronde.rustend = ronde.rustend.filter(function (r) { return r !== id; });
+    ronde.gepauzeerd = (ronde.gepauzeerd || []).filter(function (g) { return g !== id; });
+    if (reden === 'pauze') ronde.gepauzeerd.push(id);
+  }
+
+  function vervangInRonde(ronde, avond, club, historie, id, reden) {
+    const baan = baanVan(ronde, id);
+    let nieuw = kopie(ronde);
+    if (baan === null) {
+      haalUit(nieuw, id, reden);
+      return { ronde: nieuw, invaller: null, baan: null };
+    }
+    const invaller = invallerVoor(ronde, avond, club, historie, id);
+    if (!invaller) return { ronde: ronde, invaller: null, baan: baan };
+    nieuw = Hussel.wisselSpelers(nieuw, id, invaller, groepVan(club));
+    haalUit(nieuw, id, reden);
+    return { ronde: nieuw, invaller: invaller, baan: baan };
+  }
+
+  // Iemand valt uit: alleen die speler wordt vervangen, de rest van de
+  // indeling blijft staan, ook handmatige wissels. In het concept bij een
+  // pauze of vertrek; in de lopende ronde bij een vertrek of een pauze die
+  // 'nu meteen' geldt. Is er niemand om in te vallen, dan wordt het concept
+  // opnieuw geloot en blijft de lopende ronde zoals hij is.
+  function valtUit(avond, club, id, opties) {
+    let nieuw = kopie(avond);
+    const invallen = [];
+    const metConcept = opties.reden === 'vertrek' || !opties.nu;
+    const metLopende = opties.reden === 'vertrek' || opties.nu;
+
+    if (nieuw.concept && metConcept) {
+      const opBaan = baanVan(nieuw.concept, id) !== null;
+      const uitkomst = vervangInRonde(nieuw.concept, nieuw, club, nieuw.rondes, id, opties.reden);
+      if (opBaan && !uitkomst.invaller) {
+        const opnieuw = maakConcept(nieuw, club, { gewichten: opties.gewichten });
+        if (!opnieuw.fout) {
+          nieuw = opnieuw.avond;
+          invallen.push({ waar: 'concept', uit: id, in: null, baan: null });
+        }
+      } else {
+        nieuw.concept = uitkomst.ronde;
+        if (uitkomst.invaller) invallen.push({ waar: 'concept', uit: id, in: uitkomst.invaller, baan: uitkomst.baan });
+      }
+      delete nieuw.verouderd[id];
+    }
+
+    if (metLopende && nieuw.rondes.length) {
+      const index = nieuw.rondes.length - 1;
+      const lopende = nieuw.rondes[index];
+      if (baanVan(lopende, id) !== null) {
+        const uitkomst = vervangInRonde(lopende, nieuw, club, nieuw.rondes.slice(0, index), id, opties.reden);
+        nieuw.rondes[index] = uitkomst.ronde;
+        invallen.push({ waar: 'ronde', uit: id, in: uitkomst.invaller, baan: uitkomst.baan });
+      }
+    }
+    return { avond: nieuw, invallen: invallen };
+  }
+
+  // Pauze voor de volgende ronde, of met nu: true voor de lopende ronde
+  // waarin de speler al op een baan staat.
+  function pauzeer(avond, club, id, aan, nu, gewichten) {
+    if (!isAanwezig(avond, id)) return { avond: avond, invallen: [] };
+    if (aan && nu) return valtUit(avond, club, id, { reden: 'pauze', nu: true, gewichten: gewichten });
+    const nieuw = zetPauze(avond, id, aan);
+    if (!aan) return { avond: nieuw, invallen: [] };
+    return valtUit(nieuw, club, id, { reden: 'pauze', nu: false, gewichten: gewichten });
+  }
+
+  function vertrek(avond, club, id, gewichten) {
+    if (!isAanwezig(avond, id)) return { avond: avond, invallen: [] };
+    return valtUit(meldAf(avond, id), club, id, { reden: 'vertrek', gewichten: gewichten });
   }
 
   // Het aantal banen mag tussen rondes veranderen. De lopende ronde blijft
@@ -272,17 +383,18 @@
     return { avond: nieuw, club: uitkomst.club, antwoord: null };
   }
 
-  function pasVerzoekToe(avond, club, verzoek, nieuwId) {
-    const uitkomst = verwerkVerzoek(avond, club, verzoek, nieuwId);
+  function pasVerzoekToe(avond, club, verzoek, nieuwId, gewichten) {
+    const uitkomst = verwerkVerzoek(avond, club, verzoek, nieuwId, gewichten);
     if (['claim', 'registreer', 'aanmelden'].indexOf(verzoek.type) === -1) return uitkomst;
-    return onthoudEerste({ avond: uitkomst.avond, club: uitkomst.club, antwoord: uitkomst.antwoord, telefoon: verzoek.telefoon });
+    const metEerste = onthoudEerste({ avond: uitkomst.avond, club: uitkomst.club, antwoord: uitkomst.antwoord, telefoon: verzoek.telefoon });
+    return { avond: metEerste.avond, club: metEerste.club, antwoord: metEerste.antwoord, invallen: uitkomst.invallen };
   }
 
-  function verwerkVerzoek(avond, club, verzoek, nieuwId) {
+  function verwerkVerzoek(avond, club, verzoek, nieuwId, gewichten) {
     const telefoon = verzoek.telefoon;
     const ik = avond.koppelingen[telefoon] || null;
-    function uitkomst(nieuweAvond, fout, nieuweClub) {
-      return { avond: nieuweAvond, club: nieuweClub || club, antwoord: fout ? { fout: fout } : null };
+    function uitkomst(nieuweAvond, fout, nieuweClub, invallen) {
+      return { avond: nieuweAvond, club: nieuweClub || club, antwoord: fout ? { fout: fout } : null, invallen: invallen || [] };
     }
 
     switch (verzoek.type) {
@@ -311,13 +423,17 @@
         delete nieuw.koppelingen[telefoon];
         return uitkomst(nieuw, null);
       }
-      case 'pauze':
+      case 'pauze': {
         if (!ik) return uitkomst(avond, 'geen-naam');
         if (!isAanwezig(avond, ik)) return uitkomst(avond, 'niet-aanwezig');
-        return uitkomst(zetPauze(avond, ik, verzoek.aan), null);
-      case 'vertrek':
+        const gevolg = pauzeer(avond, club, ik, verzoek.aan, verzoek.nu === true, gewichten);
+        return uitkomst(gevolg.avond, null, null, gevolg.invallen);
+      }
+      case 'vertrek': {
         if (!ik) return uitkomst(avond, 'geen-naam');
-        return uitkomst(meldAf(avond, ik), null);
+        const gevolg = vertrek(avond, club, ik, gewichten);
+        return uitkomst(gevolg.avond, null, null, gevolg.invallen);
+      }
       case 'aanmelden':
         if (!ik) return uitkomst(avond, 'geen-naam');
         return uitkomst(meldAan(avond, ik), null);
@@ -397,6 +513,9 @@
     meldAan: meldAan,
     meldAf: meldAf,
     zetPauze: zetPauze,
+    pauzeer: pauzeer,
+    vertrek: vertrek,
+    valtUit: valtUit,
     zetBanen: zetBanen,
     aanwezigeSpelers: aanwezigeSpelers,
     maakConcept: maakConcept,

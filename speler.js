@@ -111,8 +111,24 @@
     }
   }
 
+  function buzz() {
+    if (navigator.vibrate) navigator.vibrate([250, 120, 250]);
+    const kaart = $('mijn-kaart');
+    kaart.classList.remove('flits');
+    void kaart.offsetWidth;
+    kaart.classList.add('flits');
+  }
+
+  let vorigeStatus = null;
   function meldNieuweRonde(toestand) {
     const nummer = toestand.ronde ? toestand.ronde.nummer : 0;
+    const status = toestand.mijn ? toestand.mijn.status : null;
+    // Dezelfde ronde, maar nu ineens op een baan: de speler valt in.
+    if (toestand.ik && nummer === staat.laatsteRonde && vorigeStatus && vorigeStatus !== 'speelt' && status === 'speelt') {
+      buzz();
+      toast(T.tel_invallen(toestand.mijn.baan));
+    }
+    vorigeStatus = status;
     if (staat.laatsteRonde === null) {
       staat.laatsteRonde = nummer;
       return;
@@ -120,12 +136,8 @@
     if (nummer > staat.laatsteRonde) {
       staat.laatsteRonde = nummer;
       if (!toestand.ik) return;
-      if (navigator.vibrate) navigator.vibrate([250, 120, 250]);
+      buzz();
       toast(T.tel_nieuwe_ronde);
-      const kaart = $('mijn-kaart');
-      kaart.classList.remove('flits');
-      void kaart.offsetWidth;
-      kaart.classList.add('flits');
     } else if (nummer < staat.laatsteRonde) {
       staat.laatsteRonde = nummer;
     }
@@ -355,9 +367,29 @@
       }
     });
 
+    // Staat de speler al op een baan in de lopende ronde, dan is 'pauze'
+    // dubbelzinnig: nu meteen stoppen of na deze ronde. Dat kiest hij zelf.
     $('pauze-schakelaar').addEventListener('change', function () {
       const schakelaar = $('pauze-schakelaar');
+      const mijn = laatste && laatste.mijn;
+      if (schakelaar.checked && mijn && mijn.status === 'speelt') {
+        $('pauze-keuze-tekst').textContent = T.tel_pauze_wanneer(mijn.baan);
+        $('pauze-keuze').hidden = false;
+        return;
+      }
       if (!zend({ type: 'pauze', aan: schakelaar.checked })) schakelaar.checked = !schakelaar.checked;
+    });
+
+    function kiesPauze(nu) {
+      $('pauze-keuze').hidden = true;
+      const gelukt = zend({ type: 'pauze', aan: true, nu: nu });
+      $('pauze-schakelaar').checked = gelukt && !nu;
+    }
+    $('pauze-nu').addEventListener('click', function () { kiesPauze(true); });
+    $('pauze-straks').addEventListener('click', function () { kiesPauze(false); });
+    $('pauze-annuleer').addEventListener('click', function () {
+      $('pauze-keuze').hidden = true;
+      $('pauze-schakelaar').checked = false;
     });
 
     $('naar-huis').addEventListener('click', function () {

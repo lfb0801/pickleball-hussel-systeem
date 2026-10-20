@@ -201,7 +201,7 @@
       const verzoek = Object.assign({}, bericht, { telefoon: telefoon });
       const voorAvond = JSON.stringify(this.avond);
       const voorAanwezig = this.avond.aanwezigen.length;
-      const uitkomst = Sessie.pasVerzoekToe(this.avond, this.club, verzoek, this.nieuwId());
+      const uitkomst = Sessie.pasVerzoekToe(this.avond, this.club, verzoek, this.nieuwId(), this.gewichten());
       this.avond = uitkomst.avond;
       if (uitkomst.club !== this.club) {
         this.club = uitkomst.club;
@@ -213,6 +213,7 @@
       if (JSON.stringify(this.avond) !== voorAvond) {
         this.bewaarAvond();
         this.meldVerzoek(verzoek, this.avond.aanwezigen.length - voorAanwezig);
+        this.meldInvallen(uitkomst.invallen);
         this.werkConceptBij();
         this.renderHuidig();
       } else {
@@ -273,11 +274,35 @@
       this.meld(T.niveau_concept(naam, niveau));
     },
 
+    meldInvallen: function (invallen) {
+      if (!invallen || !invallen.length) return;
+      const app = this;
+      this.meld(invallen.map(function (inval) {
+        return T.invaller(app.naam(inval.uit), inval.in ? app.naam(inval.in) : null, inval.baan, inval.waar);
+      }).join(' '));
+    },
+
+    // Pauze of naar huis vanaf de laptop: dezelfde regels als vanaf een
+    // telefoon, met een invaller waar nodig.
+    pauzeer: function (id, aan, nu) {
+      const gevolg = Sessie.pauzeer(this.avond, this.club, id, aan, nu, this.gewichten());
+      this.wijzigAvond(gevolg.avond);
+      this.meldInvallen(gevolg.invallen);
+    },
+
+    stuurNaarHuis: function (id) {
+      const gevolg = Sessie.vertrek(this.avond, this.club, id, this.gewichten());
+      this.wijzigAvond(gevolg.avond);
+      if (gevolg.invallen.length) this.meldInvallen(gevolg.invallen);
+      else this.meld(T.doet_niet_meer_mee(this.naam(id)));
+    },
+
     meldVerzoek: function (verzoek, erbij) {
       const id = this.avond.koppelingen[verzoek.telefoon];
       const speler = id ? this.spelerOp(id) : null;
       if (!speler) return;
       if (verzoek.type === 'vertrek') this.meld(T.doet_niet_meer_mee(speler.naam));
+      else if (verzoek.type === 'pauze' && verzoek.aan) this.meld(T.pauzeert_melding(speler.naam, verzoek.nu === true));
       else if (verzoek.type === 'registreer') this.meld(T.nieuw_aangemeld(speler.naam, this.club.groepen[speler.groep]));
       else if (erbij > 0) this.meld(T.doet_mee(speler.naam));
     },

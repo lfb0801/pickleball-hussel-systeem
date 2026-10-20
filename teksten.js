@@ -93,6 +93,13 @@
     },
     niveau_gewijzigd: function (naam, niveau) { return naam + ' speelt vanaf de volgende ronde op niveau ' + niveau + '.'; },
     niveau_concept: function (naam, niveau) { return naam + ' speelt nu op niveau ' + niveau + '. Het concept is opnieuw geloot.'; },
+    invaller: function (uit, invaller, baan, waar) {
+      const plek = waar === 'ronde' ? 'in de lopende ronde' : 'in het concept';
+      if (!invaller && waar === 'concept') return uit + ' valt uit; het concept is opnieuw geloot.';
+      if (!invaller) return uit + ' valt uit, maar niemand rust om op baan ' + baan + ' in te vallen.';
+      return uit + ' valt uit; ' + invaller + ' valt in op baan ' + baan + ' ' + plek + '.';
+    },
+    pauzeert_melding: function (naam, nu) { return naam + (nu ? ' stopt deze ronde.' : ' slaat de volgende ronde over.'); },
     concept_bijgewerkt: function (namen) {
       return namen.join(', ') + (namen.length === 1 ? ' is' : ' zijn') + ' erbij gekomen. Het concept is opnieuw geloot, zodat '
         + (namen.length === 1 ? 'die meteen meedoet.' : 'zij meteen meedoen.');
@@ -201,6 +208,11 @@
     tel_toch_terug: 'Ik doe weer mee',
     tel_pauze_schakelaar: 'Volgende ronde sla ik over',
     tel_pauze_aan: 'Je slaat de volgende ronde over.',
+    tel_pauze_wanneer: function (baan) { return 'Je staat nu op baan ' + baan + '. Wanneer stop je?'; },
+    tel_pauze_nu: 'Nu meteen, iemand valt in',
+    tel_pauze_straks: 'Na deze ronde',
+    tel_pauze_annuleer: 'Toch niet',
+    tel_invallen: function (baan) { return 'Je valt in op baan ' + baan + '!'; },
     tel_naar_huis: 'Ik ga naar huis',
     tel_naar_huis_vraag: 'Ga je naar huis? Je wordt afgemeld voor de rest van de avond.',
     tel_hele_ronde: 'Hele ronde bekijken',

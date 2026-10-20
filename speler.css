@@ -160,3 +160,6 @@ details summary { font-weight: 600; cursor: pointer; }
 .niveau { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 0.9rem; border: 1.5px solid var(--kleur-rand); border-radius: var(--radius-klein); background: var(--kleur-oppervlak); font-weight: 600; cursor: pointer; }
 .niveau input { width: 1.15rem; height: 1.15rem; padding: 0; accent-color: var(--kleur-primair); }
 .niveau:has(input:checked) { border-color: var(--kleur-primair); background: #F1F8F4; }
+
+.pauze-keuze { margin-top: 0.8rem; padding: 0.9rem; border-radius: var(--radius-klein); background: #FFFBEA; border: 1.5px solid var(--kleur-accent); display: grid; gap: 0.5rem; }
+.pauze-keuze p { margin: 0 0 0.2rem; font-weight: 600; }

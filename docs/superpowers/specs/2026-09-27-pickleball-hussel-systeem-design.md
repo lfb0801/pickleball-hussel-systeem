@@ -143,7 +143,7 @@ De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spe
 
 - *Wachtruimte.* Zolang er nog geen eerste ronde is, toont het scherm een grote QR-code met de sessiecode en, per niveau, wie er al binnen is. Nieuwe namen lichten even op. Een teller meldt hoeveel spelers er nog nodig zijn; de knop *Eerste ronde voorbereiden* werkt vanaf vier beschikbare spelers. Er wordt niets vanzelf geloot, zodat de organisator wacht tot iedereen binnen is.
 
-- *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Wie zich aanmeldt terwijl het concept openstaat, moet de volgende ronde meteen mee kunnen doen: het concept wordt dan vanzelf opnieuw geloot, met de nieuwkomer erin. Dat gebeurt niet als de organisator al met de hand in het concept gewisseld heeft; dan blijft het staan, krijgt de nieuwkomer een badge en meldt het scherm dat opnieuw loten nodig is. Een pauze of vertrek tijdens het concept geeft altijd die badge en melding.
+- *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Wie zich aanmeldt terwijl het concept openstaat, moet de volgende ronde meteen mee kunnen doen: het concept wordt dan vanzelf opnieuw geloot, met de nieuwkomer erin. Dat gebeurt niet als de organisator al met de hand in het concept gewisseld heeft; dan blijft het staan, krijgt de nieuwkomer een badge en meldt het scherm dat opnieuw loten nodig is. Een pauze of vertrek tijdens het concept wordt opgelost met een invaller (zie *Invallers*).
 - *Gepubliceerd.* Met *Start ronde* wordt het concept de lopende ronde. Telefoons krijgen de indeling en een melding, precies één keer per ronde.
 
 Naast de rondetitel staat het aantal banen, met een min- en plusknop. Het aantal banen is tussen rondes aan te passen: de lopende ronde blijft staan en de wijziging geldt vanaf de volgende loting. Staat er een concept open, dan wordt dat meteen opnieuw geloot met het nieuwe aantal; handmatige wissels in dat concept vervallen dan. Op het avondscherm werkt de baanteller tijdens de avond op dezelfde manier.
@@ -161,6 +161,17 @@ Wijzigingen gelden vanaf de volgende ronde; de lopende ronde blijft ongewijzigd.
 Een niveau wijzigen laat gespeelde rondes en de lopende ronde zoals ze waren; het nieuwe niveau geldt vanaf de volgende loting. Staat de speler op een baan in een open concept, dan wordt dat concept vanzelf opnieuw geloot, tenzij er al met de hand in gewisseld is: dan krijgt de speler een badge en meldt het scherm dat opnieuw loten nodig is. Het spelersscherm volgt dezelfde regel.
 
 Het aparte overzichtsscherm is vervallen: de aantallen per speler staan in het paneel.
+
+### Invallers
+
+Het komt vaak voor dat iemand van de baan komt, moe blijkt en pauzeert, terwijl de volgende ronde al klaarstaat. Dan wordt alleen die speler vervangen: de rest van de indeling blijft staan, ook handmatige wissels.
+
+- De invaller is de rustende speler die het meest gerust heeft; bij gelijke stand die het dichtst bij het niveau van de uitvaller zit. Hij neemt precies de plek van de uitvaller in.
+- Wie pauzeert, komt bij de pauzerenden van die ronde (het telt als rustbeurt). Wie naar huis gaat, verdwijnt uit de ronde.
+- *In het concept*: bij een pauze voor de volgende ronde en bij naar huis gaan. Rust er niemand om in te vallen, dan wordt het concept opnieuw geloot.
+- *In de lopende ronde*: bij naar huis gaan, en bij een pauze die *nu meteen* geldt. Staat een speler op een baan in de lopende ronde en zet hij op zijn telefoon de pauze aan, dan vraagt de telefoon: *Nu meteen, iemand valt in* of *Na deze ronde*. De invaller krijgt een melding op zijn telefoon (*Je valt in op baan 2!*) en het scherm in de zaal toont de nieuwe indeling. Rust er niemand, dan blijft de lopende ronde zoals hij is en meldt de laptop dat er niemand kan invallen.
+- Voor de telling speelt de invaller die ronde en rust of pauzeert de uitvaller.
+- Pauze en *Naar huis* in het zijpaneel volgen dezelfde regels.
 
 ## De telefoon
 
@@ -231,8 +242,9 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 | Tweede telefoon kiest een al gekoppelde naam | Geweigerd, met de melding dat die naam al gekoppeld is en dat de organisator kan ontkoppelen. |
 | Aanmelding tijdens het concept | Het concept wordt vanzelf opnieuw geloot met de nieuwkomer erin, tenzij er al met de hand in gewisseld is; dan een badge en een melding. |
 | Niveau gewijzigd van een speler op een baan in het concept | Het concept wordt vanzelf opnieuw geloot, tenzij er al met de hand in gewisseld is; dan een badge en een melding. |
-| Pauze of vertrek tijdens het concept | Badge bij de speler en een melding op de laptop dat opnieuw genereren nodig is. |
-| Pauze na publiceren | Geldt voor de ronde daarna. |
+| Pauze of vertrek tijdens het concept | Een invaller neemt de plek in; zonder rustende spelers wordt het concept opnieuw geloot. |
+| Vertrek, of pauze *nu meteen*, tijdens de lopende ronde | Een invaller neemt de plek in en krijgt een melding; zonder rustende spelers blijft de ronde staan, met een melding op de laptop. |
+| Pauze na publiceren, van iemand die niet op een baan staat | Geldt voor de ronde daarna. |
 | Handmatige wissel brengt de rustverdeling uit balans | Toegestaan. De volgende rondes herstellen de balans via de regel uit stap 2. |
 | Iedereen pauzeert tegelijk, minder dan vier over | Melding, geen ronde gegenereerd. |
 | Avond afgesloten | De sessiecode vervalt; aangesloten telefoons tonen dat de avond voorbij is. |
@@ -263,6 +275,8 @@ Tegen `sessie.js`:
 - Een pauze vervalt bij het publiceren van de ronde waarvoor hij gold.
 - Het aantal banen wijzigen laat gespeelde rondes ongemoeid en geldt bij de volgende loting.
 - Een nieuwkomer rust niet in de eerstvolgende ronde.
+- Bij uitval wordt alleen die speler vervangen, door wie het meest rustte en dan het dichtst bij het niveau zit; handmatige wissels blijven staan; zonder invaller wordt het concept opnieuw geloot.
+- Nu meteen pauzeren vervangt de speler in de lopende ronde, telt als pauze en laat de volgende ronde ongemoeid.
 - Een ander niveau laat gespeelde rondes ongemoeid en telt bij de volgende loting; een onbekend niveau wordt geweigerd.
 - Een aanmelding tijdens een concept vraagt om een nieuw concept, behalve als er met de hand in gewisseld is.
 

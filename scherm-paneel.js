@@ -131,7 +131,7 @@
       pauze.textContent = T.pauze_label;
       pauze.title = T.pauze_uitleg;
       pauze.addEventListener('click', function () {
-        App.wijzigAvond(Sessie.zetPauze(App.avond, speler.id, !pauzeert));
+        App.pauzeer(speler.id, !pauzeert, false);
         App.renderHuidig();
       });
       rij.appendChild(pauze);
@@ -141,8 +141,7 @@
       weg.className = 'knop-link knop-weg';
       weg.textContent = T.naar_huis;
       weg.addEventListener('click', function () {
-        App.wijzigAvond(Sessie.meldAf(App.avond, speler.id));
-        App.meld(T.doet_niet_meer_mee(speler.naam));
+        App.stuurNaarHuis(speler.id);
         App.renderHuidig();
       });
       rij.appendChild(weg);

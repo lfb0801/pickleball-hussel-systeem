@@ -69,6 +69,3 @@ De app draait op GitHub Pages vanaf de branch `master`. Pages laat browsers best
 ```bash
 npm run stempel
 ```
-
-> [!CAUTION]
-> Ledengegevens van de club (`docs/Pickleball Den Bosch_members/`) staan in `.gitignore` en horen nooit in de repository.

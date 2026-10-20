@@ -292,6 +292,8 @@ td:last-child { text-align: right; }
 .ronde-banen { gap: 0.7rem; padding: 0.25rem 0.4rem 0.25rem 0.9rem; background: var(--kleur-oppervlak); border-radius: 999px; box-shadow: var(--schaduw); }
 .ronde-banen .stapper output { font-size: 1.4rem; }
 .ronde-banen .knop-rond { width: 34px; height: 34px; font-size: 1.1rem; }
+.ronde-modus { cursor: pointer; padding-right: 0.5rem; }
+.ronde-modus select { border: 0; background: transparent; font-weight: 700; padding: 0.35rem 0.3rem; }
 .ronde-kop .acties { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 .verouderd { border-left: 6px solid var(--kleur-accent); margin-bottom: 1rem; padding: 0.9rem 1.1rem; }

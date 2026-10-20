@@ -344,6 +344,15 @@
     return String(naam || '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAAMLENGTE);
   }
 
+  function spelerMetNaam(club, naam) {
+    const schoon = schoneNaam(naam);
+    if (!schoon) return null;
+    for (const speler of club.spelers) {
+      if (vergelijkbaar(speler.naam) === vergelijkbaar(schoon)) return speler.id;
+    }
+    return null;
+  }
+
   function naamBestaat(club, naam, behalveId) {
     for (const speler of club.spelers) {
       if (speler.id !== behalveId && vergelijkbaar(speler.naam) === vergelijkbaar(naam)) return true;
@@ -400,9 +409,14 @@
     switch (verzoek.type) {
       case 'hallo': {
         // Een bekende telefoon wordt weer gekoppeld, maar niet vanzelf
-        // aangemeld: wie vertrokken is, blijft vertrokken.
-        if (ik || !verzoek.speler || !spelerOp(club, verzoek.speler)) return uitkomst(avond, null);
-        const poging = koppel(avond, telefoon, verzoek.speler);
+        // aangemeld: wie vertrokken is, blijft vertrokken. Kent deze laptop
+        // de bewaarde speler-id niet, dan herkent hij de speler aan zijn naam.
+        if (ik) return uitkomst(avond, null);
+        const bekend = verzoek.speler && spelerOp(club, verzoek.speler)
+          ? verzoek.speler
+          : spelerMetNaam(club, verzoek.naam);
+        if (!bekend) return uitkomst(avond, null);
+        const poging = koppel(avond, telefoon, bekend);
         return uitkomst(poging.avond, null);
       }
       case 'claim': {
@@ -491,6 +505,7 @@
       spelers: spelers,
       ik: ik,
       ikNaam: ik ? naamVan(club, ik) : null,
+      ikNiveau: ik && spelerOp(club, ik) ? club.groepen[spelerOp(club, ik).groep] : null,
       aanwezig: ik ? isAanwezig(avond, ik) : false,
       pauzeertVolgende: ik ? Boolean(avond.pauzes[ik]) : false,
       groepen: club.groepen.slice(),

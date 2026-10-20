@@ -35,7 +35,6 @@
       this.renderAfwezig();
       SchermSpelers.vulGroepKeuze(document.getElementById('paneel-nieuw-groep'),
         Number(document.getElementById('paneel-nieuw-groep').value) || 0);
-      App.renderPresets(document.getElementById('paneel-presets'));
       this.renderVerbinding();
       document.getElementById('lokaal-waarschuwing').hidden = !App.isLokaal();
     },

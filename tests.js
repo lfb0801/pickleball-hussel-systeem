@@ -1104,3 +1104,27 @@ test('invallen: pauze intrekken zet de speler in het concept terug bij de rusten
   assert(avond.concept.rustend.indexOf(uit) !== -1, 'niet terug bij de rustenden');
   preciesEenKeer(avond.concept, avond.aanwezigen);
 });
+
+test('sessie: hallo herkent een speler aan zijn naam als de id onbekend is', function () {
+  const club = maakTestClub(4);
+  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'onbekend', naam: ' speler 2 ' });
+  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p2' });
+  assertGelijk(uitkomst.avond.aanwezigen, [], 'hallo mag niet vanzelf aanmelden');
+});
+
+test('sessie: hallo op naam koppelt niet als die naam al aan een andere telefoon hangt', function () {
+  const club = maakTestClub(4);
+  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p2' }).avond;
+  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'hallo', naam: 'Speler 2' });
+  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p2' });
+});
+
+test('sessie: de telefoon krijgt zijn eigen naam en niveau mee om te onthouden', function () {
+  const club = maakTestClub(4);
+  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p1' }).avond;
+  const toestand = Sessie.toestandVoor(avond, club, 't1');
+  assertGelijk([toestand.ikNaam, toestand.ikNiveau], ['Speler 1', 'Zwak']);
+});

@@ -26,6 +26,7 @@
       if (wachtruimte) document.getElementById('ronde-nummer').textContent = '1';
 
       document.getElementById('ronde-banen').textContent = String(avond.banen);
+      this.renderModus();
       document.getElementById('opnieuw-loten').hidden = !concept;
       const start = document.getElementById('start-ronde');
       start.hidden = !concept;
@@ -51,6 +52,20 @@
       this.renderBanen(ronde, Boolean(concept));
       this.renderRustend(ronde, Boolean(concept));
       this.renderAansluiten();
+    },
+
+    renderModus: function () {
+      const keuze = document.getElementById('ronde-modus');
+      if (!keuze.options.length) {
+        for (const preset of Presets.lijst) {
+          const optie = document.createElement('option');
+          optie.value = preset.sleutel;
+          optie.textContent = T.presets[preset.sleutel].naam;
+          keuze.appendChild(optie);
+        }
+      }
+      keuze.value = Presets.op(App.club.preset).sleutel;
+      keuze.title = T.presets[keuze.value].uitleg;
     },
 
     beschikbaar: function () {
@@ -266,6 +281,10 @@
     });
     document.getElementById('start-ronde').addEventListener('click', function () {
       SchermRonde.publiceer();
+      SchermRonde.render();
+    });
+    document.getElementById('ronde-modus').addEventListener('change', function () {
+      App.wijzigModus(document.getElementById('ronde-modus').value);
       SchermRonde.render();
     });
     document.getElementById('ronde-banen-min').addEventListener('click', function () {

@@ -147,7 +147,7 @@ De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spe
 - *Concept.* De organisator genereert de volgende ronde, kan *opnieuw genereren* (andere loting) en spelers met de hand wisselen door twee namen na elkaar aan te tikken. Ook een speler op een baan en een rustende speler zijn te wisselen. Telefoons zien het concept niet. Wie zich aanmeldt terwijl het concept openstaat, moet de volgende ronde meteen mee kunnen doen: het concept wordt dan vanzelf opnieuw geloot, met de nieuwkomer erin. Dat gebeurt niet als de organisator al met de hand in het concept gewisseld heeft; dan blijft het staan, krijgt de nieuwkomer een badge en meldt het scherm dat opnieuw loten nodig is. Een pauze of vertrek tijdens het concept wordt opgelost met een invaller (zie *Invallers*).
 - *Gepubliceerd.* Met *Start ronde* wordt het concept de lopende ronde. Telefoons krijgen de indeling en een melding, precies één keer per ronde.
 
-Naast de rondetitel staat het aantal banen, met een min- en plusknop. Het aantal banen is tussen rondes aan te passen: de lopende ronde blijft staan en de wijziging geldt vanaf de volgende loting. Staat er een concept open, dan wordt dat meteen opnieuw geloot met het nieuwe aantal; handmatige wissels in dat concept vervallen dan. Op het avondscherm werkt de baanteller tijdens de avond op dezelfde manier.
+Naast de rondetitel staan de modus (de preset) als keuzelijst en het aantal banen, met een min- en plusknop. De modus is tijdens de avond te wisselen; een open concept zonder handmatige wissels wordt dan meteen opnieuw geloot, anders geldt de nieuwe modus vanaf de volgende loting. Het aantal banen is tussen rondes aan te passen: de lopende ronde blijft staan en de wijziging geldt vanaf de volgende loting. Staat er een concept open, dan wordt dat meteen opnieuw geloot met het nieuwe aantal; handmatige wissels in dat concept vervallen dan. Op het avondscherm werkt de baanteller tijdens de avond op dezelfde manier.
 
 Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team tegen team. Daaronder wie deze ronde rust en wie pauzeert. Knoppen: *volgende ronde* (maakt een concept), *opnieuw genereren*, *start ronde*, *spelers aanpassen*, *avond afsluiten*. Een kleine QR-code in een hoek laat laatkomers ook tijdens de avond aansluiten.
 
@@ -155,7 +155,7 @@ Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team te
 
 - *Aanwezig*, per niveau: per speler de naam (te verbeteren), hoe vaak hij speelde, rustte en pauzeerde, het niveau, *Pauze* voor de volgende ronde en *Naar huis*. Een telefoonicoon toont of er een telefoon gekoppeld en verbonden is; erop tikken ontkoppelt hem, na bevestiging.
 - *Iemand erbij*: zonder zoekterm wie eerder vanavond meedeed en vertrok, met zoekterm iedereen uit de spelerslijst die er niet is, elk met *Erbij*. Daaronder een nieuwe speler toevoegen met naam en niveau, voor wie geen telefoon heeft.
-- De preset, de verbindingsstatus voor telefoons en *Avond afsluiten*.
+- De verbindingsstatus voor telefoons en *Avond afsluiten*.
 
 Wijzigingen gelden vanaf de volgende ronde; de lopende ronde blijft ongewijzigd. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.
 
@@ -178,7 +178,7 @@ Het komt vaak voor dat iemand van de baan komt, moe blijkt en pauzeert, terwijl 
 
 Een speler scant de QR-code of opent de link met sessiecode. Wie al eerder meedeed, tikt zijn naam aan en is daarmee aangemeld. Wie nieuw is, vult naam en niveau in en is meteen aangemeld: zonder goedkeuring van de organisator, die achteraf een naam of niveau kan aanpassen of iemand kan verwijderen. Bestaat de naam al, dan wordt de speler naar de lijst verwezen. Er zijn geen accounts en geen pincodes: de app vertrouwt op de gekozen naam. Een naam kan door één telefoon tegelijk gekoppeld worden.
 
-De telefoon onthoudt welke speler hij is, ook na het afsluiten van de avond. Bij een verbroken verbinding sluit hij vanzelf weer aan; bij een volgende avond is één tik op *Ik ben er* genoeg. Opnieuw verbinden meldt niemand vanzelf aan, zodat wie vertrokken is ook vertrokken blijft.
+De telefoon onthoudt welke speler hij is (id, naam en niveau), ook na het afsluiten van de avond. Kent de laptop die id niet, bijvoorbeeld omdat een andere organisator een andere laptop gebruikt, dan herkent hij de speler aan zijn naam. Kent de laptop de naam ook niet, dan staat het aanmeldformulier al ingevuld met de bewaarde naam en het niveau. *Niet jij?* wist wat de telefoon onthield. Laptop en telefoon vragen de browser hun gegevens blijvend te bewaren (`navigator.storage.persist`); doet een browser dat niet en ruimt hij ze toch op (Safari doet dat na zeven dagen zonder bezoek), dan tikt de speler zijn naam aan in de lijst. Bij een verbroken verbinding sluit hij vanzelf weer aan; bij een volgende avond is één tik op *Ik ben er* genoeg. Opnieuw verbinden meldt niemand vanzelf aan, zodat wie vertrokken is ook vertrokken blijft.
 
 Wat een telefoon kan:
 
@@ -191,7 +191,7 @@ Wat een telefoon kan:
 
 | Van | Bericht | Gevolg |
 |---|---|---|
-| Telefoon | `hallo` met telefoon-id en bewaarde speler | Stelt de telefoon voor en koppelt de bewaarde speler opnieuw, zonder aan te melden. |
+| Telefoon | `hallo` met telefoon-id, bewaarde speler en naam | Stelt de telefoon voor en koppelt de bewaarde speler opnieuw, op id of anders op naam, zonder aan te melden. |
 | Telefoon | `claim` met speler | Koppelt de telefoon aan de speler en meldt hem aan, of weigert als een andere telefoon die naam al heeft. |
 | Telefoon | `registreer` met naam en niveau | Nieuwe speler in de spelerslijst, aangemeld en gekoppeld; geweigerd bij een lege of bestaande naam of een onbekend niveau. |
 | Telefoon | `loslaten` | Koppelt de telefoon los (*Niet jij?*). De speler blijft aangemeld. |
@@ -274,6 +274,7 @@ Tegen `sessie.js`:
 - Aanmelden van een laatkomer geeft het hoogste rustsaldo onder de aanwezigen.
 - Registreren met naam en niveau zet de speler in de lijst, meldt hem aan en koppelt de telefoon; een bestaande naam, een lege naam of een onbekend niveau wordt geweigerd.
 - Je eigen naam aantikken meldt je aan; opnieuw verbinden doet dat niet.
+- Opnieuw verbinden herkent een onbekende id aan de naam, maar niet als die naam al aan een andere telefoon hangt.
 - Een pauze vervalt bij het publiceren van de ronde waarvoor hij gold.
 - Het aantal banen wijzigen laat gespeelde rondes ongemoeid en geldt bij de volgende loting.
 - Een nieuwkomer rust niet in de eerstvolgende ronde.

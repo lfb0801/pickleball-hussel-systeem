@@ -233,6 +233,24 @@
       this.meld(T.concept_bijgewerkt(namen));
     },
 
+    // De modus mag tijdens de avond wisselen. Een open concept zonder
+    // handmatige wissels wordt meteen opnieuw geloot met de nieuwe modus.
+    wijzigModus: function (sleutel) {
+      this.club.preset = Presets.op(sleutel).sleutel;
+      this.bewaarClub();
+      const naam = T.presets[this.club.preset].naam;
+      if (this.avond && this.avond.concept && !this.avond.concept.handmatig) {
+        const uitkomst = Sessie.maakConcept(this.avond, this.club, { gewichten: this.gewichten() });
+        if (!uitkomst.fout) {
+          if (window.SchermRonde) SchermRonde.gekozen = null;
+          this.wijzigAvond(uitkomst.avond);
+          this.meld(T.modus_concept(naam));
+          return;
+        }
+      }
+      this.meld(T.modus_gewijzigd(naam));
+    },
+
     // Spelers typen hun naam zelf in; de organisator kan een tikfout
     // herstellen. Geeft false terug als de naam leeg is of al bestaat.
     hernoem: function (id, naam) {
@@ -359,6 +377,10 @@
     },
 
     start: function () {
+      // De spelerslijst moet maanden blijven staan; vraag de browser hem niet
+      // op te ruimen als er ruimte nodig is.
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
+
       const bewaardeClub = Opslag.laadClub();
       if (bewaardeClub && bewaardeClub.groepen && bewaardeClub.spelers) {
         this.club = bewaardeClub;

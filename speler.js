@@ -22,6 +22,9 @@
   }
 
   const staat = leesStaat() || {};
+  // Vraag de browser deze gegevens niet op te ruimen, zodat de telefoon
+  // volgende week nog weet wie hij is.
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
   if (!staat.telefoon) staat.telefoon = 't' + Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36);
   if (staat.laatsteRonde === undefined) staat.laatsteRonde = null;
 
@@ -64,7 +67,7 @@
     toon('verbinden');
     verbinding = Verbinding.gast(code, {
       bijOpen: function () {
-        verbinding.zend({ type: 'hallo', telefoon: staat.telefoon, speler: staat.speler || null });
+        verbinding.zend({ type: 'hallo', telefoon: staat.telefoon, speler: staat.speler || null, naam: staat.naam || null });
       },
       bijBericht: bijBericht,
       bijStatus: bijStatus,
@@ -98,7 +101,11 @@
         // De naam is elders gekoppeld of ontkoppeld: opnieuw kiezen.
         staat.speler = null;
       }
-      if (bericht.ik) staat.speler = bericht.ik;
+      if (bericht.ik) {
+        staat.speler = bericht.ik;
+        staat.naam = bericht.ikNaam;
+        staat.niveau = bericht.ikNiveau;
+      }
       meldNieuweRonde(bericht);
       bewaarStaat();
       render();
@@ -149,6 +156,7 @@
       toon('naam');
       renderNamen();
       renderNiveaus();
+      vulOnthoudenIn();
     } else {
       toon('hoofd');
       renderHoofd();
@@ -208,6 +216,17 @@
       label.appendChild(tekst);
       houder.appendChild(label);
     });
+  }
+
+  // Kende deze laptop ons niet, dan staat het formulier al ingevuld met de
+  // bewaarde naam en het niveau: één tik op Aanmelden.
+  function vulOnthoudenIn() {
+    const veld = $('nieuw-naam');
+    if (staat.naam && !veld.value) veld.value = staat.naam;
+    if (!staat.niveau || document.querySelector('#niveau-keuze input:checked')) return;
+    const index = laatste.groepen.indexOf(staat.niveau);
+    const keuzes = document.querySelectorAll('#niveau-keuze input');
+    if (index !== -1 && keuzes[index]) keuzes[index].checked = true;
   }
 
   function regel(klasse, tekst) {
@@ -356,6 +375,9 @@
 
     $('niet-jij').addEventListener('click', function () {
       staat.speler = null;
+      staat.naam = null;
+      staat.niveau = null;
+      $('nieuw-naam').value = '';
       bewaarStaat();
       zend({ type: 'loslaten' });
     });

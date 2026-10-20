@@ -24,10 +24,16 @@ globalThis.assertGelijk = function (gevonden, verwacht, bericht) {
   if (a !== b) throw new Error((bericht || 'niet gelijk') + ': ' + a + ' !== ' + b);
 };
 
-const bestanden = ['hussel.js', 'presets.js', 'sessie.js', 'opslag.js', 'tests.js'];
+const root = path.join(__dirname, '..');
+const bestanden = [
+  'assets/js/kern/hussel.js',
+  'assets/js/kern/presets.js',
+  'assets/js/kern/sessie.js',
+  'assets/js/kern/opslag.js',
+  'tests/tests.js',
+];
 for (const bestand of bestanden) {
-  const volledig = path.join(__dirname, bestand);
-  if (!fs.existsSync(volledig)) continue;
+  const volledig = path.join(root, bestand);
   (0, eval)(fs.readFileSync(volledig, 'utf8'));
 }
 

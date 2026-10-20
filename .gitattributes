@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Meegeleverde bibliotheken: niet meetellen in de taalstatistiek van GitHub.
+assets/vendor/** linguist-vendored

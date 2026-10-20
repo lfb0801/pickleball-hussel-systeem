@@ -28,26 +28,26 @@ Losse bestanden zonder build-stap, elk met één verantwoordelijkheid:
 
 | Bestand | Verantwoordelijkheid |
 |---|---|
-| `hussel.js` | Het algoritme. Pure functies, geen DOM, geen opslag. |
-| `presets.js` | De drie presets met hun gewichten. |
-| `sessie.js` | Verzoeken van telefoons toepassen op de avond. Pure functies, geen DOM, geen netwerk. |
-| `verbinding.js` | De PeerJS-laag: de laptop als gastheer, telefoons als gast, berichten heen en weer, opnieuw verbinden. |
-| `opslag.js` | De `localStorage`-laag, met terugval op geheugen. |
-| `teksten.js` | Alle zichtbare tekst van laptop en telefoon. |
-| `app.js` | Gedeelde toestand, navigatie tussen schermen, opstarten. |
-| `scherm-spelers.js` | Het scherm voor spelers- en groepsbeheer. |
-| `scherm-avond.js` | De voorbereiding van een avond: banen, preset en wie er al is. |
-| `scherm-ronde.js` | Het ronde-scherm met concept, publiceren, handmatig wisselen en de baankaarten. |
-| `scherm-paneel.js` | Het zijpaneel bij het ronde-scherm met al het beheer tijdens de avond. |
-| `thema.css` | De huisstijl als CSS-variabelen: kleuren en lettertypen. |
-| `stijl.css` | De opmaak, die alleen variabelen uit `thema.css` gebruikt. |
+| `assets/js/kern/hussel.js` | Het algoritme. Pure functies, geen DOM, geen opslag. |
+| `assets/js/kern/presets.js` | De drie presets met hun gewichten. |
+| `assets/js/kern/sessie.js` | Verzoeken van telefoons toepassen op de avond. Pure functies, geen DOM, geen netwerk. |
+| `assets/js/kern/verbinding.js` | De PeerJS-laag: de laptop als gastheer, telefoons als gast, berichten heen en weer, opnieuw verbinden. |
+| `assets/js/kern/opslag.js` | De `localStorage`-laag, met terugval op geheugen. |
+| `assets/js/kern/teksten.js` | Alle zichtbare tekst van laptop en telefoon. |
+| `assets/js/laptop/app.js` | Gedeelde toestand, navigatie tussen schermen, opstarten. |
+| `assets/js/laptop/scherm-spelers.js` | Het scherm voor spelers- en groepsbeheer. |
+| `assets/js/laptop/scherm-avond.js` | De voorbereiding van een avond: banen, preset en wie er al is. |
+| `assets/js/laptop/scherm-ronde.js` | Het ronde-scherm met concept, publiceren, handmatig wisselen en de baankaarten. |
+| `assets/js/laptop/scherm-paneel.js` | Het zijpaneel bij het ronde-scherm met al het beheer tijdens de avond. |
+| `assets/css/thema.css` | De huisstijl als CSS-variabelen: kleuren en lettertypen. |
+| `assets/css/stijl.css` | De opmaak, die alleen variabelen uit `thema.css` gebruikt. |
 | `index.html` | De laptop-app, die de bovenstaande bestanden inlaadt. |
-| `speler.html` / `speler.js` / `speler.css` | De telefoon-app en zijn opmaak. |
-| `peerjs.min.js` (1.5.4), `qrcode.js` (qrcode-generator 1.4.4) | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
-| `stempel-versie.js` | Zet een versie achter elk eigen script en stijlblad in de HTML (`node stempel-versie.js`). |
-| `tests.js` | De testgevallen. |
-| `test.html` | Testrunner in de browser. |
-| `test-node.js` | Dezelfde tests via `node test-node.js`, voor gebruik zonder browser. |
+| `speler.html` / `assets/js/telefoon/speler.js` / `assets/css/speler.css` | De telefoon-app en zijn opmaak. |
+| `assets/vendor/peerjs.min.js` (1.5.4), `assets/vendor/qrcode.js` (qrcode-generator 1.4.4) | Meegeleverde bibliotheken op een vaste versie, geen CDN-afhankelijkheid. |
+| `scripts/stempel-versie.js` | Zet een versie achter elk eigen script en stijlblad in de HTML (`npm run stempel`). |
+| `tests/tests.js` | De testgevallen. |
+| `tests/index.html` | Testrunner in de browser. |
+| `tests/node.js` | Dezelfde tests via `npm test`, voor gebruik zonder browser. |
 
 Het algoritme staat apart van de app omdat het daarmee zonder browserinteractie te testen is. Om dezelfde reden staat het verwerken van telefoonverzoeken (`sessie.js`) los van het netwerk (`verbinding.js`). Gewone `<script>`-tags in plaats van ES-modules houden alles werkend via `file://`; de bestanden schrijven zichzelf op `globalThis`, zodat dezelfde code ook onder Node draait.
 
@@ -228,7 +228,7 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 ## Hosting en privacy
 
 - De app staat op GitHub Pages, vanuit een publieke repository op de branch `master`.
-- GitHub Pages laat browsers bestanden tien minuten bewaren. Zonder maatregel kan een browser na een nieuwe uitgave de nieuwe pagina met oude scripts combineren. Daarom staat achter elk eigen script en stijlblad een versie (`?v=…`), die `node stempel-versie.js` vóór elke uitgave bijwerkt.
+- GitHub Pages laat browsers bestanden tien minuten bewaren. Zonder maatregel kan een browser na een nieuwe uitgave de nieuwe pagina met oude scripts combineren. Daarom staat achter elk eigen script en stijlblad een versie (`?v=…`), die `npm run stempel` vóór elke uitgave bijwerkt.
 - In de repository staan geen namen of andere gegevens van leden. `docs/Pickleball Den Bosch_members/` staat in `.gitignore` of buiten de repository, vóór de eerste push.
 - Spelersnamen staan alleen in `localStorage` van de laptop en gaan rechtstreeks van laptop naar telefoon. De namen van de clublijst worden naar aangesloten telefoons gestuurd, zodat spelers zichzelf kunnen kiezen en aanmelden; andere gegevens dan naam en groep kent de app niet.
 - De publieke PeerJS-server ziet alleen verbindingsgegevens, geen namen of indelingen. PeerJS gebruikt standaard ook zijn eigen gratis TURN-servers voor telefoons die niet rechtstreeks kunnen verbinden; daar is geen account of sleutel voor nodig. Het verkeer daarlangs is versleuteld (WebRTC).
@@ -261,7 +261,7 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 
 ## Tests
 
-In `test.html` en `test-node.js`, tegen `hussel.js`:
+In `tests/index.html` en `tests/node.js`, tegen `hussel.js`:
 
 - Iedere aanwezige staat per ronde precies één keer ingedeeld: spelend of rustend, nooit allebei en nooit geen van beide.
 - Over twintig rondes zonder pauzes verschilt het aantal rustbeurten tussen spelers nooit meer dan één.

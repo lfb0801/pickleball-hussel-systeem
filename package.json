@@ -1,0 +1,19 @@
+{
+  "name": "pickleball-hussel-systeem",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Indelingssysteem voor pickleball-clubavonden: per ronde wie met en tegen wie speelt, ingedeeld op niveau.",
+  "homepage": "https://lfb0801.github.io/pickleball-hussel-systeem/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lfb0801/pickleball-hussel-systeem.git"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 127.0.0.1",
+    "test": "node tests/node.js",
+    "stempel": "node scripts/stempel-versie.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -327,15 +327,7 @@
     });
 
     document.getElementById('stop-avond').addEventListener('click', function () {
-      App.bevestig(T.afsluiten_vraag, T.avond_afsluiten, function () {
-        App.stopSessie();
-        App.avond = null;
-        Opslag.wisAvond();
-        SchermRonde.getekendeCode = null;
-        SchermRonde.getekendeLobbyCode = null;
-        SchermPaneel.sluit();
-        App.toonScherm('avond');
-      }, true);
+      App.bevestig(T.afsluiten_vraag, T.avond_afsluiten, function () { App.sluitAvond(); }, true);
     });
   });
 })();

@@ -20,6 +20,7 @@
     // Elke wijziging aan de avond gaat hierlangs, zodat telefoons altijd
     // dezelfde toestand zien als de laptop.
     bewaarAvond: function () {
+      if (this.avond) this.avond.bijgewerkt = Date.now();
       if (this.avond) Opslag.bewaarAvond(this.avond);
       else Opslag.wisAvond();
       this.zendToestand();
@@ -91,15 +92,41 @@
       if (tekst) this.meldingTimer = setTimeout(function () { toast.hidden = true; }, 4000);
     },
 
+    sluitAvond: function () {
+      this.stopSessie();
+      this.avond = null;
+      Opslag.wisAvond();
+      if (window.SchermRonde) {
+        SchermRonde.getekendeCode = null;
+        SchermRonde.getekendeLobbyCode = null;
+      }
+      if (window.SchermPaneel) SchermPaneel.sluit();
+      this.toonScherm('avond');
+    },
+
+    vraagOverVergetenAvond: function () {
+      const app = this;
+      const datum = typeof this.avond.bijgewerkt === 'number'
+        ? new Date(this.avond.bijgewerkt).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })
+        : null;
+      this.bevestig(T.vergeten_avond(datum), T.nieuwe_avond, function () {
+        app.sluitAvond();
+      }, false, T.doorgaan, function () {
+        app.bewaarAvond();
+      });
+    },
+
     // Eigen bevestiging in plaats van window.confirm: die verschijnt niet in
     // elke browser (in een ingebedde browser geeft hij meteen 'nee').
-    bevestig: function (tekst, jaTekst, actie, gevaarlijk) {
+    bevestig: function (tekst, jaTekst, actie, gevaarlijk, neeTekst, neeActie) {
       const venster = document.getElementById('bevestig');
       document.getElementById('bevestig-tekst').textContent = tekst;
       const ja = document.getElementById('bevestig-ja');
       ja.textContent = jaTekst;
       ja.className = 'knop ' + (gevaarlijk ? 'knop-gevaar-vol' : 'knop-primair');
+      document.getElementById('bevestig-nee').textContent = neeTekst || T.annuleren;
       this.bevestigActie = actie;
+      this.bevestigNeeActie = neeActie || null;
       venster.showModal();
       ja.focus();
     },
@@ -416,10 +443,20 @@
       document.getElementById('bevestig-nee').addEventListener('click', function () {
         document.getElementById('bevestig').close();
       });
+      // Sluiten zonder 'ja' (ook met Escape) voert de nee-actie uit.
+      document.getElementById('bevestig').addEventListener('close', function () {
+        const actie = App.bevestigNeeActie;
+        App.bevestigNeeActie = null;
+        if (actie && App.bevestigActie) {
+          App.bevestigActie = null;
+          actie();
+        }
+      });
       document.getElementById('bevestig-ja').addEventListener('click', function () {
-        document.getElementById('bevestig').close();
         const actie = App.bevestigActie;
         App.bevestigActie = null;
+        App.bevestigNeeActie = null;
+        document.getElementById('bevestig').close();
         if (actie) actie();
       });
 
@@ -435,6 +472,7 @@
       if (this.avond) this.startSessie();
 
       this.toonScherm(this.avond ? 'ronde' : 'avond');
+      if (Sessie.isVergeten(this.avond, Date.now())) this.vraagOverVergetenAvond();
     },
   };
 

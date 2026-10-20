@@ -134,6 +134,8 @@ Het scherm in de zaal toont nooit niveaus: geen niveau per baan, geen markering 
 
 Zodra de avond loopt, is er maar één scherm: het ronde-scherm. De tabbladen verdwijnen; al het beheer zit in een zijpaneel dat over de banen heen schuift en standaard dicht is, zodat het scherm in de zaal alleen de banen toont. Na het afsluiten komen de tabbladen *Spelers* en *Avond* terug.
 
+De laptop-app werkt ook op een telefoon als gastheer. Op een smal scherm staat de QR-code tijdens de rondes onder de banen.
+
 Gewone meldingen (iemand meldt zich aan, een niveau is gewijzigd, een concept is opnieuw geloot) verschijnen een paar seconden onderin en schuiven niets op. Alleen een blijvend probleem, zoals opslag die niet werkt, staat als balk bovenin, met een knop om hem weg te klikken.
 
 De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spelers op kijken. De opmaak is daarom gericht op een liggend scherm, met grote baankaarten die van een paar meter afstand leesbaar zijn. Tijdens een lopende avond vraagt de app de browser het scherm aan te houden (Wake Lock), waar de browser dat ondersteunt.
@@ -239,6 +241,7 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 | Meer banen dan spelers aankunnen | Overtollige banen blijven leeg, geen foutmelding. |
 | Speler verwijderd die in de lopende ronde staat | Waarschuwing dat de lopende ronde blijft staan; de wijziging geldt vanaf de volgende ronde. |
 | `localStorage` geblokkeerd of vol | De app werkt door in het geheugen, met een zichtbare waarschuwing dat er niets bewaard wordt. |
+| Avond vergeten af te sluiten: bij het openen is de laatste wijziging meer dan twaalf uur oud (of onbekend) | De laptop vraagt: *De avond van dinsdag 20 oktober staat nog open. Afsluiten en een nieuwe beginnen?* *Nieuwe avond* sluit hem af (de spelerslijst blijft); *Doorgaan* houdt de rondes en de telling. |
 | Pagina ververst tijdens een avond | De avond wordt hersteld in de toestand van vóór het verversen, met dezelfde sessiecode. Telefoons verbinden vanzelf opnieuw. |
 | Laptop slaapt of verliest internet | Telefoons tonen *verbinding kwijt* en proberen het steeds opnieuw. De laptop werkt door. |
 | PeerJS-server onbereikbaar | De laptop werkt door zonder telefoons en toont dat aansluiten nu niet lukt. |
@@ -285,6 +288,7 @@ Tegen `sessie.js`:
 - Een nieuwkomer rust niet in de eerstvolgende ronde.
 - Bij uitval wordt alleen die speler vervangen, door wie het meest rustte en dan het dichtst bij het niveau zit; handmatige wissels blijven staan; zonder invaller wordt het concept opnieuw geloot.
 - Nu meteen pauzeren vervangt de speler in de lopende ronde, telt als pauze en laat de volgende ronde ongemoeid.
+- Een avond die twaalf uur niet veranderde, of zonder tijdstip, geldt als vergeten.
 - Een ander niveau laat gespeelde rondes ongemoeid en telt bij de volgende loting; een onbekend niveau wordt geweigerd.
 - Een aanmelding tijdens een concept vraagt om een nieuw concept, behalve als er met de hand in gewisseld is.
 

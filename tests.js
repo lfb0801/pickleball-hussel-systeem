@@ -1128,3 +1128,12 @@ test('sessie: de telefoon krijgt zijn eigen naam en niveau mee om te onthouden',
   const toestand = Sessie.toestandVoor(avond, club, 't1');
   assertGelijk([toestand.ikNaam, toestand.ikNiveau], ['Speler 1', 'Zwak']);
 });
+
+test('sessie: een avond die twaalf uur niet veranderde, geldt als vergeten', function () {
+  const uur = 60 * 60 * 1000;
+  const nu = 100 * uur;
+  assertGelijk(Sessie.isVergeten(null, nu), false);
+  assertGelijk(Sessie.isVergeten({ bijgewerkt: nu - 3 * uur }, nu), false);
+  assertGelijk(Sessie.isVergeten({ bijgewerkt: nu - 13 * uur }, nu), true);
+  assertGelijk(Sessie.isVergeten({}, nu), true, 'zonder tijdstip vragen we het voor de zekerheid');
+});

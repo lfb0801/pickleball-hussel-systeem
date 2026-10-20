@@ -208,6 +208,17 @@
     return nieuw;
   }
 
+  const VERGETEN_NA = 12 * 60 * 60 * 1000;
+
+  // Een avond die al twaalf uur niet meer veranderd is, is waarschijnlijk
+  // vergeten af te sluiten. Zonder tijdstip (uit een oudere versie) weten we
+  // het niet, en vragen we het voor de zekerheid.
+  function isVergeten(avond, nu) {
+    if (!avond) return false;
+    if (typeof avond.bijgewerkt !== 'number') return true;
+    return nu - avond.bijgewerkt > VERGETEN_NA;
+  }
+
   function aanwezigeSpelers(avond, club) {
     const spelers = [];
     for (const id of avond.aanwezigen) {
@@ -532,6 +543,7 @@
     vertrek: vertrek,
     valtUit: valtUit,
     zetBanen: zetBanen,
+    isVergeten: isVergeten,
     aanwezigeSpelers: aanwezigeSpelers,
     maakConcept: maakConcept,
     wissel: wissel,

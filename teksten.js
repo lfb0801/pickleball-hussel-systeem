@@ -17,6 +17,12 @@
     nav_avond: 'Avond',
     sluiten: 'Sluiten',
     annuleren: 'Annuleren',
+    vergeten_avond: function (datum) {
+      return (datum ? 'De avond van ' + datum + ' staat nog open.' : 'Er staat nog een avond open.')
+        + ' Afsluiten en een nieuwe beginnen? Doorgaan houdt de rondes en de telling van die avond.';
+    },
+    nieuwe_avond: 'Nieuwe avond',
+    doorgaan: 'Doorgaan',
     volledig_scherm: 'Volledig scherm',
 
     opslag_weg: 'De browser bewaart niets. De avond werkt door, maar gaat verloren als je de pagina sluit.',

@@ -119,6 +119,7 @@
       banen: nieuw.banen,
       historie: nieuw.rondes,
       rustcorrectie: nieuw.rustcorrectie,
+      altijd: nieuw.eerste ? [nieuw.eerste] : [],
       gewichten: instellingen.gewichten,
       rng: instellingen.rng,
       pogingen: instellingen.pogingen,
@@ -259,7 +260,25 @@
   // Verwerkt één bericht van een telefoon. antwoord is null of een foutcode
   // die alleen aan die telefoon wordt teruggemeld. nieuwId is nodig voor een
   // registratie, zodat deze functie puur blijft.
+  // Wie als eerste met een telefoon meedoet, speelt elke ronde op zijn eigen
+  // niveau. Niet zichtbaar op telefoons of het scherm in de zaal.
+  function onthoudEerste(uitkomst) {
+    const avond = uitkomst.avond;
+    if (uitkomst.antwoord || avond.eerste) return uitkomst;
+    const id = avond.koppelingen[uitkomst.telefoon];
+    if (!id || !isAanwezig(avond, id)) return uitkomst;
+    const nieuw = kopie(avond);
+    nieuw.eerste = id;
+    return { avond: nieuw, club: uitkomst.club, antwoord: null };
+  }
+
   function pasVerzoekToe(avond, club, verzoek, nieuwId) {
+    const uitkomst = verwerkVerzoek(avond, club, verzoek, nieuwId);
+    if (['claim', 'registreer', 'aanmelden'].indexOf(verzoek.type) === -1) return uitkomst;
+    return onthoudEerste({ avond: uitkomst.avond, club: uitkomst.club, antwoord: uitkomst.antwoord, telefoon: verzoek.telefoon });
+  }
+
+  function verwerkVerzoek(avond, club, verzoek, nieuwId) {
     const telefoon = verzoek.telefoon;
     const ik = avond.koppelingen[telefoon] || null;
     function uitkomst(nieuweAvond, fout, nieuweClub) {

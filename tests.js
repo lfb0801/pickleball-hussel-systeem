@@ -962,3 +962,34 @@ test('sessie: staatOpBaanInConcept herkent alleen spelers op een baan', function
   assertGelijk(Sessie.staatOpBaanInConcept(avond, avond.concept.rustend[0]), false);
   assertGelijk(Sessie.markeerVerouderd(avond, 'p1', 'niveau').verouderd, { p1: 'niveau' });
 });
+
+test('sessie: wie als eerste met een telefoon meedoet, speelt elke ronde', function () {
+  const club = maakTestClub(11);
+  let avond = Sessie.nieuweAvond(idsVan(club, 6), 2, 'ABCDEF');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p10' }).avond;
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'claim', speler: 'p9' }).avond;
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't3', type: 'claim', speler: 'p8' }).avond;
+  assertGelijk(avond.eerste, 'p10');
+  for (let i = 0; i < 12; i += 1) {
+    avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(700 + i), pogingen: 20 }).avond);
+    assert(avond.rondes[i].rustend.indexOf('p10') === -1, 'p10 rust in ronde ' + (i + 1));
+  }
+  assertGelijk(Sessie.toestandVoor(avond, club, 't2').eerste, undefined);
+});
+
+test('sessie: een pauze van de eerste speler wordt gewoon gerespecteerd', function () {
+  const club = maakTestClub(9);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p8' }).avond;
+  avond = Sessie.zetPauze(avond, 'p8', true);
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
+  assertGelijk(avond.concept.gepauzeerd, ['p8']);
+});
+
+test('sessie: aanvinken op de laptop maakt niemand de eerste', function () {
+  const club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
+  avond = Sessie.meldAan(avond, 'p0');
+  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p0' }).avond;
+  assertGelijk(avond.eerste, undefined);
+});

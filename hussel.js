@@ -115,8 +115,11 @@
 
   // Harde regel: wie tot nu toe het meest gerust heeft, speelt. Eerst
   // husselen en dan stabiel sorteren geeft een willekeurige tiebreak.
-  function kiesSpelenden(aanwezigen, plekken, stat, rng) {
+  function kiesSpelenden(aanwezigen, plekken, stat, rng, altijd) {
+    const voorrang = altijd || {};
     const opRustsaldo = husselLijst(aanwezigen, rng).sort(function (a, b) {
+      const verschil = (voorrang[b.id] ? 1 : 0) - (voorrang[a.id] ? 1 : 0);
+      if (verschil) return verschil;
       return aantal(stat.rust, b.id) - aantal(stat.rust, a.id);
     });
     return {
@@ -128,11 +131,12 @@
   // Eerst husselen, dan stabiel sorteren op groep: de groepsvolgorde ligt
   // vast, maar binnen een groep wisselt de volgorde per ronde. Daardoor
   // rouleert vanzelf wie er op een breukvlak tussen twee groepen valt.
-  function verdeelOverBanen(spelend, rng, menging) {
+  function verdeelOverBanen(spelend, rng, menging, altijd) {
     const gehusseld = husselLijst(spelend, rng);
+    const vast = altijd || {};
     const rang = {};
     for (const speler of gehusseld) {
-      rang[speler.id] = menging > 0 ? speler.groep + rng() * menging : speler.groep;
+      rang[speler.id] = menging > 0 && !vast[speler.id] ? speler.groep + rng() * menging : speler.groep;
     }
     const rij = gehusseld.sort(function (a, b) {
       return rang[a.id] - rang[b.id];
@@ -241,6 +245,8 @@
     const pauzeert = {};
     for (const id of gepauzeerd) pauzeert[id] = true;
     const beschikbaar = aanwezigen.filter(function (speler) { return !pauzeert[speler.id]; });
+    const altijd = {};
+    for (const id of invoer.altijd || []) altijd[id] = true;
 
     const stat = maakHistorieStatistiek(historie, invoer.rustcorrectie);
     const plekken = aantalPlekken(beschikbaar.length, invoer.banen);
@@ -250,8 +256,8 @@
     let besteScore = Infinity;
 
     for (let poging = 0; poging < pogingen; poging += 1) {
-      const keuze = kiesSpelenden(beschikbaar, plekken, stat, rng);
-      const viertallen = verdeelOverBanen(keuze.spelend, rng, gewichten.menging);
+      const keuze = kiesSpelenden(beschikbaar, plekken, stat, rng, altijd);
+      const viertallen = verdeelOverBanen(keuze.spelend, rng, gewichten.menging, altijd);
       const teamsPerBaan = viertallen.map(function (viertal) { return kiesTeams(viertal, stat, gewichten); });
 
       let score = 0;

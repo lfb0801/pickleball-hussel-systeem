@@ -153,8 +153,8 @@ Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team te
 
 **Zijpaneel *Spelers*.** Te openen met de knop *Spelers* op het ronde-scherm, die ook het aantal aanwezigen toont. Te sluiten met het kruisje, een tik ernaast of Escape. Het paneel bevat:
 
+- *Iemand erbij*, bovenaan: één zoekveld, dat bij het openen van het paneel de focus krijgt en ook de lijst *Aanwezig* filtert. Is de gezochte speler er al, dan staat dat erbij. zonder zoekterm wie eerder vanavond meedeed en vertrok, met zoekterm iedereen uit de spelerslijst die er niet is, elk met *Erbij*. Daaronder een nieuwe speler toevoegen met naam en niveau, voor wie geen telefoon heeft.
 - *Aanwezig*, per niveau: per speler de naam (te verbeteren), hoe vaak hij speelde, rustte en pauzeerde, het niveau, *Pauze* voor de volgende ronde en *Naar huis*. Een telefoonicoon toont of er een telefoon gekoppeld en verbonden is; erop tikken ontkoppelt hem, na bevestiging.
-- *Iemand erbij*: zonder zoekterm wie eerder vanavond meedeed en vertrok, met zoekterm iedereen uit de spelerslijst die er niet is, elk met *Erbij*. Daaronder een nieuwe speler toevoegen met naam en niveau, voor wie geen telefoon heeft.
 - De verbindingsstatus voor telefoons en *Avond afsluiten*.
 
 Wijzigingen gelden vanaf de volgende ronde; de lopende ronde blijft ongewijzigd. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.

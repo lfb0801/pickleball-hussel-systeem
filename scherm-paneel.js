@@ -54,12 +54,16 @@
       const scherm = this;
       const stat = this.statistiek();
       houder.textContent = '';
-      const aanwezigen = App.avond.aanwezigen.map(function (id) { return App.spelerOp(id); }).filter(Boolean);
+      const zoekterm = document.getElementById('paneel-zoek').value.trim().toLowerCase();
+      const aanwezigen = App.avond.aanwezigen
+        .map(function (id) { return App.spelerOp(id); })
+        .filter(Boolean)
+        .filter(function (speler) { return !zoekterm || speler.naam.toLowerCase().indexOf(zoekterm) !== -1; });
 
       if (!aanwezigen.length) {
         const leeg = document.createElement('p');
         leeg.className = 'uitleg';
-        leeg.textContent = T.paneel_niemand;
+        leeg.textContent = zoekterm ? T.geen_treffers : T.paneel_niemand;
         houder.appendChild(leeg);
         return;
       }
@@ -173,7 +177,12 @@
       if (!kandidaten.length) {
         const hint = document.createElement('li');
         hint.className = 'uitleg';
-        hint.textContent = zoekterm ? T.geen_treffers : T.paneel_zoek_hint;
+        const alAanwezig = zoekterm && App.avond.aanwezigen.map(function (id) { return App.spelerOp(id); }).filter(function (speler) {
+          return speler && speler.naam.toLowerCase().indexOf(zoekterm) !== -1;
+        });
+        if (!zoekterm) hint.textContent = T.paneel_zoek_hint;
+        else if (alAanwezig.length) hint.textContent = T.paneel_al_aanwezig(alAanwezig.map(function (s) { return s.naam; }));
+        else hint.textContent = T.geen_treffers;
         lijst.appendChild(hint);
         return;
       }
@@ -216,7 +225,10 @@
     document.addEventListener('keydown', function (gebeurtenis) {
       if (gebeurtenis.key === 'Escape' && SchermPaneel.open) SchermPaneel.sluit();
     });
-    document.getElementById('paneel-zoek').addEventListener('input', function () { SchermPaneel.renderAfwezig(); });
+    document.getElementById('paneel-zoek').addEventListener('input', function () {
+      SchermPaneel.renderAfwezig();
+      SchermPaneel.renderAanwezig();
+    });
 
     // Iemand zonder telefoon: de organisator voegt hem toe met naam en
     // niveau, en hij doet meteen mee.

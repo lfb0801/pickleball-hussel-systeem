@@ -91,6 +91,19 @@
       if (tekst) this.meldingTimer = setTimeout(function () { toast.hidden = true; }, 4000);
     },
 
+    // Eigen bevestiging in plaats van window.confirm: die verschijnt niet in
+    // elke browser (in een ingebedde browser geeft hij meteen 'nee').
+    bevestig: function (tekst, jaTekst, actie, gevaarlijk) {
+      const venster = document.getElementById('bevestig');
+      document.getElementById('bevestig-tekst').textContent = tekst;
+      const ja = document.getElementById('bevestig-ja');
+      ja.textContent = jaTekst;
+      ja.className = 'knop ' + (gevaarlijk ? 'knop-gevaar-vol' : 'knop-primair');
+      this.bevestigActie = actie;
+      venster.showModal();
+      ja.focus();
+    },
+
     renderPresets: function (houder) {
       houder.textContent = '';
       for (const preset of Presets.lijst) {
@@ -400,6 +413,15 @@
       }
 
       document.getElementById('melding-sluit').addEventListener('click', function () { App.waarschuw(''); });
+      document.getElementById('bevestig-nee').addEventListener('click', function () {
+        document.getElementById('bevestig').close();
+      });
+      document.getElementById('bevestig-ja').addEventListener('click', function () {
+        document.getElementById('bevestig').close();
+        const actie = App.bevestigActie;
+        App.bevestigActie = null;
+        if (actie) actie();
+      });
 
       document.getElementById('volledig-scherm').addEventListener('click', function () {
         if (document.fullscreenElement) document.exitFullscreen();

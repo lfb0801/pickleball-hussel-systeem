@@ -112,7 +112,12 @@
     } else if (bericht.type === 'antwoord') {
       toast(T.tel_fouten[bericht.fout] || bericht.fout);
     } else if (bericht.type === 'ontkoppeld') {
+      // Ontkoppeld door de organisator: ook naam en niveau vergeten, anders
+      // koppelt de telefoon zich bij het volgende verbinden vanzelf weer.
       staat.speler = null;
+      staat.naam = null;
+      staat.niveau = null;
+      $('nieuw-naam').value = '';
       bewaarStaat();
       toast(T.tel_ontkoppeld);
     }

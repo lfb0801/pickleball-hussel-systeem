@@ -446,3 +446,11 @@ button.naamkaartje:hover { border-color: var(--kleur-accent); }
 .paneel-voet .knop { width: 100%; }
 .paneel-toegevoegd { list-style: none; padding: 0; margin: 0.8rem 0 0; color: var(--kleur-primair); font-weight: 600; }
 .kolom { display: grid; gap: 0.5rem; }
+
+/* Eigen bevestigingsvenster. */
+.bevestig { border: 0; border-radius: var(--radius); padding: 1.4rem 1.5rem 1.1rem; max-width: min(28rem, calc(100vw - 2rem)); box-shadow: 0 12px 48px rgba(11, 27, 44, 0.3); color: var(--kleur-tekst); }
+.bevestig::backdrop { background: rgba(11, 27, 44, 0.45); }
+.bevestig p { margin: 0; }
+.bevestig .knoppen { justify-content: flex-end; margin-top: 1.2rem; }
+.knop-gevaar-vol { background: var(--kleur-gevaar); border-color: var(--kleur-gevaar); color: #fff; }
+.knop-gevaar-vol:hover { filter: brightness(1.1); }

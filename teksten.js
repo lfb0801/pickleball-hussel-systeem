@@ -16,6 +16,7 @@
     nav_spelers: 'Spelers',
     nav_avond: 'Avond',
     sluiten: 'Sluiten',
+    annuleren: 'Annuleren',
     volledig_scherm: 'Volledig scherm',
 
     opslag_weg: 'De browser bewaart niets. De avond werkt door, maar gaat verloren als je de pagina sluit.',
@@ -74,7 +75,7 @@
     zonder_telefoon: 'Doet mee zonder telefoon',
     telefoon_verbonden: 'Telefoon verbonden',
     telefoon_gekoppeld: 'Telefoon gekoppeld, nu niet verbonden',
-    ontkoppel: 'Ontkoppel',
+    ontkoppel: 'Ontkoppelen',
     ontkoppeld_melding: function (naam) { return 'De telefoon van ' + naam + ' is ontkoppeld.'; },
     niveau_wijzigen: 'Niveau',
     teller_voorbereiding: function (n) {
@@ -100,7 +101,7 @@
     paneel_nieuw: 'Nieuwe speler',
     erbij: 'Erbij',
     naar_huis: 'Naar huis',
-    ontkoppel_vraag: function (naam) { return 'De telefoon van ' + naam + ' ontkoppelen? Die kan daarna opnieuw een naam kiezen.'; },
+    ontkoppel_vraag: function (naam) { return 'De telefoon van ' + naam + ' loskoppelen van deze avond? ' + naam + ' blijft aangemeld; de telefoon kan daarna gewoon opnieuw meedoen door een naam te kiezen.'; },
     statistiek: function (gespeeld, gerust, pauze) {
       let tekst = gespeeld + '× gespeeld · ' + gerust + '× rust';
       if (pauze) tekst += ' · ' + pauze + '× pauze';

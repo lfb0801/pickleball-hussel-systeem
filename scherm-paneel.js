@@ -121,9 +121,10 @@
         icoon.type = 'button';
         icoon.title = (telefoon === 'aan' ? T.telefoon_verbonden : T.telefoon_gekoppeld) + ' · ' + T.ontkoppel;
         icoon.addEventListener('click', function () {
-          if (!window.confirm(T.ontkoppel_vraag(speler.naam))) return;
-          App.ontkoppel(speler.id);
-          SchermPaneel.render();
+          App.bevestig(T.ontkoppel_vraag(speler.naam), T.ontkoppel, function () {
+            App.ontkoppel(speler.id);
+            App.renderHuidig();
+          });
         });
       }
       rij.appendChild(icoon);
@@ -309,6 +310,7 @@
     document.getElementById('paneel-achtergrond').addEventListener('click', function () { SchermPaneel.sluit(); });
     document.addEventListener('keydown', function (gebeurtenis) {
       if (gebeurtenis.key !== 'Escape' || !SchermPaneel.open) return;
+      if (document.getElementById('bevestig').open) return;
       if (SchermPaneel.weergave === 'overzicht') SchermPaneel.sluit();
       else SchermPaneel.toon('overzicht');
     });
@@ -325,14 +327,15 @@
     });
 
     document.getElementById('stop-avond').addEventListener('click', function () {
-      if (!window.confirm(T.afsluiten_vraag)) return;
-      App.stopSessie();
-      App.avond = null;
-      Opslag.wisAvond();
-      SchermRonde.getekendeCode = null;
-      SchermRonde.getekendeLobbyCode = null;
-      SchermPaneel.sluit();
-      App.toonScherm('avond');
+      App.bevestig(T.afsluiten_vraag, T.avond_afsluiten, function () {
+        App.stopSessie();
+        App.avond = null;
+        Opslag.wisAvond();
+        SchermRonde.getekendeCode = null;
+        SchermRonde.getekendeLobbyCode = null;
+        SchermPaneel.sluit();
+        App.toonScherm('avond');
+      }, true);
     });
   });
 })();

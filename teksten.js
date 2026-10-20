@@ -15,14 +15,12 @@
 
     nav_spelers: 'Spelers',
     nav_avond: 'Avond',
-    nav_ronde: 'Ronde',
-    nav_overzicht: 'Overzicht',
+    sluiten: 'Sluiten',
     volledig_scherm: 'Volledig scherm',
 
     opslag_weg: 'De browser bewaart niets. De avond werkt door, maar gaat verloren als je de pagina sluit.',
 
     // Spelers
-    spelers_titel: 'Spelers en groepen',
     groepen_titel: 'Groepen',
     groepen_uitleg: 'Van sterk naar minder sterk. Banen worden in deze volgorde gevuld.',
     groep_naam: 'Naam van de groep',
@@ -48,7 +46,6 @@
     },
 
     // Avond
-    avond_titel: 'Avond',
     avond_nieuw_titel: 'Nieuwe avond',
     aanwezig_titel: 'Wie is er?',
     aanwezig_uitleg: 'Vink aan wie er vanavond is. Laatkomers kunnen zich ook later met hun telefoon aanmelden.',
@@ -67,7 +64,6 @@
       return tekst + ' · ' + banenInGebruik + ' van de ' + banen + ' banen in gebruik';
     },
     min_vier: 'Er zijn minstens vier aanwezige spelers nodig.',
-    min_een_baan: 'Er is minstens één baan nodig.',
     doet_mee: function (naam) { return naam + ' doet mee vanaf de volgende ronde.'; },
     doet_niet_meer_mee: function (naam) { return naam + ' doet niet meer mee. De lopende ronde blijft staan; de wijziging geldt vanaf de volgende ronde.'; },
     pauze_label: 'Pauze',
@@ -77,6 +73,24 @@
     ontkoppel: 'Ontkoppel',
     ontkoppeld_melding: function (naam) { return 'De telefoon van ' + naam + ' is ontkoppeld.'; },
     niveau_wijzigen: 'Niveau',
+    teller_leeg: 'Nog niemand aangevinkt. Dat mag: spelers melden zich na de start zelf aan met hun telefoon.',
+    paneel_knop: 'Spelers',
+    paneel_titel: 'Spelers vanavond',
+    paneel_vanavond: 'Aanwezig',
+    paneel_niemand: 'Nog niemand. Spelers melden zich aan via de QR-code.',
+    paneel_erbij: 'Iemand erbij',
+    paneel_zoek: 'Zoek in de spelerslijst',
+    paneel_zoek_hint: 'Zoek een naam om iemand zonder telefoon aan te melden, of voeg hieronder een nieuwe speler toe.',
+    paneel_eerder: 'Eerder vanavond',
+    paneel_nieuw: 'Nieuwe speler',
+    erbij: 'Erbij',
+    naar_huis: 'Naar huis',
+    ontkoppel_vraag: function (naam) { return 'De telefoon van ' + naam + ' ontkoppelen? Die kan daarna opnieuw een naam kiezen.'; },
+    statistiek: function (gespeeld, gerust, pauze) {
+      let tekst = gespeeld + '× gespeeld · ' + gerust + '× rust';
+      if (pauze) tekst += ' · ' + pauze + '× pauze';
+      return tekst;
+    },
     niveau_gewijzigd: function (naam, niveau) { return naam + ' speelt vanaf de volgende ronde op niveau ' + niveau + '.'; },
     niveau_concept: function (naam, niveau) { return naam + ' speelt nu op niveau ' + niveau + '. Het concept is opnieuw geloot.'; },
     concept_bijgewerkt: function (namen) {
@@ -96,8 +110,6 @@
     eerste_ronde: 'Eerste ronde voorbereiden',
 
     // Aansluiten
-    aansluiten_titel: 'Doe mee met je telefoon',
-    aansluiten_uitleg: 'Scan de code of ga naar de link en vul de code in.',
     aansluiten_kort: 'Scan om mee te doen',
     sessiecode: 'Code',
     lokaal_bestand: 'De app draait nu als lokaal bestand. Telefoons kunnen pas aansluiten als de app online staat.',
@@ -118,13 +130,11 @@
     volgende_voorbereiden: 'Volgende ronde voorbereiden',
     opnieuw_loten: 'Opnieuw loten',
     start_ronde: function (n) { return 'Start ronde ' + n; },
-    spelers_aanpassen: 'Spelers aanpassen',
     baan: 'Baan',
     tegen: 'tegen',
     rust: 'Rust',
     pauzeert: 'Pauze',
     niemand_rust: 'Deze ronde rust niemand.',
-    start_eerst_avond: 'Start eerst een avond.',
     geen_ronde_mogelijk: 'Met dit aantal spelers en banen is er geen volledige baan te vullen.',
     gekozen_wissel: function (naam) { return naam + ' gekozen. Tik een tweede naam om te wisselen.'; },
     verouderd_titel: 'Er is iets veranderd sinds dit concept',
@@ -142,15 +152,6 @@
         ? '. Het concept is opnieuw geloot.'
         : '. Geldt vanaf de volgende ronde; de lopende ronde blijft staan.');
     },
-
-    // Overzicht
-    overzicht_titel: 'Overzicht',
-    geen_avond: 'Er loopt geen avond.',
-    rondes_gespeeld: function (n) { return meervoud(n, 'ronde', 'rondes') + ' gespeeld.'; },
-    kolom_speler: 'Speler',
-    kolom_gespeeld: 'Gespeeld',
-    kolom_gerust: 'Gerust',
-    kolom_gepauzeerd: 'Pauze',
 
     // Presets
     presets: {

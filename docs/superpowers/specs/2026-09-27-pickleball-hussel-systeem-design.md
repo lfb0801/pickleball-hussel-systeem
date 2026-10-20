@@ -36,9 +36,9 @@ Losse bestanden zonder build-stap, elk met één verantwoordelijkheid:
 | `teksten.js` | Alle zichtbare tekst van laptop en telefoon. |
 | `app.js` | Gedeelde toestand, navigatie tussen schermen, opstarten. |
 | `scherm-spelers.js` | Het scherm voor spelers- en groepsbeheer. |
-| `scherm-avond.js` | Avond starten, afsluiten, de aanwezigheid aanpassen, preset kiezen, QR-code voor telefoons. |
+| `scherm-avond.js` | De voorbereiding van een avond: banen, preset en wie er al is. |
 | `scherm-ronde.js` | Het ronde-scherm met concept, publiceren, handmatig wisselen en de baankaarten. |
-| `scherm-overzicht.js` | De tabel met gespeelde rondes en rustbeurten. |
+| `scherm-paneel.js` | Het zijpaneel bij het ronde-scherm met al het beheer tijdens de avond. |
 | `thema.css` | De huisstijl als CSS-variabelen: kleuren en lettertypen. |
 | `stijl.css` | De opmaak, die alleen variabelen uit `thema.css` gebruikt. |
 | `index.html` | De laptop-app, die de bovenstaande bestanden inlaadt. |
@@ -129,11 +129,15 @@ De waarden zijn een vertrekpunt en worden na een avond in de zaal bijgesteld in 
 
 ## Schermen op de laptop
 
+Zodra de avond loopt, is er maar één scherm: het ronde-scherm. De tabbladen verdwijnen; al het beheer zit in een zijpaneel dat over de banen heen schuift en standaard dicht is, zodat het scherm in de zaal alleen de banen toont. Na het afsluiten komen de tabbladen *Spelers* en *Avond* terug.
+
+Gewone meldingen (iemand meldt zich aan, een niveau is gewijzigd, een concept is opnieuw geloot) verschijnen een paar seconden onderin en schuiven niets op. Alleen een blijvend probleem, zoals opslag die niet werkt, staat als balk bovenin, met een knop om hem weg te klikken.
+
 De laptop of tablet staat de hele avond in de zaal en is ook het scherm waar spelers op kijken. De opmaak is daarom gericht op een liggend scherm, met grote baankaarten die van een paar meter afstand leesbaar zijn. Tijdens een lopende avond vraagt de app de browser het scherm aan te houden (Wake Lock), waar de browser dat ondersteunt.
 
 **Spelersbeheer.** Groepen benoemen, op volgorde zetten, toevoegen en verwijderen. De groepen zijn ook de niveaus waaruit spelers op hun telefoon kiezen. Spelers melden zich normaal zelf aan; hier kan de organisator er ook een toevoegen, een naam verbeteren (spelers typen hem zelf in), het niveau aanpassen of een speler verwijderen. Een naam is uniek, zonder op hoofdletters of spaties te letten. Dit is, met de preset, het enige dat tussen avonden bewaard blijft. Er is geen import uit een bestand.
 
-**Avond starten.** Het aantal banen instellen en een preset kiezen. Aanvinken uit de bewaarde lijst kan, maar hoeft niet: een avond kan ook zonder aanwezigen starten, waarna spelers zich met hun telefoon aanmelden. Een teller toont hoeveel spelers per ronde spelen en hoeveel er rusten, zodat het aantal banen vóór aanvang bijgesteld kan worden. Bij het starten krijgt de avond een sessiecode; het scherm toont een QR-code en de korte code waarmee telefoons aansluiten.
+**Avond starten.** Alleen vóór de avond. Het aantal banen instellen en een preset kiezen. Aanvinken uit de bewaarde lijst kan, maar hoeft niet: een avond kan ook zonder aanwezigen starten, waarna spelers zich met hun telefoon aanmelden. Een teller toont hoeveel spelers per ronde spelen en hoeveel er rusten, zodat het aantal banen vóór aanvang bijgesteld kan worden. Bij het starten krijgt de avond een sessiecode en opent het ronde-scherm met de wachtruimte.
 
 **Ronde-scherm.** Het scherm dat de hele avond openstaat. Het kent drie toestanden:
 
@@ -146,13 +150,17 @@ Naast de rondetitel staat het aantal banen, met een min- en plusknop. Het aantal
 
 Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team tegen team. Daaronder wie deze ronde rust en wie pauzeert. Knoppen: *volgende ronde* (maakt een concept), *opnieuw genereren*, *start ronde*, *spelers aanpassen*, *avond afsluiten*. Een kleine QR-code in een hoek laat laatkomers ook tijdens de avond aansluiten.
 
-**Spelers aanpassen tijdens de avond.** Een laatkomer aanvinken, een afhaker uitvinken of een speler voor de volgende ronde laten pauzeren. De lopende ronde blijft ongewijzigd; de aanpassing geldt vanaf de volgende ronde. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.
+**Zijpaneel *Spelers*.** Te openen met de knop *Spelers* op het ronde-scherm, die ook het aantal aanwezigen toont. Te sluiten met het kruisje, een tik ernaast of Escape. Het paneel bevat:
 
-Per speler is hier ook het niveau te wijzigen. Gespeelde rondes en de lopende ronde blijven zoals ze waren; het nieuwe niveau geldt vanaf de volgende loting. Staat de speler op een baan in een open concept, dan wordt dat concept vanzelf opnieuw geloot, tenzij er al met de hand in gewisseld is: dan krijgt de speler een badge en meldt het scherm dat opnieuw loten nodig is. Het spelersscherm volgt dezelfde regel.
+- *Aanwezig*, per niveau: per speler de naam (te verbeteren), hoe vaak hij speelde, rustte en pauzeerde, het niveau, *Pauze* voor de volgende ronde en *Naar huis*. Een telefoonicoon toont of er een telefoon gekoppeld en verbonden is; erop tikken ontkoppelt hem, na bevestiging.
+- *Iemand erbij*: zonder zoekterm wie eerder vanavond meedeed en vertrok, met zoekterm iedereen uit de spelerslijst die er niet is, elk met *Erbij*. Daaronder een nieuwe speler toevoegen met naam en niveau, voor wie geen telefoon heeft.
+- De preset, de verbindingsstatus voor telefoons en *Avond afsluiten*.
 
-Hier staat ook per aanwezige of er een telefoon aan gekoppeld is. De organisator kan een telefoon ontkoppelen, bijvoorbeeld als iemand per ongeluk de verkeerde naam koos.
+Wijzigingen gelden vanaf de volgende ronde; de lopende ronde blijft ongewijzigd. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.
 
-**Overzicht.** Een tabel met per speler het aantal gespeelde rondes, rustbeurten en pauzes, om bij twijfel te laten zien dat de verdeling klopt.
+Een niveau wijzigen laat gespeelde rondes en de lopende ronde zoals ze waren; het nieuwe niveau geldt vanaf de volgende loting. Staat de speler op een baan in een open concept, dan wordt dat concept vanzelf opnieuw geloot, tenzij er al met de hand in gewisseld is: dan krijgt de speler een badge en meldt het scherm dat opnieuw loten nodig is. Het spelersscherm volgt dezelfde regel.
+
+Het aparte overzichtsscherm is vervallen: de aantallen per speler staan in het paneel.
 
 ## De telefoon
 

@@ -10,11 +10,7 @@
     lobbyGezien: {},
 
     render: function () {
-      if (!App.avond) {
-        App.waarschuw(T.start_eerst_avond);
-        App.toonScherm('avond');
-        return;
-      }
+      if (!App.avond) return;
       const avond = App.avond;
       const concept = avond.concept;
       const ronde = concept || (avond.rondes.length ? avond.rondes[avond.rondes.length - 1] : null);
@@ -233,12 +229,11 @@
     genereer: function () {
       const uitkomst = Sessie.maakConcept(App.avond, App.club, { gewichten: App.gewichten() });
       if (uitkomst.fout) {
-        App.waarschuw(App.avond.aanwezigen.length < 4 ? T.min_vier : T.geen_ronde_mogelijk);
+        App.meld(App.avond.aanwezigen.length < 4 ? T.min_vier : T.geen_ronde_mogelijk);
         return;
       }
       this.gekozen = null;
-      App.waarschuw('');
-      App.wijzigAvond(uitkomst.avond);
+            App.wijzigAvond(uitkomst.avond);
     },
 
     // Met een open concept wordt meteen opnieuw geloot: een concept met het
@@ -281,8 +276,6 @@
       SchermRonde.wijzigBanen(1);
       SchermRonde.render();
     });
-    document.getElementById('naar-avond').addEventListener('click', function () {
-      App.toonScherm('avond');
-    });
+
   });
 })();

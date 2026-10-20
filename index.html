@@ -19,8 +19,6 @@
   <nav>
     <button type="button" data-scherm="spelers" data-t="nav_spelers"></button>
     <button type="button" data-scherm="avond" data-t="nav_avond"></button>
-    <button type="button" data-scherm="ronde" data-t="nav_ronde"></button>
-    <button type="button" data-scherm="overzicht" data-t="nav_overzicht"></button>
   </nav>
   <div class="balk-rechts">
     <span id="telefoon-status" class="pil pil-donker" hidden></span>
@@ -29,7 +27,11 @@
     </button>
   </div>
 </header>
-<p id="melding" hidden></p>
+<div id="melding" class="melding" hidden>
+  <p id="melding-tekst"></p>
+  <button type="button" id="melding-sluit" class="knop-link" data-t="sluiten"></button>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
 <main>
   <section id="scherm-spelers" hidden>
@@ -96,19 +98,9 @@
           <div id="presets" class="presets"></div>
           <p class="knoppen">
             <button type="button" id="start-avond" class="knop knop-primair knop-groot" data-t="avond_starten"></button>
-            <button type="button" id="stop-avond" class="knop knop-gevaar" data-t="avond_afsluiten"></button>
           </p>
         </div>
 
-        <div class="kaart aansluiten" id="aansluiten-kaart" hidden>
-          <h2 data-t="aansluiten_titel"></h2>
-          <div class="qr" id="qr-groot"></div>
-          <p class="sessiecode"><span data-t="sessiecode"></span> <strong id="code-groot"></strong></p>
-          <p class="uitleg" data-t="aansluiten_uitleg"></p>
-          <p class="link"><a id="aansluit-link" target="_blank" rel="noopener"></a></p>
-          <p id="lokaal-waarschuwing" class="uitleg waarschuwing-tekst" hidden data-t="lokaal_bestand"></p>
-          <p id="verbinding-tekst" class="uitleg"></p>
-        </div>
       </aside>
     </div>
   </section>
@@ -129,7 +121,7 @@
         <button type="button" id="opnieuw-loten" class="knop" data-t="opnieuw_loten"></button>
         <button type="button" id="start-ronde" class="knop knop-primair knop-groot"></button>
         <button type="button" id="volgende-ronde" class="knop knop-primair knop-groot" data-t="volgende_voorbereiden"></button>
-        <button type="button" id="naar-avond" class="knop" data-t="spelers_aanpassen"></button>
+        <button type="button" id="open-paneel" class="knop knop-paneel"><span data-t="paneel_knop"></span> <span id="paneel-knop-aantal" class="pil"></span></button>
       </div>
     </div>
     <p id="concept-uitleg" class="uitleg"></p>
@@ -158,22 +150,40 @@
     <div id="rustbalk" class="rustbalk"></div>
   </section>
 
-  <section id="scherm-overzicht" hidden>
-    <div class="kaart">
-      <h2 data-t="overzicht_titel"></h2>
-      <p id="overzicht-melding"></p>
-      <div class="tabel-houder">
-        <table id="overzicht-tabel">
-          <thead><tr>
-            <th data-t="kolom_speler"></th><th data-t="kolom_groep"></th>
-            <th class="getal" data-t="kolom_gespeeld"></th><th class="getal" data-t="kolom_gerust"></th><th class="getal" data-t="kolom_gepauzeerd"></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
 </main>
+
+<div id="paneel-achtergrond" class="paneel-achtergrond" hidden></div>
+<aside id="paneel" class="paneel" hidden aria-labelledby="paneel-titel">
+  <header class="paneel-kop">
+    <h2 id="paneel-titel" data-t="paneel_titel"></h2>
+    <button type="button" id="paneel-sluit" class="knop-rond" aria-label="Sluiten">×</button>
+  </header>
+  <div class="paneel-inhoud">
+    <section class="paneel-sectie">
+      <div class="paneel-sectiekop"><h3 data-t="paneel_vanavond"></h3><span id="paneel-aantal" class="pil pil-bezig"></span></div>
+      <div id="paneel-aanwezig"></div>
+    </section>
+    <section class="paneel-sectie">
+      <h3 data-t="paneel_erbij"></h3>
+      <input type="search" id="paneel-zoek" class="zoek" data-t-placeholder="paneel_zoek">
+      <ul id="paneel-afwezig" class="paneel-afwezig"></ul>
+      <form id="paneel-nieuw" class="regel">
+        <input type="text" id="paneel-nieuw-naam" maxlength="40" data-t-placeholder="paneel_nieuw" required>
+        <select id="paneel-nieuw-groep"></select>
+        <button type="submit" class="knop" data-t="speler_toevoegen"></button>
+      </form>
+    </section>
+    <section class="paneel-sectie">
+      <h3 data-t="preset_titel"></h3>
+      <div id="paneel-presets" class="presets"></div>
+    </section>
+    <section class="paneel-sectie">
+      <p id="paneel-verbinding" class="uitleg"></p>
+      <p id="lokaal-waarschuwing" class="uitleg waarschuwing-tekst" hidden data-t="lokaal_bestand"></p>
+      <button type="button" id="stop-avond" class="knop knop-gevaar" data-t="avond_afsluiten"></button>
+    </section>
+  </div>
+</aside>
 <script src="teksten.js"></script>
 <script src="peerjs.min.js"></script>
 <script src="qrcode.js"></script>
@@ -185,7 +195,7 @@
 <script src="scherm-spelers.js"></script>
 <script src="scherm-avond.js"></script>
 <script src="scherm-ronde.js"></script>
-<script src="scherm-overzicht.js"></script>
+<script src="scherm-paneel.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

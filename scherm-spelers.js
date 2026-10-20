@@ -76,16 +76,8 @@
         naamVeld.maxLength = 40;
         naamVeld.setAttribute('aria-label', T.kolom_naam);
         naamVeld.addEventListener('change', function () {
-          const nieuw = Sessie.schoneNaam(naamVeld.value);
-          if (!nieuw || Sessie.naamBestaat(App.club, nieuw, speler.id)) {
-            App.waarschuw(nieuw ? T.naam_bestaat_al(nieuw) : T.naam_leeg);
-            naamVeld.value = speler.naam;
-            return;
-          }
-          speler.naam = nieuw;
-          App.bewaarClub();
-          App.zendToestand();
-          scherm.renderSpelers();
+          if (App.hernoem(speler.id, naamVeld.value)) scherm.renderSpelers();
+          else naamVeld.value = speler.naam;
         });
         naamCel.appendChild(naamVeld);
 
@@ -131,12 +123,12 @@
 
     verwijderGroep: function (index) {
       if (App.club.groepen.length === 1) {
-        App.waarschuw(T.min_een_groep);
+        App.meld(T.min_een_groep);
         return;
       }
       for (const speler of App.club.spelers) {
         if (speler.groep === index) {
-          App.waarschuw(T.groep_heeft_spelers);
+          App.meld(T.groep_heeft_spelers);
           return;
         }
       }
@@ -144,8 +136,7 @@
       for (const speler of App.club.spelers) {
         if (speler.groep > index) speler.groep -= 1;
       }
-      App.waarschuw('');
-      App.bewaarClub();
+            App.bewaarClub();
       this.render();
     },
 
@@ -153,7 +144,7 @@
       const naam = App.naam(id);
       if (App.avond && App.avond.aanwezigen.indexOf(id) !== -1) {
         App.avond = Sessie.ontkoppel(Sessie.meldAf(App.avond, id), id).avond;
-        App.waarschuw(T.speler_was_aanwezig(naam));
+        App.meld(T.speler_was_aanwezig(naam));
       }
       App.club.spelers = App.club.spelers.filter(function (s) { return s.id !== id; });
       App.bewaarClub();

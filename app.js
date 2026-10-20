@@ -46,8 +46,14 @@
       return Presets.gewichten(this.club.preset);
     },
 
+    // Zodra de avond loopt, is het ronde-scherm het enige scherm; al het
+    // beheer zit in het zijpaneel.
     toonScherm: function (naam) {
+      if (this.avond) naam = 'ronde';
+      else if (naam === 'ronde') naam = 'avond';
       this.huidigScherm = naam;
+      document.body.classList.toggle('avond-loopt', Boolean(this.avond));
+      if (!this.avond && window.SchermPaneel) SchermPaneel.sluit();
       for (const sectie of document.querySelectorAll('main > section')) {
         sectie.hidden = sectie.id !== 'scherm-' + naam;
       }
@@ -62,27 +68,55 @@
         spelers: window.SchermSpelers,
         avond: window.SchermAvond,
         ronde: window.SchermRonde,
-        overzicht: window.SchermOverzicht,
       };
       const scherm = schermen[this.huidigScherm];
       if (scherm && scherm.render) scherm.render();
+      if (window.SchermPaneel) SchermPaneel.render();
       this.renderTelefoonStatus();
     },
 
-    // Een melding die blijft staan tot de volgende, of na een paar seconden
-    // verdwijnt als blijvend false is.
-    waarschuw: function (tekst, blijvend) {
-      const balk = document.getElementById('melding');
-      clearTimeout(this.meldingTimer);
-      balk.textContent = tekst || '';
-      balk.hidden = !tekst;
-      if (tekst && blijvend === false) {
-        this.meldingTimer = setTimeout(function () { balk.hidden = true; }, 6000);
-      }
+    // Alleen voor een echt probleem dat blijft, zoals opslag die niet werkt.
+    // Blijft staan tot de organisator hem wegklikt.
+    waarschuw: function (tekst) {
+      document.getElementById('melding-tekst').textContent = tekst || '';
+      document.getElementById('melding').hidden = !tekst;
     },
 
+    // Gewone meldingen verschijnen even onderin en schuiven niets op.
     meld: function (tekst) {
-      this.waarschuw(tekst, false);
+      const toast = document.getElementById('toast');
+      clearTimeout(this.meldingTimer);
+      toast.textContent = tekst || '';
+      toast.hidden = !tekst;
+      if (tekst) this.meldingTimer = setTimeout(function () { toast.hidden = true; }, 4000);
+    },
+
+    renderPresets: function (houder) {
+      houder.textContent = '';
+      for (const preset of Presets.lijst) {
+        const tekst = T.presets[preset.sleutel];
+        const label = document.createElement('label');
+        label.className = 'preset';
+        const keuze = document.createElement('input');
+        keuze.type = 'radio';
+        keuze.name = houder.id + '-preset';
+        keuze.value = preset.sleutel;
+        keuze.checked = App.club.preset === preset.sleutel;
+        keuze.addEventListener('change', function () {
+          App.club.preset = preset.sleutel;
+          App.bewaarClub();
+        });
+        const omschrijving = document.createElement('span');
+        const naam = document.createElement('strong');
+        naam.textContent = tekst.naam;
+        const uitleg = document.createElement('small');
+        uitleg.textContent = tekst.uitleg;
+        omschrijving.appendChild(naam);
+        omschrijving.appendChild(uitleg);
+        label.appendChild(keuze);
+        label.appendChild(omschrijving);
+        houder.appendChild(label);
+      }
     },
 
     nieuwId: function () {
@@ -129,7 +163,7 @@
         bijStatus: function (status) {
           app.verbindingStatus = status;
           app.renderTelefoonStatus();
-          if (app.huidigScherm === 'avond') SchermAvond.renderVerbinding();
+          if (window.SchermPaneel) SchermPaneel.renderVerbinding();
         },
         bijTelefoons: function (lijst) {
           app.verbondenTelefoons = lijst;
@@ -196,6 +230,22 @@
       if (window.SchermRonde) SchermRonde.gekozen = null;
       this.wijzigAvond(uitkomst.avond);
       this.meld(T.concept_bijgewerkt(namen));
+    },
+
+    // Spelers typen hun naam zelf in; de organisator kan een tikfout
+    // herstellen. Geeft false terug als de naam leeg is of al bestaat.
+    hernoem: function (id, naam) {
+      const nieuw = Sessie.schoneNaam(naam);
+      if (!nieuw || Sessie.naamBestaat(this.club, nieuw, id)) {
+        this.meld(nieuw ? T.naam_bestaat_al(nieuw) : T.naam_leeg);
+        return false;
+      }
+      const speler = this.spelerOp(id);
+      if (!speler) return false;
+      speler.naam = nieuw;
+      this.bewaarClub();
+      this.zendToestand();
+      return true;
     },
 
     // Een ander niveau verandert de baanindeling. Staat de speler op een baan
@@ -301,6 +351,8 @@
           App.toonScherm(knop.dataset.scherm);
         });
       }
+
+      document.getElementById('melding-sluit').addEventListener('click', function () { App.waarschuw(''); });
 
       document.getElementById('volledig-scherm').addEventListener('click', function () {
         if (document.fullscreenElement) document.exitFullscreen();

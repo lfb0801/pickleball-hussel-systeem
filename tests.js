@@ -933,3 +933,32 @@ test('sessie: een concept met handmatige wissels wordt niet vanzelf vernieuwd', 
   avond = Sessie.publiceer(avond);
   assertGelijk(avond.rondes[0].handmatig, undefined);
 });
+
+test('sessie: zetNiveau wijzigt alleen die speler en weigert een onbekend niveau', function () {
+  const club = maakTestClub(4);
+  const nieuw = Sessie.zetNiveau(club, 'p0', 1);
+  assertGelijk(nieuw.spelers[0].groep, 1);
+  assertGelijk(club.spelers[0].groep, 0, 'originele club is gewijzigd');
+  assertGelijk(Sessie.zetNiveau(club, 'p0', 7), club);
+});
+
+test('sessie: een ander niveau geldt bij de volgende loting, gespeelde rondes blijven staan', function () {
+  let club = maakTestClub(8);
+  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
+  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond);
+  const voor = JSON.stringify(avond.rondes);
+  club = Sessie.zetNiveau(club, 'p0', 1);
+  assertGelijk(JSON.stringify(avond.rondes), voor);
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(2), pogingen: 5 }).avond;
+  const baanVanP0 = avond.concept.banen.filter(function (b) { return b.teamA.concat(b.teamB).indexOf('p0') !== -1; })[0];
+  if (baanVanP0) assert(baanVanP0.groepen.indexOf(1) !== -1, 'p0 telt nog als niveau 0');
+});
+
+test('sessie: staatOpBaanInConcept herkent alleen spelers op een baan', function () {
+  const club = maakTestClub(9);
+  let avond = Sessie.nieuweAvond(idsVan(club, 9), 2, 'ABCDEF');
+  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond;
+  assertGelijk(Sessie.staatOpBaanInConcept(avond, avond.concept.banen[0].teamB[1]), true);
+  assertGelijk(Sessie.staatOpBaanInConcept(avond, avond.concept.rustend[0]), false);
+  assertGelijk(Sessie.markeerVerouderd(avond, 'p1', 'niveau').verouderd, { p1: 'niveau' });
+});

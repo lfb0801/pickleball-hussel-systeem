@@ -148,6 +148,8 @@ Grote kaarten per baan met baannummer, de betrokken groep of groepen, en team te
 
 **Spelers aanpassen tijdens de avond.** Een laatkomer aanvinken, een afhaker uitvinken of een speler voor de volgende ronde laten pauzeren. De lopende ronde blijft ongewijzigd; de aanpassing geldt vanaf de volgende ronde. Een laatkomer start met het hoogste rustsaldo dat op dat moment onder de aanwezigen voorkomt. Zou die op nul beginnen, dan zou hij volgens de regel uit stap 2 juist als eerste aan de beurt zijn om te rusten, terwijl hij nog geen bal heeft geslagen. Met het hoogste saldo speelt hij zijn eerste ronde meteen mee en draait hij daarna gewoon mee in de rotatie.
 
+Per speler is hier ook het niveau te wijzigen. Gespeelde rondes en de lopende ronde blijven zoals ze waren; het nieuwe niveau geldt vanaf de volgende loting. Staat de speler op een baan in een open concept, dan wordt dat concept vanzelf opnieuw geloot, tenzij er al met de hand in gewisseld is: dan krijgt de speler een badge en meldt het scherm dat opnieuw loten nodig is. Het spelersscherm volgt dezelfde regel.
+
 Hier staat ook per aanwezige of er een telefoon aan gekoppeld is. De organisator kan een telefoon ontkoppelen, bijvoorbeeld als iemand per ongeluk de verkeerde naam koos.
 
 **Overzicht.** Een tabel met per speler het aantal gespeelde rondes, rustbeurten en pauzes, om bij twijfel te laten zien dat de verdeling klopt.
@@ -220,6 +222,7 @@ De lettertypen komen van Google Fonts. Zonder internet valt de app terug op het 
 | Iemand meldt een verzonnen naam aan | De organisator verwijdert die speler op het spelersscherm. Er is geen bescherming tegen; dat is bewust. |
 | Tweede telefoon kiest een al gekoppelde naam | Geweigerd, met de melding dat die naam al gekoppeld is en dat de organisator kan ontkoppelen. |
 | Aanmelding tijdens het concept | Het concept wordt vanzelf opnieuw geloot met de nieuwkomer erin, tenzij er al met de hand in gewisseld is; dan een badge en een melding. |
+| Niveau gewijzigd van een speler op een baan in het concept | Het concept wordt vanzelf opnieuw geloot, tenzij er al met de hand in gewisseld is; dan een badge en een melding. |
 | Pauze of vertrek tijdens het concept | Badge bij de speler en een melding op de laptop dat opnieuw genereren nodig is. |
 | Pauze na publiceren | Geldt voor de ronde daarna. |
 | Handmatige wissel brengt de rustverdeling uit balans | Toegestaan. De volgende rondes herstellen de balans via de regel uit stap 2. |
@@ -252,6 +255,7 @@ Tegen `sessie.js`:
 - Een pauze vervalt bij het publiceren van de ronde waarvoor hij gold.
 - Het aantal banen wijzigen laat gespeelde rondes ongemoeid en geldt bij de volgende loting.
 - Een nieuwkomer rust niet in de eerstvolgende ronde.
+- Een ander niveau laat gespeelde rondes ongemoeid en telt bij de volgende loting; een onbekend niveau wordt geweigerd.
 - Een aanmelding tijdens een concept vraagt om een nieuw concept, behalve als er met de hand in gewisseld is.
 
 De verbinding zelf (`verbinding.js`) wordt met de hand getest, volgens een vaste lijst: aansluiten via QR, laptop verversen, telefoon op wifi en op mobiele data, Android en iPhone.

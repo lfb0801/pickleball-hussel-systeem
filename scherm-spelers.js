@@ -93,9 +93,7 @@
         const keuze = document.createElement('select');
         this.vulGroepKeuze(keuze, speler.groep);
         keuze.addEventListener('change', function () {
-          speler.groep = Number(keuze.value);
-          App.bewaarClub();
-          App.zendToestand();
+          App.wijzigNiveau(speler.id, Number(keuze.value));
           scherm.renderSpelers();
         });
         groepCel.appendChild(keuze);

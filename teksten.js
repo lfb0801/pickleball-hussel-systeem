@@ -76,6 +76,9 @@
     telefoon_gekoppeld: 'Telefoon gekoppeld, nu niet verbonden',
     ontkoppel: 'Ontkoppel',
     ontkoppeld_melding: function (naam) { return 'De telefoon van ' + naam + ' is ontkoppeld.'; },
+    niveau_wijzigen: 'Niveau',
+    niveau_gewijzigd: function (naam, niveau) { return naam + ' speelt vanaf de volgende ronde op niveau ' + niveau + '.'; },
+    niveau_concept: function (naam, niveau) { return naam + ' speelt nu op niveau ' + niveau + '. Het concept is opnieuw geloot.'; },
     concept_bijgewerkt: function (namen) {
       return namen.join(', ') + (namen.length === 1 ? ' is' : ' zijn') + ' erbij gekomen. Het concept is opnieuw geloot, zodat '
         + (namen.length === 1 ? 'die meteen meedoet.' : 'zij meteen meedoen.');
@@ -130,6 +133,7 @@
       'terug': 'speelt toch weer mee',
       'vertrek': 'is vertrokken',
       'aanmelding': 'is erbij gekomen',
+      'niveau': 'speelt nu op een ander niveau',
     },
     verouderd_advies: 'Je hebt in dit concept met de hand gewisseld, dus het is niet vanzelf opnieuw geloot. Loot opnieuw om dit mee te nemen, of start de ronde zo.',
     lener: 'speelt een niveau anders',

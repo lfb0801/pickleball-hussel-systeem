@@ -157,6 +157,32 @@
     return avond.aanwezigen.filter(function (id) { return !ingedeeld[id] && !avond.pauzes[id]; });
   }
 
+  // De organisator mag het niveau van een speler tijdens de avond wijzigen.
+  // Gespeelde rondes blijven zoals ze waren; het nieuwe niveau geldt vanaf
+  // de volgende loting.
+  function zetNiveau(club, id, groep) {
+    if (!(Number.isInteger(groep) && groep >= 0 && groep < club.groepen.length)) return club;
+    const nieuw = kopie(club);
+    for (const speler of nieuw.spelers) {
+      if (speler.id === id) speler.groep = groep;
+    }
+    return nieuw;
+  }
+
+  function staatOpBaanInConcept(avond, id) {
+    if (!avond.concept) return false;
+    for (const baan of avond.concept.banen) {
+      if (baan.teamA.indexOf(id) !== -1 || baan.teamB.indexOf(id) !== -1) return true;
+    }
+    return false;
+  }
+
+  function markeerVerouderd(avond, id, reden) {
+    const nieuw = kopie(avond);
+    markeer(nieuw, id, reden);
+    return nieuw;
+  }
+
   function moetConceptVernieuwen(avond) {
     return Boolean(avond.concept) && !avond.concept.handmatig && nieuwkomersBuitenConcept(avond).length > 0;
   }
@@ -358,6 +384,9 @@
     wissel: wissel,
     nieuwkomersBuitenConcept: nieuwkomersBuitenConcept,
     moetConceptVernieuwen: moetConceptVernieuwen,
+    zetNiveau: zetNiveau,
+    staatOpBaanInConcept: staatOpBaanInConcept,
+    markeerVerouderd: markeerVerouderd,
     publiceer: publiceer,
     telefoonVan: telefoonVan,
     ontkoppel: ontkoppel,

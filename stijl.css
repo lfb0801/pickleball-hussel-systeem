@@ -212,10 +212,10 @@ td:last-child { text-align: right; }
 .groep-blok-kop h3 { margin: 0; }
 .groep-blok-kop .pil { margin-right: auto; }
 
-.spelers-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem; }
+.spelers-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 0.4rem; }
 
 .speler-tegel {
-  display: flex; align-items: center; gap: 0.55rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.55rem;
   padding: 0.45rem 0.6rem;
   border: 1.5px solid var(--kleur-rand);
   border-radius: var(--radius-klein);
@@ -224,11 +224,12 @@ td:last-child { text-align: right; }
 }
 .speler-tegel.aanwezig { border-color: var(--kleur-primair); background: #F1F8F4; }
 .speler-tegel.pauzeert { border-color: var(--kleur-accent); background: #FFFBEA; }
-.speler-tegel label { display: flex; align-items: center; gap: 0.55rem; flex: 1; cursor: pointer; min-width: 0; }
+.speler-tegel label { display: flex; align-items: center; gap: 0.55rem; flex: 1 1 8rem; cursor: pointer; min-width: 0; }
 .speler-tegel .naam { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .speler-tegel .telefoon { flex: none; width: 1.1rem; height: 1.1rem; color: var(--kleur-tekst-zacht); }
 .speler-tegel .telefoon.aan { color: var(--kleur-primair-licht); }
-.speler-tegel .tegel-acties { display: flex; gap: 0.3rem; flex: none; }
+.speler-tegel .tegel-acties { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.3rem; margin-left: auto; }
+.speler-tegel .niveau-keuze { font-size: 0.75rem; padding: 0.15rem 0.3rem; border-radius: 999px; max-width: 6.5rem; color: var(--kleur-tekst-zacht); }
 
 .pauze-knop {
   font: 600 0.75rem var(--font-tekst);

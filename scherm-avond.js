@@ -150,6 +150,16 @@
       const telefoon = App.telefoonVan(speler.id);
       const acties = document.createElement('span');
       acties.className = 'tegel-acties';
+      const niveau = document.createElement('select');
+      niveau.className = 'niveau-keuze';
+      niveau.title = T.niveau_wijzigen;
+      niveau.setAttribute('aria-label', T.niveau_wijzigen + ': ' + speler.naam);
+      SchermSpelers.vulGroepKeuze(niveau, speler.groep);
+      niveau.addEventListener('change', function () {
+        App.wijzigNiveau(speler.id, Number(niveau.value));
+        scherm.render();
+      });
+      acties.appendChild(niveau);
       if (telefoon) {
         const icoon = document.createElement('span');
         icoon.className = 'telefoon' + (telefoon === 'aan' ? ' aan' : '');

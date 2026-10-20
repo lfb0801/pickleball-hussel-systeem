@@ -198,6 +198,31 @@
       this.meld(T.concept_bijgewerkt(namen));
     },
 
+    // Een ander niveau verandert de baanindeling. Staat de speler op een baan
+    // in het open concept, dan wordt dat opnieuw geloot, tenzij er al met de
+    // hand in gewisseld is.
+    wijzigNiveau: function (id, groep) {
+      this.club = Sessie.zetNiveau(this.club, id, groep);
+      this.bewaarClub();
+      const naam = this.naam(id);
+      const niveau = this.club.groepen[groep];
+      if (!this.avond || !Sessie.staatOpBaanInConcept(this.avond, id)) {
+        this.zendToestand();
+        if (this.avond) this.meld(T.niveau_gewijzigd(naam, niveau));
+        return;
+      }
+      if (this.avond.concept.handmatig) {
+        this.wijzigAvond(Sessie.markeerVerouderd(this.avond, id, 'niveau'));
+        this.meld(T.niveau_gewijzigd(naam, niveau));
+        return;
+      }
+      const uitkomst = Sessie.maakConcept(this.avond, this.club, { gewichten: this.gewichten() });
+      if (uitkomst.fout) return;
+      if (window.SchermRonde) SchermRonde.gekozen = null;
+      this.wijzigAvond(uitkomst.avond);
+      this.meld(T.niveau_concept(naam, niveau));
+    },
+
     meldVerzoek: function (verzoek, erbij) {
       const id = this.avond.koppelingen[verzoek.telefoon];
       const speler = id ? this.spelerOp(id) : null;

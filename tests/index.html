@@ -1,54 +1,56 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Tests — hussel systeem</title>
+<title>Tests — hussel</title>
 <style>
   body { font: 16px system-ui, sans-serif; margin: 2rem; }
-  li.gelukt { color: #17603a; }
-  li.mislukt { color: #a01b1b; }
+  li.passed { color: #17603a; }
+  li.failed { color: #a01b1b; }
 </style>
 </head>
 <body>
 <h1>Tests</h1>
-<p id="samenvatting"></p>
-<ul id="resultaten"></ul>
+<p id="summary"></p>
+<ul id="results"></ul>
 <script>
-  const resultaten = [];
-  function test(naam, fn) {
+  const results = [];
+  function test(name, fn) {
     try {
       fn();
-      resultaten.push({ naam: naam, gelukt: true });
-    } catch (fout) {
-      resultaten.push({ naam: naam, gelukt: false, fout: fout.message });
+      results.push({ name: name, passed: true });
+    } catch (error) {
+      results.push({ name: name, passed: false, error: error.message });
     }
   }
-  function assert(voorwaarde, bericht) {
-    if (!voorwaarde) throw new Error(bericht || 'assertie mislukt');
+  function assert(condition, message) {
+    if (!condition) throw new Error(message || 'assertion failed');
   }
-  function assertGelijk(gevonden, verwacht, bericht) {
-    const a = JSON.stringify(gevonden);
-    const b = JSON.stringify(verwacht);
-    if (a !== b) throw new Error((bericht || 'niet gelijk') + ': ' + a + ' !== ' + b);
+  function assertEqual(actual, expected, message) {
+    const a = JSON.stringify(actual);
+    const b = JSON.stringify(expected);
+    if (a !== b) throw new Error((message || 'not equal') + ': ' + a + ' !== ' + b);
   }
 </script>
-<script src="../assets/js/kern/hussel.js?v=20261020222140"></script>
-<script src="../assets/js/kern/presets.js?v=20261020222140"></script>
-<script src="../assets/js/kern/sessie.js?v=20261020222140"></script>
-<script src="../assets/js/kern/opslag.js?v=20261020222140"></script>
-<script src="tests.js?v=20261020222140"></script>
+<script src="../assets/js/core/pairing.js?v=20261020224710"></script>
+<script src="../assets/js/core/presets.js?v=20261020224710"></script>
+<script src="../assets/js/core/session.js?v=20261020224710"></script>
+<script src="../assets/js/core/migrate.js?v=20261020224710"></script>
+<script src="../assets/js/core/store.js?v=20261020224710"></script>
+<script src="tests.js?v=20261020224710"></script>
+<script src="migrate-tests.js?v=20261020224710"></script>
 <script>
-  const lijst = document.getElementById('resultaten');
-  let mislukt = 0;
-  for (const resultaat of resultaten) {
+  const list = document.getElementById('results');
+  let failed = 0;
+  for (const result of results) {
     const item = document.createElement('li');
-    item.className = resultaat.gelukt ? 'gelukt' : 'mislukt';
-    item.textContent = resultaat.naam + (resultaat.gelukt ? '' : ' — ' + resultaat.fout);
-    if (!resultaat.gelukt) mislukt += 1;
-    lijst.appendChild(item);
+    item.className = result.passed ? 'passed' : 'failed';
+    item.textContent = result.name + (result.passed ? '' : ' — ' + result.error);
+    if (!result.passed) failed += 1;
+    list.appendChild(item);
   }
-  document.getElementById('samenvatting').textContent =
-    (resultaten.length - mislukt) + '/' + resultaten.length + ' geslaagd';
+  document.getElementById('summary').textContent =
+    (results.length - failed) + '/' + results.length + ' passed';
 </script>
 </body>
 </html>

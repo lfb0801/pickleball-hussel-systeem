@@ -1,1139 +1,1139 @@
-test('maakRng levert bij hetzelfde zaad dezelfde reeks', function () {
-  const a = Hussel.maakRng(42);
-  const b = Hussel.maakRng(42);
-  const reeksA = [a(), a(), a()];
-  const reeksB = [b(), b(), b()];
-  assertGelijk(reeksA, reeksB);
+test('createRng gives the same sequence for the same seed', function () {
+  const a = Pairing.createRng(42);
+  const b = Pairing.createRng(42);
+  const sequenceA = [a(), a(), a()];
+  const sequenceB = [b(), b(), b()];
+  assertEqual(sequenceA, sequenceB);
 });
 
-test('maakRng levert getallen tussen 0 en 1', function () {
-  const rng = Hussel.maakRng(7);
+test('createRng gives numbers between 0 and 1', function () {
+  const rng = Pairing.createRng(7);
   for (let i = 0; i < 100; i += 1) {
-    const waarde = rng();
-    assert(waarde >= 0 && waarde < 1, 'waarde buiten bereik: ' + waarde);
+    const value = rng();
+    assert(value >= 0 && value < 1, 'value out of range: ' + value);
   }
 });
 
-test('husselLijst behoudt alle elementen en laat het origineel ongemoeid', function () {
-  const origineel = [1, 2, 3, 4, 5];
-  const gehusseld = Hussel.husselLijst(origineel, Hussel.maakRng(3));
-  assertGelijk(origineel, [1, 2, 3, 4, 5], 'origineel is gewijzigd');
-  assertGelijk(gehusseld.slice().sort(function (a, b) { return a - b; }), [1, 2, 3, 4, 5]);
+test('shuffle keeps all elements and leaves the original untouched', function () {
+  const original = [1, 2, 3, 4, 5];
+  const shuffled = Pairing.shuffle(original, Pairing.createRng(3));
+  assertEqual(original, [1, 2, 3, 4, 5], 'original was changed');
+  assertEqual(shuffled.slice().sort(function (a, b) { return a - b; }), [1, 2, 3, 4, 5]);
 });
 
-test('husselLijst verandert de volgorde bij een voldoende lange lijst', function () {
-  const origineel = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const gehusseld = Hussel.husselLijst(origineel, Hussel.maakRng(3));
-  assert(JSON.stringify(gehusseld) !== JSON.stringify(origineel), 'volgorde is niet veranderd');
+test('shuffle changes the order of a long enough list', function () {
+  const original = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const shuffled = Pairing.shuffle(original, Pairing.createRng(3));
+  assert(JSON.stringify(shuffled) !== JSON.stringify(original), 'order did not change');
 });
 
-function maakTestRonde(banen, rustend) {
-  return { banen: banen, rustend: rustend || [] };
+function makeTestRound(courts, resting) {
+  return { courts: courts, resting: resting || [] };
 }
 
-function maakTestBaan(nummer, teamA, teamB, leners) {
+function makeTestCourt(number, teamA, teamB, borrowers) {
   return {
-    baan: nummer,
+    number: number,
     teamA: teamA,
     teamB: teamB,
-    thuisgroep: 0,
-    groepen: [0],
-    leners: leners || [],
+    homeGroup: 0,
+    groups: [0],
+    borrowers: borrowers || [],
   };
 }
 
-test('sleutel is onafhankelijk van de volgorde', function () {
-  assertGelijk(Hussel.sleutel('a', 'b'), Hussel.sleutel('b', 'a'));
-  assert(Hussel.sleutel('a', 'b') !== Hussel.sleutel('a', 'c'));
+test('pairKey does not depend on the order', function () {
+  assertEqual(Pairing.pairKey('a', 'b'), Pairing.pairKey('b', 'a'));
+  assert(Pairing.pairKey('a', 'b') !== Pairing.pairKey('a', 'c'));
 });
 
-test('aantal geeft nul terug voor een onbekende sleutel', function () {
-  assertGelijk(Hussel.aantal({ x: 2 }, 'x'), 2);
-  assertGelijk(Hussel.aantal({ x: 2 }, 'y'), 0);
+test('count returns zero for an unknown key', function () {
+  assertEqual(Pairing.count({ x: 2 }, 'x'), 2);
+  assertEqual(Pairing.count({ x: 2 }, 'y'), 0);
 });
 
-test('historiestatistiek telt partners, tegenstanders, rust en leners', function () {
-  const rondes = [
-    maakTestRonde([maakTestBaan(1, ['a', 'b'], ['c', 'd'], ['d'])], ['e']),
-    maakTestRonde([maakTestBaan(1, ['a', 'b'], ['c', 'e'], [])], ['d']),
+test('history stats count partners, opponents, rest and borrowers', function () {
+  const rounds = [
+    makeTestRound([makeTestCourt(1, ['a', 'b'], ['c', 'd'], ['d'])], ['e']),
+    makeTestRound([makeTestCourt(1, ['a', 'b'], ['c', 'e'], [])], ['d']),
   ];
-  const stat = Hussel.maakHistorieStatistiek(rondes);
-  assertGelijk(Hussel.aantal(stat.partner, Hussel.sleutel('a', 'b')), 2);
-  assertGelijk(Hussel.aantal(stat.partner, Hussel.sleutel('c', 'd')), 1);
-  assertGelijk(Hussel.aantal(stat.tegenstander, Hussel.sleutel('a', 'c')), 2);
-  assertGelijk(Hussel.aantal(stat.tegenstander, Hussel.sleutel('a', 'd')), 1);
-  assertGelijk(Hussel.aantal(stat.rust, 'e'), 1);
-  assertGelijk(Hussel.aantal(stat.rust, 'd'), 1);
-  assertGelijk(Hussel.aantal(stat.lener, 'd'), 1);
-  assertGelijk(Hussel.aantal(stat.lener, 'a'), 0);
+  const stats = Pairing.historyStats(rounds);
+  assertEqual(Pairing.count(stats.partner, Pairing.pairKey('a', 'b')), 2);
+  assertEqual(Pairing.count(stats.partner, Pairing.pairKey('c', 'd')), 1);
+  assertEqual(Pairing.count(stats.opponent, Pairing.pairKey('a', 'c')), 2);
+  assertEqual(Pairing.count(stats.opponent, Pairing.pairKey('a', 'd')), 1);
+  assertEqual(Pairing.count(stats.rest, 'e'), 1);
+  assertEqual(Pairing.count(stats.rest, 'd'), 1);
+  assertEqual(Pairing.count(stats.borrower, 'd'), 1);
+  assertEqual(Pairing.count(stats.borrower, 'a'), 0);
 });
 
-test('historiestatistiek telt de rustcorrectie mee', function () {
-  const rondes = [maakTestRonde([maakTestBaan(1, ['a', 'b'], ['c', 'd'])], ['e'])];
-  const stat = Hussel.maakHistorieStatistiek(rondes, { e: 3, f: 2 });
-  assertGelijk(Hussel.aantal(stat.rust, 'e'), 4);
-  assertGelijk(Hussel.aantal(stat.rust, 'f'), 2);
+test('history stats include the rest correction', function () {
+  const rounds = [makeTestRound([makeTestCourt(1, ['a', 'b'], ['c', 'd'])], ['e'])];
+  const stats = Pairing.historyStats(rounds, { e: 3, f: 2 });
+  assertEqual(Pairing.count(stats.rest, 'e'), 4);
+  assertEqual(Pairing.count(stats.rest, 'f'), 2);
 });
 
-test('hoogsteRustsaldo geeft het maximum onder de opgegeven spelers', function () {
-  const stat = { partner: {}, tegenstander: {}, rust: { a: 1, b: 3, c: 0 }, lener: {} };
-  assertGelijk(Hussel.hoogsteRustsaldo(stat, ['a', 'b', 'c']), 3);
-  assertGelijk(Hussel.hoogsteRustsaldo(stat, ['a', 'c']), 1);
-  assertGelijk(Hussel.hoogsteRustsaldo(stat, []), 0);
+test('highestRestBalance gives the maximum among the given players', function () {
+  const stats = { partner: {}, opponent: {}, rest: { a: 1, b: 3, c: 0 }, borrower: {} };
+  assertEqual(Pairing.highestRestBalance(stats, ['a', 'b', 'c']), 3);
+  assertEqual(Pairing.highestRestBalance(stats, ['a', 'c']), 1);
+  assertEqual(Pairing.highestRestBalance(stats, []), 0);
 });
 
-function maakSpelers(aantalPerGroep) {
-  const spelers = [];
-  aantalPerGroep.forEach(function (hoeveel, groep) {
-    for (let i = 0; i < hoeveel; i += 1) {
-      const id = 'g' + groep + 'n' + i;
-      spelers.push({ id: id, naam: id, groep: groep });
+function makePlayers(countPerGroup) {
+  const players = [];
+  countPerGroup.forEach(function (howMany, group) {
+    for (let i = 0; i < howMany; i += 1) {
+      const id = 'g' + group + 'n' + i;
+      players.push({ id: id, name: id, group: group });
     }
   });
-  return spelers;
+  return players;
 }
 
-test('aantalPlekken wordt begrensd door banen en door viertallen', function () {
-  assertGelijk(Hussel.aantalPlekken(18, 4), 16);
-  assertGelijk(Hussel.aantalPlekken(18, 10), 16);
-  assertGelijk(Hussel.aantalPlekken(11, 4), 8);
-  assertGelijk(Hussel.aantalPlekken(20, 3), 12);
-  assertGelijk(Hussel.aantalPlekken(3, 4), 0);
-  assertGelijk(Hussel.aantalPlekken(8, 0), 0);
+test('countSpots is limited by courts and by foursomes', function () {
+  assertEqual(Pairing.countSpots(18, 4), 16);
+  assertEqual(Pairing.countSpots(18, 10), 16);
+  assertEqual(Pairing.countSpots(11, 4), 8);
+  assertEqual(Pairing.countSpots(20, 3), 12);
+  assertEqual(Pairing.countSpots(3, 4), 0);
+  assertEqual(Pairing.countSpots(8, 0), 0);
 });
 
-test('kiesSpelenden vult precies het aantal plekken en laat de rest rusten', function () {
-  const spelers = maakSpelers([6, 6]);
-  const stat = Hussel.maakHistorieStatistiek([]);
-  const keuze = Hussel.kiesSpelenden(spelers, 8, stat, Hussel.maakRng(1));
-  assertGelijk(keuze.spelend.length, 8);
-  assertGelijk(keuze.rustend.length, 4);
-  const ids = keuze.spelend.concat(keuze.rustend).map(function (s) { return s.id; });
-  assertGelijk(ids.slice().sort(), spelers.map(function (s) { return s.id; }).sort());
+test('choosePlaying fills exactly the number of spots and rests the others', function () {
+  const players = makePlayers([6, 6]);
+  const stats = Pairing.historyStats([]);
+  const choice = Pairing.choosePlaying(players, 8, stats, Pairing.createRng(1));
+  assertEqual(choice.playing.length, 8);
+  assertEqual(choice.resting.length, 4);
+  const ids = choice.playing.concat(choice.resting).map(function (p) { return p.id; });
+  assertEqual(ids.slice().sort(), players.map(function (p) { return p.id; }).sort());
 });
 
-test('kiesSpelenden laat wie het meest gerust heeft spelen', function () {
-  const spelers = maakSpelers([5]);
-  const stat = Hussel.maakHistorieStatistiek([], { g0n0: 3, g0n1: 0, g0n2: 0, g0n3: 0, g0n4: 0 });
-  const keuze = Hussel.kiesSpelenden(spelers, 4, stat, Hussel.maakRng(1));
-  const rustendeIds = keuze.rustend.map(function (s) { return s.id; });
-  assert(rustendeIds.indexOf('g0n0') === -1, 'de speler met het hoogste rustsaldo rust ten onrechte opnieuw');
+test('choosePlaying lets whoever rested most play', function () {
+  const players = makePlayers([5]);
+  const stats = Pairing.historyStats([], { g0n0: 3, g0n1: 0, g0n2: 0, g0n3: 0, g0n4: 0 });
+  const choice = Pairing.choosePlaying(players, 4, stats, Pairing.createRng(1));
+  const restingIds = choice.resting.map(function (p) { return p.id; });
+  assert(restingIds.indexOf('g0n0') === -1, 'the player with the highest rest balance wrongly rests again');
 });
 
-test('kiesSpelenden breekt gelijke rustsaldi willekeurig', function () {
-  const spelers = maakSpelers([8]);
-  const stat = Hussel.maakHistorieStatistiek([]);
-  const eerste = Hussel.kiesSpelenden(spelers, 4, stat, Hussel.maakRng(1)).rustend
-    .map(function (s) { return s.id; }).sort();
-  let andersGevonden = false;
-  for (let zaad = 2; zaad < 20; zaad += 1) {
-    const volgende = Hussel.kiesSpelenden(spelers, 4, stat, Hussel.maakRng(zaad)).rustend
-      .map(function (s) { return s.id; }).sort();
-    if (JSON.stringify(volgende) !== JSON.stringify(eerste)) andersGevonden = true;
+test('choosePlaying breaks equal rest balances at random', function () {
+  const players = makePlayers([8]);
+  const stats = Pairing.historyStats([]);
+  const first = Pairing.choosePlaying(players, 4, stats, Pairing.createRng(1)).resting
+    .map(function (p) { return p.id; }).sort();
+  let foundDifferent = false;
+  for (let seed = 2; seed < 20; seed += 1) {
+    const next = Pairing.choosePlaying(players, 4, stats, Pairing.createRng(seed)).resting
+      .map(function (p) { return p.id; }).sort();
+    if (JSON.stringify(next) !== JSON.stringify(first)) foundDifferent = true;
   }
-  assert(andersGevonden, 'de rustende spelers zijn bij elk zaad gelijk');
+  assert(foundDifferent, 'the resting players are the same for every seed');
 });
 
-test('verdeelOverBanen knipt de rij in viertallen op niveauvolgorde', function () {
-  const spelers = maakSpelers([4, 4, 4]);
-  const banen = Hussel.verdeelOverBanen(spelers, Hussel.maakRng(5));
-  assertGelijk(banen.length, 3);
-  banen.forEach(function (viertal, index) {
-    assertGelijk(viertal.length, 4);
-    viertal.forEach(function (speler) {
-      assertGelijk(speler.groep, index, 'baan ' + index + ' bevat een speler uit groep ' + speler.groep);
+test('distributeOverCourts cuts the row into foursomes in level order', function () {
+  const players = makePlayers([4, 4, 4]);
+  const courts = Pairing.distributeOverCourts(players, Pairing.createRng(5));
+  assertEqual(courts.length, 3);
+  courts.forEach(function (foursome, index) {
+    assertEqual(foursome.length, 4);
+    foursome.forEach(function (player) {
+      assertEqual(player.group, index, 'court ' + index + ' has a player from group ' + player.group);
     });
   });
 });
 
-test('verdeelOverBanen laat op het breukvlak twee naastliggende groepen samenspelen', function () {
-  const spelers = maakSpelers([6, 6]);
-  const banen = Hussel.verdeelOverBanen(spelers, Hussel.maakRng(5));
-  assertGelijk(banen.length, 3);
-  const spanwijdtes = banen.map(function (viertal) {
-    const groepen = viertal.map(function (s) { return s.groep; });
-    return Math.max.apply(null, groepen) - Math.min.apply(null, groepen);
+test('distributeOverCourts lets two neighbouring groups play together at the boundary', function () {
+  const players = makePlayers([6, 6]);
+  const courts = Pairing.distributeOverCourts(players, Pairing.createRng(5));
+  assertEqual(courts.length, 3);
+  const spans = courts.map(function (foursome) {
+    const groups = foursome.map(function (p) { return p.group; });
+    return Math.max.apply(null, groups) - Math.min.apply(null, groups);
   });
-  assertGelijk(spanwijdtes, [0, 1, 0]);
+  assertEqual(spans, [0, 1, 0]);
 });
 
-test('verdeelOverBanen negeert spelers die geen viertal meer vormen', function () {
-  const banen = Hussel.verdeelOverBanen(maakSpelers([6]), Hussel.maakRng(5));
-  assertGelijk(banen.length, 1);
+test('distributeOverCourts ignores players who no longer make a foursome', function () {
+  const courts = Pairing.distributeOverCourts(makePlayers([6]), Pairing.createRng(5));
+  assertEqual(courts.length, 1);
 });
 
-test('verdeelOverBanen wisselt wie er op het breukvlak komt', function () {
-  const spelers = maakSpelers([6, 6]);
-  const gezien = {};
-  for (let zaad = 1; zaad < 30; zaad += 1) {
-    const middelste = Hussel.verdeelOverBanen(spelers, Hussel.maakRng(zaad))[1];
-    for (const speler of middelste) gezien[speler.id] = true;
+test('distributeOverCourts rotates who lands on the boundary', function () {
+  const players = makePlayers([6, 6]);
+  const seen = {};
+  for (let seed = 1; seed < 30; seed += 1) {
+    const middle = Pairing.distributeOverCourts(players, Pairing.createRng(seed))[1];
+    for (const player of middle) seen[player.id] = true;
   }
-  assert(Object.keys(gezien).length > 4, 'steeds dezelfde spelers op het breukvlak');
+  assert(Object.keys(seen).length > 4, 'always the same players on the boundary');
 });
 
-test('bepaalLeners wijst de minderheid op een baan aan als lener', function () {
-  const viertal = [
-    { id: 'a', naam: 'a', groep: 0 },
-    { id: 'b', naam: 'b', groep: 0 },
-    { id: 'c', naam: 'c', groep: 0 },
-    { id: 'd', naam: 'd', groep: 1 },
+test('findBorrowers marks the minority on a court as borrowers', function () {
+  const foursome = [
+    { id: 'a', name: 'a', group: 0 },
+    { id: 'b', name: 'b', group: 0 },
+    { id: 'c', name: 'c', group: 0 },
+    { id: 'd', name: 'd', group: 1 },
   ];
-  const uitkomst = Hussel.bepaalLeners(viertal);
-  assertGelijk(uitkomst.thuisgroep, 0);
-  assertGelijk(uitkomst.leners.map(function (s) { return s.id; }), ['d']);
+  const result = Pairing.findBorrowers(foursome);
+  assertEqual(result.homeGroup, 0);
+  assertEqual(result.borrowers.map(function (p) { return p.id; }), ['d']);
 });
 
-test('bepaalLeners kiest bij gelijke aantallen de sterkste groep als thuisgroep', function () {
-  const viertal = [
-    { id: 'a', naam: 'a', groep: 0 },
-    { id: 'b', naam: 'b', groep: 0 },
-    { id: 'c', naam: 'c', groep: 1 },
-    { id: 'd', naam: 'd', groep: 1 },
+test('findBorrowers picks the strongest group as home group when counts are equal', function () {
+  const foursome = [
+    { id: 'a', name: 'a', group: 0 },
+    { id: 'b', name: 'b', group: 0 },
+    { id: 'c', name: 'c', group: 1 },
+    { id: 'd', name: 'd', group: 1 },
   ];
-  const uitkomst = Hussel.bepaalLeners(viertal);
-  assertGelijk(uitkomst.thuisgroep, 0);
-  assertGelijk(uitkomst.leners.map(function (s) { return s.id; }), ['c', 'd']);
+  const result = Pairing.findBorrowers(foursome);
+  assertEqual(result.homeGroup, 0);
+  assertEqual(result.borrowers.map(function (p) { return p.id; }), ['c', 'd']);
 });
 
-test('bepaalLeners levert geen leners bij een baan uit één groep', function () {
-  const viertal = maakSpelers([4]);
-  assertGelijk(Hussel.bepaalLeners(viertal).leners.length, 0);
+test('findBorrowers gives no borrowers for a court from one group', function () {
+  const foursome = makePlayers([4]);
+  assertEqual(Pairing.findBorrowers(foursome).borrowers.length, 0);
 });
 
-test('scoorViertal is nul zonder historie en binnen één groep', function () {
-  const spelers = maakSpelers([4]);
-  const stat = Hussel.maakHistorieStatistiek([]);
-  assertGelijk(Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), stat), 0);
+test('scoreFoursome is zero without history and within one group', function () {
+  const players = makePlayers([4]);
+  const stats = Pairing.historyStats([]);
+  assertEqual(Pairing.scoreFoursome(players.slice(0, 2), players.slice(2), stats), 0);
 });
 
-test('scoorViertal straft partnerherhaling kwadratisch', function () {
-  const spelers = maakSpelers([4]);
-  const stat = Hussel.maakHistorieStatistiek([]);
-  stat.partner[Hussel.sleutel('g0n0', 'g0n1')] = 2;
-  const score = Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), stat);
-  assertGelijk(score, Hussel.GEWICHT_PARTNER * 4);
+test('scoreFoursome penalises repeated partners quadratically', function () {
+  const players = makePlayers([4]);
+  const stats = Pairing.historyStats([]);
+  stats.partner[Pairing.pairKey('g0n0', 'g0n1')] = 2;
+  const score = Pairing.scoreFoursome(players.slice(0, 2), players.slice(2), stats);
+  assertEqual(score, Pairing.WEIGHT_PARTNER * 4);
 });
 
-test('scoorViertal straft tegenstanderherhaling lichter dan partnerherhaling', function () {
-  const spelers = maakSpelers([4]);
-  const metPartner = Hussel.maakHistorieStatistiek([]);
-  metPartner.partner[Hussel.sleutel('g0n0', 'g0n1')] = 1;
-  const metTegenstander = Hussel.maakHistorieStatistiek([]);
-  metTegenstander.tegenstander[Hussel.sleutel('g0n0', 'g0n2')] = 1;
-  const scorePartner = Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), metPartner);
-  const scoreTegenstander = Hussel.scoorViertal(spelers.slice(0, 2), spelers.slice(2), metTegenstander);
-  assert(scorePartner > scoreTegenstander, 'partnerherhaling weegt niet zwaarder');
+test('scoreFoursome penalises repeated opponents less than repeated partners', function () {
+  const players = makePlayers([4]);
+  const withPartner = Pairing.historyStats([]);
+  withPartner.partner[Pairing.pairKey('g0n0', 'g0n1')] = 1;
+  const withOpponent = Pairing.historyStats([]);
+  withOpponent.opponent[Pairing.pairKey('g0n0', 'g0n2')] = 1;
+  const partnerScore = Pairing.scoreFoursome(players.slice(0, 2), players.slice(2), withPartner);
+  const opponentScore = Pairing.scoreFoursome(players.slice(0, 2), players.slice(2), withOpponent);
+  assert(partnerScore > opponentScore, 'a repeated partner does not weigh more');
 });
 
-test('scoorViertal straft de niveaukloof op een baan', function () {
-  const stat = Hussel.maakHistorieStatistiek([]);
-  const smal = [
-    { id: 'a', naam: 'a', groep: 0 }, { id: 'b', naam: 'b', groep: 0 },
-    { id: 'c', naam: 'c', groep: 0 }, { id: 'd', naam: 'd', groep: 1 },
+test('scoreFoursome penalises the level gap on a court', function () {
+  const stats = Pairing.historyStats([]);
+  const narrow = [
+    { id: 'a', name: 'a', group: 0 }, { id: 'b', name: 'b', group: 0 },
+    { id: 'c', name: 'c', group: 0 }, { id: 'd', name: 'd', group: 1 },
   ];
-  const breed = [
-    { id: 'a', naam: 'a', groep: 0 }, { id: 'b', naam: 'b', groep: 0 },
-    { id: 'c', naam: 'c', groep: 0 }, { id: 'd', naam: 'd', groep: 2 },
+  const wide = [
+    { id: 'a', name: 'a', group: 0 }, { id: 'b', name: 'b', group: 0 },
+    { id: 'c', name: 'c', group: 0 }, { id: 'd', name: 'd', group: 2 },
   ];
-  const scoreSmal = Hussel.scoorViertal(smal.slice(0, 2), smal.slice(2), stat);
-  const scoreBreed = Hussel.scoorViertal(breed.slice(0, 2), breed.slice(2), stat);
-  assertGelijk(scoreSmal, Hussel.GEWICHT_NIVEAUKLOOF * 1);
-  assertGelijk(scoreBreed, Hussel.GEWICHT_NIVEAUKLOOF * 4);
+  const narrowScore = Pairing.scoreFoursome(narrow.slice(0, 2), narrow.slice(2), stats);
+  const wideScore = Pairing.scoreFoursome(wide.slice(0, 2), wide.slice(2), stats);
+  assertEqual(narrowScore, Pairing.WEIGHT_LEVEL_GAP * 1);
+  assertEqual(wideScore, Pairing.WEIGHT_LEVEL_GAP * 4);
 });
 
-test('scoorViertal straft wie al vaker lener was', function () {
-  const stat = Hussel.maakHistorieStatistiek([]);
-  stat.lener.d = 2;
-  const viertal = [
-    { id: 'a', naam: 'a', groep: 0 }, { id: 'b', naam: 'b', groep: 0 },
-    { id: 'c', naam: 'c', groep: 0 }, { id: 'd', naam: 'd', groep: 1 },
+test('scoreFoursome penalises whoever has been a borrower more often', function () {
+  const stats = Pairing.historyStats([]);
+  stats.borrower.d = 2;
+  const foursome = [
+    { id: 'a', name: 'a', group: 0 }, { id: 'b', name: 'b', group: 0 },
+    { id: 'c', name: 'c', group: 0 }, { id: 'd', name: 'd', group: 1 },
   ];
-  const score = Hussel.scoorViertal(viertal.slice(0, 2), viertal.slice(2), stat);
-  assertGelijk(score, Hussel.GEWICHT_NIVEAUKLOOF * 1 + Hussel.GEWICHT_LENER * 4);
+  const score = Pairing.scoreFoursome(foursome.slice(0, 2), foursome.slice(2), stats);
+  assertEqual(score, Pairing.WEIGHT_LEVEL_GAP * 1 + Pairing.WEIGHT_BORROWER * 4);
 });
 
-test('kiesTeams vermijdt een partnercombinatie die al voorkwam', function () {
-  const spelers = maakSpelers([4]);
-  const stat = Hussel.maakHistorieStatistiek([]);
-  stat.partner[Hussel.sleutel('g0n0', 'g0n1')] = 3;
-  stat.partner[Hussel.sleutel('g0n2', 'g0n3')] = 3;
-  const teams = Hussel.kiesTeams(spelers, stat);
-  const paren = [
-    Hussel.sleutel(teams.teamA[0].id, teams.teamA[1].id),
-    Hussel.sleutel(teams.teamB[0].id, teams.teamB[1].id),
+test('chooseTeams avoids a partner pairing that already happened', function () {
+  const players = makePlayers([4]);
+  const stats = Pairing.historyStats([]);
+  stats.partner[Pairing.pairKey('g0n0', 'g0n1')] = 3;
+  stats.partner[Pairing.pairKey('g0n2', 'g0n3')] = 3;
+  const teams = Pairing.chooseTeams(players, stats);
+  const pairs = [
+    Pairing.pairKey(teams.teamA[0].id, teams.teamA[1].id),
+    Pairing.pairKey(teams.teamB[0].id, teams.teamB[1].id),
   ];
-  assert(paren.indexOf(Hussel.sleutel('g0n0', 'g0n1')) === -1, 'herhaalt een bestaand koppel');
+  assert(pairs.indexOf(Pairing.pairKey('g0n0', 'g0n1')) === -1, 'repeats an existing pair');
 });
 
-test('kiesTeams levert twee teams van twee met alle vier de spelers', function () {
-  const spelers = maakSpelers([4]);
-  const teams = Hussel.kiesTeams(spelers, Hussel.maakHistorieStatistiek([]));
-  assertGelijk(teams.teamA.length, 2);
-  assertGelijk(teams.teamB.length, 2);
-  const ids = teams.teamA.concat(teams.teamB).map(function (s) { return s.id; }).sort();
-  assertGelijk(ids, spelers.map(function (s) { return s.id; }).sort());
+test('chooseTeams gives two teams of two with all four players', function () {
+  const players = makePlayers([4]);
+  const teams = Pairing.chooseTeams(players, Pairing.historyStats([]));
+  assertEqual(teams.teamA.length, 2);
+  assertEqual(teams.teamB.length, 2);
+  const ids = teams.teamA.concat(teams.teamB).map(function (p) { return p.id; }).sort();
+  assertEqual(ids, players.map(function (p) { return p.id; }).sort());
 });
 
-test('genereerRonde geeft null als er geen volledige baan te vullen is', function () {
-  const uitkomst = Hussel.genereerRonde({
-    aanwezigen: maakSpelers([3]),
-    banen: 4,
-    rng: Hussel.maakRng(1),
-    pogingen: 5,
+test('generateRound returns null when no full court can be filled', function () {
+  const result = Pairing.generateRound({
+    attendees: makePlayers([3]),
+    courts: 4,
+    rng: Pairing.createRng(1),
+    attempts: 5,
   });
-  assertGelijk(uitkomst, null);
+  assertEqual(result, null);
 });
 
-test('genereerRonde deelt iedere aanwezige precies één keer in', function () {
-  const spelers = maakSpelers([6, 6, 6]);
-  const ronde = Hussel.genereerRonde({
-    aanwezigen: spelers,
-    banen: 4,
-    rng: Hussel.maakRng(11),
-    pogingen: 20,
+test('generateRound places every attendee exactly once', function () {
+  const players = makePlayers([6, 6, 6]);
+  const round = Pairing.generateRound({
+    attendees: players,
+    courts: 4,
+    rng: Pairing.createRng(11),
+    attempts: 20,
   });
-  const ingedeeld = [];
-  for (const baan of ronde.banen) {
-    for (const id of baan.teamA.concat(baan.teamB)) ingedeeld.push(id);
+  const placed = [];
+  for (const court of round.courts) {
+    for (const id of court.teamA.concat(court.teamB)) placed.push(id);
   }
-  for (const id of ronde.rustend) ingedeeld.push(id);
-  assertGelijk(ingedeeld.length, spelers.length);
-  assertGelijk(ingedeeld.slice().sort(), spelers.map(function (s) { return s.id; }).sort());
+  for (const id of round.resting) placed.push(id);
+  assertEqual(placed.length, players.length);
+  assertEqual(placed.slice().sort(), players.map(function (p) { return p.id; }).sort());
 });
 
-test('genereerRonde vult niet meer banen dan er plekken zijn', function () {
-  const ronde = Hussel.genereerRonde({
-    aanwezigen: maakSpelers([18]),
-    banen: 3,
-    rng: Hussel.maakRng(2),
-    pogingen: 20,
+test('generateRound does not fill more courts than there are spots', function () {
+  const round = Pairing.generateRound({
+    attendees: makePlayers([18]),
+    courts: 3,
+    rng: Pairing.createRng(2),
+    attempts: 20,
   });
-  assertGelijk(ronde.banen.length, 3);
-  assertGelijk(ronde.rustend.length, 6);
-  assertGelijk(ronde.banen.map(function (baan) { return baan.baan; }), [1, 2, 3]);
+  assertEqual(round.courts.length, 3);
+  assertEqual(round.resting.length, 6);
+  assertEqual(round.courts.map(function (court) { return court.number; }), [1, 2, 3]);
 });
 
-test('genereerRonde vult de baanbeschrijving met groepen, thuisgroep en leners', function () {
-  const ronde = Hussel.genereerRonde({
-    aanwezigen: maakSpelers([6, 6]),
-    banen: 3,
-    rng: Hussel.maakRng(4),
-    pogingen: 20,
+test('generateRound fills in the court description with groups, home group and borrowers', function () {
+  const round = Pairing.generateRound({
+    attendees: makePlayers([6, 6]),
+    courts: 3,
+    rng: Pairing.createRng(4),
+    attempts: 20,
   });
-  const breukvlak = ronde.banen[1];
-  assertGelijk(breukvlak.groepen, [0, 1]);
-  assertGelijk(breukvlak.thuisgroep, 0);
-  assertGelijk(breukvlak.leners.length, 2);
-  assertGelijk(ronde.banen[0].groepen, [0]);
-  assertGelijk(ronde.banen[0].leners, []);
+  const boundary = round.courts[1];
+  assertEqual(boundary.groups, [0, 1]);
+  assertEqual(boundary.homeGroup, 0);
+  assertEqual(boundary.borrowers.length, 2);
+  assertEqual(round.courts[0].groups, [0]);
+  assertEqual(round.courts[0].borrowers, []);
 });
 
-test('genereerRonde is reproduceerbaar bij hetzelfde zaad', function () {
-  const spelers = maakSpelers([8, 8]);
-  const eerste = Hussel.genereerRonde({ aanwezigen: spelers, banen: 4, rng: Hussel.maakRng(9), pogingen: 30 });
-  const tweede = Hussel.genereerRonde({ aanwezigen: spelers, banen: 4, rng: Hussel.maakRng(9), pogingen: 30 });
-  assertGelijk(eerste, tweede);
+test('generateRound is reproducible for the same seed', function () {
+  const players = makePlayers([8, 8]);
+  const first = Pairing.generateRound({ attendees: players, courts: 4, rng: Pairing.createRng(9), attempts: 30 });
+  const second = Pairing.generateRound({ attendees: players, courts: 4, rng: Pairing.createRng(9), attempts: 30 });
+  assertEqual(first, second);
 });
 
-test('genereerRonde vermijdt het koppel dat vorige ronde samen speelde', function () {
-  const spelers = maakSpelers([4]);
-  const eerste = Hussel.genereerRonde({ aanwezigen: spelers, banen: 1, rng: Hussel.maakRng(6), pogingen: 30 });
-  const tweede = Hussel.genereerRonde({
-    aanwezigen: spelers,
-    banen: 1,
-    historie: [eerste],
-    rng: Hussel.maakRng(6),
-    pogingen: 30,
+test('generateRound avoids the pair that played together last round', function () {
+  const players = makePlayers([4]);
+  const first = Pairing.generateRound({ attendees: players, courts: 1, rng: Pairing.createRng(6), attempts: 30 });
+  const second = Pairing.generateRound({
+    attendees: players,
+    courts: 1,
+    history: [first],
+    rng: Pairing.createRng(6),
+    attempts: 30,
   });
-  const eerdereKoppels = [
-    Hussel.sleutel(eerste.banen[0].teamA[0], eerste.banen[0].teamA[1]),
-    Hussel.sleutel(eerste.banen[0].teamB[0], eerste.banen[0].teamB[1]),
+  const earlierPairs = [
+    Pairing.pairKey(first.courts[0].teamA[0], first.courts[0].teamA[1]),
+    Pairing.pairKey(first.courts[0].teamB[0], first.courts[0].teamB[1]),
   ];
-  const nieuweKoppels = [
-    Hussel.sleutel(tweede.banen[0].teamA[0], tweede.banen[0].teamA[1]),
-    Hussel.sleutel(tweede.banen[0].teamB[0], tweede.banen[0].teamB[1]),
+  const newPairs = [
+    Pairing.pairKey(second.courts[0].teamA[0], second.courts[0].teamA[1]),
+    Pairing.pairKey(second.courts[0].teamB[0], second.courts[0].teamB[1]),
   ];
-  for (const koppel of nieuweKoppels) {
-    assert(eerdereKoppels.indexOf(koppel) === -1, 'koppel ' + koppel + ' wordt herhaald');
+  for (const pair of newPairs) {
+    assert(earlierPairs.indexOf(pair) === -1, 'pair ' + pair + ' is repeated');
   }
 });
 
-function speelAvond(spelers, banen, aantalRondes, zaad) {
-  const rondes = [];
-  for (let i = 0; i < aantalRondes; i += 1) {
-    const ronde = Hussel.genereerRonde({
-      aanwezigen: spelers,
-      banen: banen,
-      historie: rondes,
-      rng: Hussel.maakRng(zaad + i),
-      pogingen: 50,
+function playEvening(players, courts, roundCount, seed) {
+  const rounds = [];
+  for (let i = 0; i < roundCount; i += 1) {
+    const round = Pairing.generateRound({
+      attendees: players,
+      courts: courts,
+      history: rounds,
+      rng: Pairing.createRng(seed + i),
+      attempts: 50,
     });
-    assert(ronde !== null, 'ronde ' + i + ' kon niet gemaakt worden');
-    rondes.push(ronde);
+    assert(round !== null, 'round ' + i + ' could not be made');
+    rounds.push(round);
   }
-  return rondes;
+  return rounds;
 }
 
-function telRust(rondes, spelers) {
-  const telling = {};
-  for (const speler of spelers) telling[speler.id] = 0;
-  for (const ronde of rondes) {
-    for (const id of ronde.rustend) telling[id] += 1;
+function countRest(rounds, players) {
+  const tally = {};
+  for (const player of players) tally[player.id] = 0;
+  for (const round of rounds) {
+    for (const id of round.resting) tally[id] += 1;
   }
-  return telling;
+  return tally;
 }
 
-test('eigenschap: iedere aanwezige staat per ronde precies één keer ingedeeld', function () {
-  const spelers = maakSpelers([7, 7, 4]);
-  const rondes = speelAvond(spelers, 4, 8, 100);
-  for (const ronde of rondes) {
-    const gezien = {};
-    for (const baan of ronde.banen) {
-      for (const id of baan.teamA.concat(baan.teamB)) {
-        assert(gezien[id] === undefined, id + ' staat twee keer ingedeeld');
-        gezien[id] = true;
+test('property: every attendee is placed exactly once per round', function () {
+  const players = makePlayers([7, 7, 4]);
+  const rounds = playEvening(players, 4, 8, 100);
+  for (const round of rounds) {
+    const seen = {};
+    for (const court of round.courts) {
+      for (const id of court.teamA.concat(court.teamB)) {
+        assert(seen[id] === undefined, id + ' is placed twice');
+        seen[id] = true;
       }
     }
-    for (const id of ronde.rustend) {
-      assert(gezien[id] === undefined, id + ' speelt en rust tegelijk');
-      gezien[id] = true;
+    for (const id of round.resting) {
+      assert(seen[id] === undefined, id + ' plays and rests at the same time');
+      seen[id] = true;
     }
-    assertGelijk(Object.keys(gezien).length, spelers.length, 'niet iedereen is ingedeeld');
+    assertEqual(Object.keys(seen).length, players.length, 'not everyone is placed');
   }
 });
 
-test('eigenschap: over twintig rondes verschilt het aantal rustbeurten hooguit één', function () {
-  const spelers = maakSpelers([18]);
-  const rondes = speelAvond(spelers, 4, 20, 200);
-  const telling = telRust(rondes, spelers);
-  const waarden = Object.keys(telling).map(function (id) { return telling[id]; });
-  const verschil = Math.max.apply(null, waarden) - Math.min.apply(null, waarden);
-  assert(verschil <= 1, 'rustverschil is ' + verschil + ': ' + JSON.stringify(telling));
+test('property: over twenty rounds the number of rest turns differs by at most one', function () {
+  const players = makePlayers([18]);
+  const rounds = playEvening(players, 4, 20, 200);
+  const tally = countRest(rounds, players);
+  const values = Object.keys(tally).map(function (id) { return tally[id]; });
+  const difference = Math.max.apply(null, values) - Math.min.apply(null, values);
+  assert(difference <= 1, 'rest difference is ' + difference + ': ' + JSON.stringify(tally));
 });
 
-test('eigenschap: groepen die deelbaar zijn door vier blijven binnen één niveau', function () {
-  const spelers = maakSpelers([8, 8]);
-  const rondes = speelAvond(spelers, 4, 8, 300);
-  for (const ronde of rondes) {
-    for (const baan of ronde.banen) {
-      assertGelijk(baan.groepen.length, 1, 'baan overspant meerdere niveaus: ' + JSON.stringify(baan.groepen));
-    }
-  }
-});
-
-test('eigenschap: een restgroep leent hooguit uit één naastliggend niveau', function () {
-  const spelers = maakSpelers([6, 6]);
-  const rondes = speelAvond(spelers, 3, 8, 400);
-  for (const ronde of rondes) {
-    for (const baan of ronde.banen) {
-      const kloof = baan.groepen[baan.groepen.length - 1] - baan.groepen[0];
-      assert(kloof <= 1, 'baan overspant een kloof van ' + kloof);
+test('property: groups divisible by four stay within one level', function () {
+  const players = makePlayers([8, 8]);
+  const rounds = playEvening(players, 4, 8, 300);
+  for (const round of rounds) {
+    for (const court of round.courts) {
+      assertEqual(court.groups.length, 1, 'court spans several levels: ' + JSON.stringify(court.groups));
     }
   }
 });
 
-test('eigenschap: wie als lener op het breukvlak valt, rouleert', function () {
-  const spelers = maakSpelers([6, 6]);
-  const rondes = speelAvond(spelers, 3, 10, 500);
-  const gezien = {};
-  for (const ronde of rondes) {
-    for (const baan of ronde.banen) {
-      for (const id of baan.leners) gezien[id] = true;
+test('property: a leftover group borrows from at most one neighbouring level', function () {
+  const players = makePlayers([6, 6]);
+  const rounds = playEvening(players, 3, 8, 400);
+  for (const round of rounds) {
+    for (const court of round.courts) {
+      const gap = court.groups[court.groups.length - 1] - court.groups[0];
+      assert(gap <= 1, 'court spans a gap of ' + gap);
     }
   }
-  assert(Object.keys(gezien).length >= 4, 'slechts ' + Object.keys(gezien).length + ' spelers zijn ooit lener geweest');
 });
 
-test('eigenschap: vier tot veertig spelers bij één tot tien banen levert altijd een geldige ronde', function () {
-  for (let aantalSpelers = 4; aantalSpelers <= 40; aantalSpelers += 1) {
-    const spelers = [];
-    for (let i = 0; i < aantalSpelers; i += 1) {
-      spelers.push({ id: 'p' + i, naam: 'p' + i, groep: i % 3 });
+test('property: who lands on the boundary as a borrower rotates', function () {
+  const players = makePlayers([6, 6]);
+  const rounds = playEvening(players, 3, 10, 500);
+  const seen = {};
+  for (const round of rounds) {
+    for (const court of round.courts) {
+      for (const id of court.borrowers) seen[id] = true;
     }
-    for (let banen = 1; banen <= 10; banen += 1) {
-      const ronde = Hussel.genereerRonde({
-        aanwezigen: spelers,
-        banen: banen,
-        rng: Hussel.maakRng(aantalSpelers * 100 + banen),
-        pogingen: 3,
+  }
+  assert(Object.keys(seen).length >= 4, 'only ' + Object.keys(seen).length + ' players were ever a borrower');
+});
+
+test('property: four to forty players on one to ten courts always give a valid round', function () {
+  for (let playerCount = 4; playerCount <= 40; playerCount += 1) {
+    const players = [];
+    for (let i = 0; i < playerCount; i += 1) {
+      players.push({ id: 'p' + i, name: 'p' + i, group: i % 3 });
+    }
+    for (let courts = 1; courts <= 10; courts += 1) {
+      const round = Pairing.generateRound({
+        attendees: players,
+        courts: courts,
+        rng: Pairing.createRng(playerCount * 100 + courts),
+        attempts: 3,
       });
-      const plekken = Hussel.aantalPlekken(aantalSpelers, banen);
-      const omschrijving = aantalSpelers + ' spelers op ' + banen + ' banen';
-      assert(ronde !== null, 'geen ronde bij ' + omschrijving);
-      assertGelijk(ronde.banen.length, plekken / 4, 'verkeerd aantal banen bij ' + omschrijving);
+      const spots = Pairing.countSpots(playerCount, courts);
+      const description = playerCount + ' players on ' + courts + ' courts';
+      assert(round !== null, 'no round for ' + description);
+      assertEqual(round.courts.length, spots / 4, 'wrong number of courts for ' + description);
       const ids = [];
-      for (const baan of ronde.banen) {
-        assertGelijk(baan.teamA.length, 2, 'teamA is geen tweetal bij ' + omschrijving);
-        assertGelijk(baan.teamB.length, 2, 'teamB is geen tweetal bij ' + omschrijving);
-        for (const id of baan.teamA.concat(baan.teamB)) ids.push(id);
+      for (const court of round.courts) {
+        assertEqual(court.teamA.length, 2, 'teamA is not a pair for ' + description);
+        assertEqual(court.teamB.length, 2, 'teamB is not a pair for ' + description);
+        for (const id of court.teamA.concat(court.teamB)) ids.push(id);
       }
-      for (const id of ronde.rustend) ids.push(id);
-      assertGelijk(ids.length, aantalSpelers, 'niet iedereen ingedeeld bij ' + omschrijving);
-      assertGelijk(new Set(ids).size, aantalSpelers, 'dubbele indeling bij ' + omschrijving);
+      for (const id of round.resting) ids.push(id);
+      assertEqual(ids.length, playerCount, 'not everyone placed for ' + description);
+      assertEqual(new Set(ids).size, playerCount, 'double placement for ' + description);
     }
   }
 });
 
-test('maakOverzicht telt gespeelde rondes en rustbeurten per speler', function () {
-  const rondes = [
-    maakTestRonde([maakTestBaan(1, ['a', 'b'], ['c', 'd'])], ['e']),
-    maakTestRonde([maakTestBaan(1, ['a', 'c'], ['b', 'e'])], ['d']),
+test('summarize counts rounds played and rest turns per player', function () {
+  const rounds = [
+    makeTestRound([makeTestCourt(1, ['a', 'b'], ['c', 'd'])], ['e']),
+    makeTestRound([makeTestCourt(1, ['a', 'c'], ['b', 'e'])], ['d']),
   ];
-  const overzicht = Hussel.maakOverzicht(rondes, ['a', 'b', 'c', 'd', 'e']);
-  assertGelijk(overzicht, [
-    { id: 'a', gespeeld: 2, gerust: 0, gepauzeerd: 0 },
-    { id: 'b', gespeeld: 2, gerust: 0, gepauzeerd: 0 },
-    { id: 'c', gespeeld: 2, gerust: 0, gepauzeerd: 0 },
-    { id: 'd', gespeeld: 1, gerust: 1, gepauzeerd: 0 },
-    { id: 'e', gespeeld: 1, gerust: 1, gepauzeerd: 0 },
+  const summary = Pairing.summarize(rounds, ['a', 'b', 'c', 'd', 'e']);
+  assertEqual(summary, [
+    { id: 'a', played: 2, rested: 0, paused: 0 },
+    { id: 'b', played: 2, rested: 0, paused: 0 },
+    { id: 'c', played: 2, rested: 0, paused: 0 },
+    { id: 'd', played: 1, rested: 1, paused: 0 },
+    { id: 'e', played: 1, rested: 1, paused: 0 },
   ]);
 });
 
-test('maakOverzicht toont een speler zonder rondes als nul', function () {
-  const overzicht = Hussel.maakOverzicht([], ['a']);
-  assertGelijk(overzicht, [{ id: 'a', gespeeld: 0, gerust: 0, gepauzeerd: 0 }]);
+test('summarize shows a player without rounds as zero', function () {
+  const summary = Pairing.summarize([], ['a']);
+  assertEqual(summary, [{ id: 'a', played: 0, rested: 0, paused: 0 }]);
 });
 
-function maakNepStore() {
+function makeFakeStorage() {
   const data = {};
   return {
     data: data,
-    getItem: function (sleutel) {
-      return Object.prototype.hasOwnProperty.call(data, sleutel) ? data[sleutel] : null;
+    getItem: function (key) {
+      return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : null;
     },
-    setItem: function (sleutel, waarde) { data[sleutel] = String(waarde); },
-    removeItem: function (sleutel) { delete data[sleutel]; },
+    setItem: function (key, value) { data[key] = String(value); },
+    removeItem: function (key) { delete data[key]; },
   };
 }
 
-function maakWeigerendeStore() {
+function makeRefusingStorage() {
   return {
-    getItem: function () { throw new Error('geweigerd'); },
-    setItem: function () { throw new Error('geweigerd'); },
-    removeItem: function () { throw new Error('geweigerd'); },
+    getItem: function () { throw new Error('refused'); },
+    setItem: function () { throw new Error('refused'); },
+    removeItem: function () { throw new Error('refused'); },
   };
 }
 
-test('opslag bewaart en laadt de club', function () {
-  const opslag = maakOpslag(maakNepStore());
-  assertGelijk(opslag.laadClub(), null);
-  opslag.bewaarClub({ groepen: ['A'], spelers: [{ id: 'x', naam: 'X', groep: 0 }] });
-  assertGelijk(opslag.laadClub(), { groepen: ['A'], spelers: [{ id: 'x', naam: 'X', groep: 0 }] });
+test('store saves and loads the club', function () {
+  const store = createStore(makeFakeStorage());
+  assertEqual(store.loadClub(), null);
+  store.saveClub({ groups: ['A'], players: [{ id: 'x', name: 'X', group: 0 }] });
+  assertEqual(store.loadClub(), { groups: ['A'], players: [{ id: 'x', name: 'X', group: 0 }] });
 });
 
-test('opslag bewaart, laadt en wist de avond', function () {
-  const opslag = maakOpslag(maakNepStore());
-  opslag.bewaarAvond({ aanwezigen: ['x'], banen: 2, rondes: [], rustcorrectie: {} });
-  assertGelijk(opslag.laadAvond().banen, 2);
-  opslag.wisAvond();
-  assertGelijk(opslag.laadAvond(), null);
+test('store saves, loads and clears the evening', function () {
+  const store = createStore(makeFakeStorage());
+  store.saveEvening({ attendees: ['x'], courts: 2, rounds: [], restCorrection: {} });
+  assertEqual(store.loadEvening().courts, 2);
+  store.clearEvening();
+  assertEqual(store.loadEvening(), null);
 });
 
-test('opslag overleeft een nieuwe opslag op dezelfde store', function () {
-  const store = maakNepStore();
-  maakOpslag(store).bewaarClub({ groepen: ['A'], spelers: [] });
-  assertGelijk(maakOpslag(store).laadClub(), { groepen: ['A'], spelers: [] });
+test('store survives a new store on the same storage', function () {
+  const storage = makeFakeStorage();
+  createStore(storage).saveClub({ groups: ['A'], players: [] });
+  assertEqual(createStore(storage).loadClub(), { groups: ['A'], players: [] });
 });
 
-test('opslag valt terug op geheugen als de store weigert', function () {
-  const opslag = maakOpslag(maakWeigerendeStore());
-  assertGelijk(opslag.beschikbaar(), false);
-  opslag.bewaarClub({ groepen: ['A'], spelers: [] });
-  assertGelijk(opslag.laadClub(), { groepen: ['A'], spelers: [] });
+test('store falls back to memory when the storage refuses', function () {
+  const store = createStore(makeRefusingStorage());
+  assertEqual(store.available(), false);
+  store.saveClub({ groups: ['A'], players: [] });
+  assertEqual(store.loadClub(), { groups: ['A'], players: [] });
 });
 
-test('opslag zonder store meldt zich als niet beschikbaar', function () {
-  const opslag = maakOpslag(null);
-  assertGelijk(opslag.beschikbaar(), false);
-  opslag.bewaarAvond({ banen: 3 });
-  assertGelijk(opslag.laadAvond().banen, 3);
+test('store without storage reports itself as unavailable', function () {
+  const store = createStore(null);
+  assertEqual(store.available(), false);
+  store.saveEvening({ courts: 3 });
+  assertEqual(store.loadEvening().courts, 3);
 });
 
-test('opslag geeft null bij beschadigde inhoud', function () {
-  const store = maakNepStore();
-  store.data['hussel.club'] = '{geen geldige json';
-  assertGelijk(maakOpslag(store).laadClub(), null);
+test('store returns null for damaged contents', function () {
+  const storage = makeFakeStorage();
+  storage.data['hussel.club'] = '{not valid json';
+  assertEqual(createStore(storage).loadClub(), null);
 });
 
 
-function alleIngedeeld(ronde) {
+function allPlaced(round) {
   const ids = [];
-  for (const baan of ronde.banen) {
-    for (const id of baan.teamA.concat(baan.teamB)) ids.push(id);
+  for (const court of round.courts) {
+    for (const id of court.teamA.concat(court.teamB)) ids.push(id);
   }
-  return ids.concat(ronde.rustend, ronde.gepauzeerd || []);
+  return ids.concat(round.resting, round.paused || []);
 }
 
-test('genereerRonde zet een gepauzeerde speler nooit op een baan', function () {
-  const spelers = maakSpelers([9]);
-  for (let zaad = 0; zaad < 20; zaad += 1) {
-    const ronde = Hussel.genereerRonde({
-      aanwezigen: spelers,
-      gepauzeerd: ['g0n0', 'g0n1'],
-      banen: 2,
-      rng: Hussel.maakRng(zaad),
-      pogingen: 10,
+test('generateRound never puts a paused player on a court', function () {
+  const players = makePlayers([9]);
+  for (let seed = 0; seed < 20; seed += 1) {
+    const round = Pairing.generateRound({
+      attendees: players,
+      paused: ['g0n0', 'g0n1'],
+      courts: 2,
+      rng: Pairing.createRng(seed),
+      attempts: 10,
     });
-    assertGelijk(ronde.gepauzeerd, ['g0n0', 'g0n1']);
-    for (const baan of ronde.banen) {
-      for (const id of baan.teamA.concat(baan.teamB)) {
-        assert(id !== 'g0n0' && id !== 'g0n1', id + ' staat op een baan terwijl hij pauzeert');
+    assertEqual(round.paused, ['g0n0', 'g0n1']);
+    for (const court of round.courts) {
+      for (const id of court.teamA.concat(court.teamB)) {
+        assert(id !== 'g0n0' && id !== 'g0n1', id + ' is on a court while paused');
       }
     }
-    assertGelijk(ronde.rustend.length, 3, 'zeven beschikbaar op twee banen: drie rusten');
-    assertGelijk(new Set(alleIngedeeld(ronde)).size, 9, 'niet iedereen precies één keer ingedeeld');
+    assertEqual(round.resting.length, 3, 'seven available on two courts: three rest');
+    assertEqual(new Set(allPlaced(round)).size, 9, 'not everyone placed exactly once');
   }
 });
 
-test('genereerRonde geeft null als er door pauzes geen viertal over is', function () {
-  const spelers = maakSpelers([5]);
-  const ronde = Hussel.genereerRonde({
-    aanwezigen: spelers,
-    gepauzeerd: ['g0n0', 'g0n1'],
-    banen: 2,
-    rng: Hussel.maakRng(1),
+test('generateRound returns null when pauses leave no foursome', function () {
+  const players = makePlayers([5]);
+  const round = Pairing.generateRound({
+    attendees: players,
+    paused: ['g0n0', 'g0n1'],
+    courts: 2,
+    rng: Pairing.createRng(1),
   });
-  assertGelijk(ronde, null);
+  assertEqual(round, null);
 });
 
-test('een pauze telt als rustbeurt en wie terugkomt speelt de volgende ronde', function () {
-  const spelers = maakSpelers([10]);
-  const rondes = [];
-  rondes.push(Hussel.genereerRonde({
-    aanwezigen: spelers, gepauzeerd: ['g0n3'], banen: 2, historie: rondes, rng: Hussel.maakRng(5), pogingen: 20,
+test('a pause counts as a rest turn and whoever comes back plays the next round', function () {
+  const players = makePlayers([10]);
+  const rounds = [];
+  rounds.push(Pairing.generateRound({
+    attendees: players, paused: ['g0n3'], courts: 2, history: rounds, rng: Pairing.createRng(5), attempts: 20,
   }));
-  const stat = Hussel.maakHistorieStatistiek(rondes);
-  assertGelijk(Hussel.aantal(stat.rust, 'g0n3'), 1, 'pauze telt niet als rust');
-  for (let zaad = 0; zaad < 10; zaad += 1) {
-    const volgende = Hussel.genereerRonde({
-      aanwezigen: spelers, banen: 2, historie: rondes, rng: Hussel.maakRng(zaad), pogingen: 20,
+  const stats = Pairing.historyStats(rounds);
+  assertEqual(Pairing.count(stats.rest, 'g0n3'), 1, 'pause does not count as rest');
+  for (let seed = 0; seed < 10; seed += 1) {
+    const next = Pairing.generateRound({
+      attendees: players, courts: 2, history: rounds, rng: Pairing.createRng(seed), attempts: 20,
     });
-    assert(volgende.rustend.indexOf('g0n3') === -1, 'teruggekeerde speler rust opnieuw');
+    assert(next.resting.indexOf('g0n3') === -1, 'returning player rests again');
   }
 });
 
-test('wisselSpelers wisselt tussen twee banen en bepaalt groepen en leners opnieuw', function () {
-  const ronde = {
-    banen: [
-      { baan: 1, teamA: ['a1', 'a2'], teamB: ['a3', 'a4'], thuisgroep: 0, groepen: [0], leners: [] },
-      { baan: 2, teamA: ['b1', 'b2'], teamB: ['b3', 'b4'], thuisgroep: 1, groepen: [1], leners: [] },
+test('swapPlayers swaps between two courts and works out groups and borrowers again', function () {
+  const round = {
+    courts: [
+      { number: 1, teamA: ['a1', 'a2'], teamB: ['a3', 'a4'], homeGroup: 0, groups: [0], borrowers: [] },
+      { number: 2, teamA: ['b1', 'b2'], teamB: ['b3', 'b4'], homeGroup: 1, groups: [1], borrowers: [] },
     ],
-    rustend: ['r1'],
-    gepauzeerd: [],
+    resting: ['r1'],
+    paused: [],
   };
-  const groepVan = { a1: 0, a2: 0, a3: 0, a4: 0, b1: 1, b2: 1, b3: 1, b4: 1, r1: 1 };
-  const gewisseld = Hussel.wisselSpelers(ronde, 'a1', 'b1', groepVan);
-  assertGelijk(gewisseld.banen[0].teamA, ['b1', 'a2']);
-  assertGelijk(gewisseld.banen[1].teamA, ['a1', 'b2']);
-  assertGelijk(gewisseld.banen[0].groepen, [0, 1]);
-  assertGelijk(gewisseld.banen[0].leners, ['b1']);
-  assertGelijk(gewisseld.banen[1].leners, ['a1']);
-  assertGelijk(ronde.banen[0].teamA, ['a1', 'a2'], 'origineel is gewijzigd');
+  const groupOf = { a1: 0, a2: 0, a3: 0, a4: 0, b1: 1, b2: 1, b3: 1, b4: 1, r1: 1 };
+  const swapped = Pairing.swapPlayers(round, 'a1', 'b1', groupOf);
+  assertEqual(swapped.courts[0].teamA, ['b1', 'a2']);
+  assertEqual(swapped.courts[1].teamA, ['a1', 'b2']);
+  assertEqual(swapped.courts[0].groups, [0, 1]);
+  assertEqual(swapped.courts[0].borrowers, ['b1']);
+  assertEqual(swapped.courts[1].borrowers, ['a1']);
+  assertEqual(round.courts[0].teamA, ['a1', 'a2'], 'original was changed');
 });
 
-test('wisselSpelers wisselt een speler op een baan met een rustende speler', function () {
-  const ronde = {
-    banen: [{ baan: 1, teamA: ['a', 'b'], teamB: ['c', 'd'], thuisgroep: 0, groepen: [0], leners: [] }],
-    rustend: ['e'],
-    gepauzeerd: ['f'],
+test('swapPlayers swaps a player on a court with a resting player', function () {
+  const round = {
+    courts: [{ number: 1, teamA: ['a', 'b'], teamB: ['c', 'd'], homeGroup: 0, groups: [0], borrowers: [] }],
+    resting: ['e'],
+    paused: ['f'],
   };
-  const gewisseld = Hussel.wisselSpelers(ronde, 'e', 'c', { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 });
-  assertGelijk(gewisseld.banen[0].teamB, ['e', 'd']);
-  assertGelijk(gewisseld.rustend, ['c']);
-  assertGelijk(gewisseld.gepauzeerd, ['f']);
-  assertGelijk(new Set(alleIngedeeld(gewisseld)).size, 6);
+  const swapped = Pairing.swapPlayers(round, 'e', 'c', { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 });
+  assertEqual(swapped.courts[0].teamB, ['e', 'd']);
+  assertEqual(swapped.resting, ['c']);
+  assertEqual(swapped.paused, ['f']);
+  assertEqual(new Set(allPlaced(swapped)).size, 6);
 });
 
-test('wisselSpelers laat een gepauzeerde speler ongemoeid', function () {
-  const ronde = {
-    banen: [{ baan: 1, teamA: ['a', 'b'], teamB: ['c', 'd'], thuisgroep: 0, groepen: [0], leners: [] }],
-    rustend: [],
-    gepauzeerd: ['f'],
+test('swapPlayers leaves a paused player alone', function () {
+  const round = {
+    courts: [{ number: 1, teamA: ['a', 'b'], teamB: ['c', 'd'], homeGroup: 0, groups: [0], borrowers: [] }],
+    resting: [],
+    paused: ['f'],
   };
-  const gewisseld = Hussel.wisselSpelers(ronde, 'f', 'a', { a: 0, b: 0, c: 0, d: 0, f: 0 });
-  assertGelijk(gewisseld.banen[0].teamA, ['a', 'b']);
-  assertGelijk(gewisseld.gepauzeerd, ['f']);
+  const swapped = Pairing.swapPlayers(round, 'f', 'a', { a: 0, b: 0, c: 0, d: 0, f: 0 });
+  assertEqual(swapped.courts[0].teamA, ['a', 'b']);
+  assertEqual(swapped.paused, ['f']);
 });
 
-function meetAvond(sleutel) {
-  const spelers = maakSpelers([6, 6, 6, 6]);
-  const rondes = [];
+function measureEvening(key) {
+  const players = makePlayers([6, 6, 6, 6]);
+  const rounds = [];
   for (let i = 0; i < 10; i += 1) {
-    rondes.push(Hussel.genereerRonde({
-      aanwezigen: spelers,
-      banen: 6,
-      historie: rondes,
-      gewichten: Presets.gewichten(sleutel),
-      rng: Hussel.maakRng(900 + i),
-      pogingen: 100,
+    rounds.push(Pairing.generateRound({
+      attendees: players,
+      courts: 6,
+      history: rounds,
+      weights: Presets.weights(key),
+      rng: Pairing.createRng(900 + i),
+      attempts: 100,
     }));
   }
-  let kloof = 0;
-  let herhaling = 0;
-  const gezien = { partner: {}, tegenstander: {} };
-  for (const ronde of rondes) {
-    for (const baan of ronde.banen) {
-      kloof += baan.groepen[baan.groepen.length - 1] - baan.groepen[0];
-      for (const team of [baan.teamA, baan.teamB]) {
-        const s = Hussel.sleutel(team[0], team[1]);
-        if (gezien.partner[s]) herhaling += 1;
-        gezien.partner[s] = true;
+  let gap = 0;
+  let repeats = 0;
+  const seen = { partner: {}, opponent: {} };
+  for (const round of rounds) {
+    for (const court of round.courts) {
+      gap += court.groups[court.groups.length - 1] - court.groups[0];
+      for (const team of [court.teamA, court.teamB]) {
+        const k = Pairing.pairKey(team[0], team[1]);
+        if (seen.partner[k]) repeats += 1;
+        seen.partner[k] = true;
       }
-      for (const a of baan.teamA) {
-        for (const b of baan.teamB) {
-          const s = Hussel.sleutel(a, b);
-          if (gezien.tegenstander[s]) herhaling += 1;
-          gezien.tegenstander[s] = true;
+      for (const a of court.teamA) {
+        for (const b of court.teamB) {
+          const k = Pairing.pairKey(a, b);
+          if (seen.opponent[k]) repeats += 1;
+          seen.opponent[k] = true;
         }
       }
     }
   }
-  return { kloof: kloof, herhaling: herhaling };
+  return { gap: gap, repeats: repeats };
 }
 
-test('presets: Binnen niveau geeft minder niveaukloof dan Sociaal mixen', function () {
-  const niveau = meetAvond('niveau');
-  const sociaal = meetAvond('sociaal');
-  assert(niveau.kloof < sociaal.kloof, 'kloof niveau ' + niveau.kloof + ', sociaal ' + sociaal.kloof);
+test('presets: Within level gives a smaller level gap than Social mixing', function () {
+  const level = measureEvening('level');
+  const social = measureEvening('social');
+  assert(level.gap < social.gap, 'gap level ' + level.gap + ', social ' + social.gap);
 });
 
-test('presets: Sociaal mixen geeft minder herhaling dan Binnen niveau', function () {
-  const niveau = meetAvond('niveau');
-  const sociaal = meetAvond('sociaal');
-  assert(sociaal.herhaling < niveau.herhaling, 'herhaling sociaal ' + sociaal.herhaling + ', niveau ' + niveau.herhaling);
+test('presets: Social mixing gives fewer repeats than Within level', function () {
+  const level = measureEvening('level');
+  const social = measureEvening('social');
+  assert(social.repeats < level.repeats, 'repeats social ' + social.repeats + ', level ' + level.repeats);
 });
 
-test('presets: een onbekende sleutel valt terug op de standaard', function () {
-  assertGelijk(Presets.op('bestaat-niet').sleutel, Presets.STANDAARD);
+test('presets: an unknown key falls back to the default', function () {
+  assertEqual(Presets.get('does-not-exist').key, Presets.DEFAULT);
 });
 
-function maakTestClub(aantal) {
-  const spelers = [];
-  for (let i = 0; i < aantal; i += 1) spelers.push({ id: 'p' + i, naam: 'Speler ' + i, groep: i % 2 });
-  return { groepen: ['Sterk', 'Zwak'], spelers: spelers };
+function makeTestClub(count) {
+  const players = [];
+  for (let i = 0; i < count; i += 1) players.push({ id: 'p' + i, name: 'Player ' + i, group: i % 2 });
+  return { groups: ['Strong', 'Weak'], players: players };
 }
 
-function idsVan(club, aantal) {
-  return club.spelers.slice(0, aantal).map(function (s) { return s.id; });
+function idsOf(club, count) {
+  return club.players.slice(0, count).map(function (p) { return p.id; });
 }
 
-test('sessie: een claim op een vrije naam lukt, een tweede claim wordt geweigerd', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  let uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p0' });
-  assertGelijk(uitkomst.antwoord, null);
-  avond = uitkomst.avond;
-  uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'claim', speler: 'p0' });
-  assertGelijk(uitkomst.antwoord, { fout: 'bezet' });
-  avond = Sessie.ontkoppel(avond, 'p0').avond;
-  uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'claim', speler: 'p0' });
-  assertGelijk(uitkomst.antwoord, null);
-  assertGelijk(uitkomst.avond.koppelingen, { t2: 'p0' });
+test('session: a claim on a free name succeeds, a second claim is refused', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  let result = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p0' });
+  assertEqual(result.reply, null);
+  evening = result.evening;
+  result = Session.applyRequest(evening, club, { phone: 't2', type: 'claim', player: 'p0' });
+  assertEqual(result.reply, { error: 'taken' });
+  evening = Session.unlink(evening, 'p0').evening;
+  result = Session.applyRequest(evening, club, { phone: 't2', type: 'claim', player: 'p0' });
+  assertEqual(result.reply, null);
+  assertEqual(result.evening.links, { t2: 'p0' });
 });
 
-test('sessie: een telefoon claimt één naam tegelijk', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p0' }).avond;
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p1' }).avond;
-  assertGelijk(avond.koppelingen, { t1: 'p1' });
+test('session: a phone claims one name at a time', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p0' }).evening;
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p1' }).evening;
+  assertEqual(evening.links, { t1: 'p1' });
 });
 
-test('sessie: hallo met een onthouden naam koppelt opnieuw', function () {
-  const club = maakTestClub(8);
-  const avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p3' });
-  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p3' });
+test('session: hello with a remembered name links again', function () {
+  const club = makeTestClub(8);
+  const evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  const result = Session.applyRequest(evening, club, { phone: 't1', type: 'hello', player: 'p3' });
+  assertEqual(result.evening.links, { t1: 'p3' });
 });
 
-test('sessie: pauze, vertrek en aanmelden via de telefoon geven dezelfde avond als op de laptop', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond);
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p1' }).avond;
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't9', type: 'claim', speler: 'p9' }).avond;
+test('session: pause, leave and check-in from the phone give the same evening as on the laptop', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(1), attempts: 5 }).evening);
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p1' }).evening;
+  evening = Session.applyRequest(evening, club, { phone: 't9', type: 'claim', player: 'p9' }).evening;
 
-  const viaTelefoon = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'pauze', aan: true }).avond;
-  assertGelijk(viaTelefoon, Sessie.zetPauze(avond, 'p1', true));
+  const viaPhone = Session.applyRequest(evening, club, { phone: 't1', type: 'pause', on: true }).evening;
+  assertEqual(viaPhone, Session.setPause(evening, 'p1', true));
 
-  const vertrek = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'vertrek' }).avond;
-  assertGelijk(vertrek, Sessie.vertrek(avond, club, 'p1').avond);
+  const left = Session.applyRequest(evening, club, { phone: 't1', type: 'leave' }).evening;
+  assertEqual(left, Session.leave(evening, club, 'p1').evening);
 
-  const weg = Sessie.meldAf(avond, 'p9');
-  const aanmelding = Sessie.pasVerzoekToe(weg, club, { telefoon: 't9', type: 'aanmelden' }).avond;
-  assertGelijk(aanmelding, Sessie.meldAan(weg, 'p9'));
+  const gone = Session.checkOut(evening, 'p9');
+  const checkedIn = Session.applyRequest(gone, club, { phone: 't9', type: 'checkIn' }).evening;
+  assertEqual(checkedIn, Session.checkIn(gone, 'p9'));
 });
 
-test('sessie: pauze zonder gekoppelde naam wordt geweigerd', function () {
-  const club = maakTestClub(8);
-  const avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'pauze', aan: true });
-  assertGelijk(uitkomst.antwoord, { fout: 'geen-naam' });
+test('session: a pause without a linked name is refused', function () {
+  const club = makeTestClub(8);
+  const evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  const result = Session.applyRequest(evening, club, { phone: 't1', type: 'pause', on: true });
+  assertEqual(result.reply, { error: 'no-name' });
 });
 
-test('sessie: een laatkomer krijgt het hoogste rustsaldo onder de aanwezigen', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 9), 2, 'ABCDEF');
+test('session: a latecomer gets the highest rest balance among the attendees', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 9), 2, 'ABCDEF');
   for (let i = 0; i < 3; i += 1) {
-    avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(i), pogingen: 5 }).avond);
+    evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(i), attempts: 5 }).evening);
   }
-  const stat = Hussel.maakHistorieStatistiek(avond.rondes, avond.rustcorrectie);
-  const hoogste = Hussel.hoogsteRustsaldo(stat, avond.aanwezigen);
-  avond = Sessie.meldAan(avond, 'p9');
-  const na = Hussel.maakHistorieStatistiek(avond.rondes, avond.rustcorrectie);
-  assertGelijk(Hussel.aantal(na.rust, 'p9'), hoogste);
+  const stats = Pairing.historyStats(evening.rounds, evening.restCorrection);
+  const highest = Pairing.highestRestBalance(stats, evening.attendees);
+  evening = Session.checkIn(evening, 'p9');
+  const after = Pairing.historyStats(evening.rounds, evening.restCorrection);
+  assertEqual(Pairing.count(after.rest, 'p9'), highest);
 });
 
-test('sessie: een nieuwe speler meldt zich aan met naam en niveau en doet meteen mee', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: '  Gerda   de  Vries ', groep: 1 }, 'nieuw1');
-  assertGelijk(uitkomst.antwoord, null);
-  assertGelijk(uitkomst.club.spelers.length, 9);
-  assertGelijk(uitkomst.club.spelers[8], { id: 'nieuw1', naam: 'Gerda de Vries', groep: 1 });
-  assertGelijk(club.spelers.length, 8, 'originele club is gewijzigd');
-  avond = uitkomst.avond;
-  assertGelijk(avond.aanwezigen, ['nieuw1']);
-  assertGelijk(avond.koppelingen.t7, 'nieuw1');
+test('session: a new player registers with name and level and plays straight away', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening([], 2, 'ABCDEF');
+  const result = Session.applyRequest(evening, club, { phone: 't7', type: 'register', name: '  Gerda   de  Vries ', group: 1 }, 'new1');
+  assertEqual(result.reply, null);
+  assertEqual(result.club.players.length, 9);
+  assertEqual(result.club.players[8], { id: 'new1', name: 'Gerda de Vries', group: 1 });
+  assertEqual(club.players.length, 8, 'original club was changed');
+  evening = result.evening;
+  assertEqual(evening.attendees, ['new1']);
+  assertEqual(evening.links.t7, 'new1');
 });
 
-test('sessie: registreren met een bestaande naam verwijst naar de lijst', function () {
-  const club = maakTestClub(8);
-  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: 'speler 3', groep: 0 }, 'nieuw1');
-  assertGelijk(uitkomst.antwoord, { fout: 'naam-bestaat' });
-  assertGelijk(uitkomst.club.spelers.length, 8);
+test('session: registering with an existing name points to the list', function () {
+  const club = makeTestClub(8);
+  const evening = Session.newEvening([], 2, 'ABCDEF');
+  const result = Session.applyRequest(evening, club, { phone: 't7', type: 'register', name: 'player 3', group: 0 }, 'new1');
+  assertEqual(result.reply, { error: 'name-exists' });
+  assertEqual(result.club.players.length, 8);
 });
 
-test('sessie: registreren zonder naam of met een onbekend niveau wordt geweigerd', function () {
-  const club = maakTestClub(8);
-  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  assertGelijk(Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: '   ', groep: 0 }, 'n1').antwoord, { fout: 'lege-naam' });
-  assertGelijk(Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: 'Bob', groep: 5 }, 'n1').antwoord, { fout: 'onbekend-niveau' });
-  assertGelijk(Sessie.pasVerzoekToe(avond, club, { telefoon: 't7', type: 'registreer', naam: 'Bob', groep: '0' }, 'n1').antwoord, { fout: 'onbekend-niveau' });
+test('session: registering without a name or with an unknown level is refused', function () {
+  const club = makeTestClub(8);
+  const evening = Session.newEvening([], 2, 'ABCDEF');
+  assertEqual(Session.applyRequest(evening, club, { phone: 't7', type: 'register', name: '   ', group: 0 }, 'n1').reply, { error: 'empty-name' });
+  assertEqual(Session.applyRequest(evening, club, { phone: 't7', type: 'register', name: 'Bob', group: 5 }, 'n1').reply, { error: 'unknown-level' });
+  assertEqual(Session.applyRequest(evening, club, { phone: 't7', type: 'register', name: 'Bob', group: '0' }, 'n1').reply, { error: 'unknown-level' });
 });
 
-test('sessie: een te lange naam wordt ingekort', function () {
-  assertGelijk(Sessie.schoneNaam('x'.repeat(60)).length, 40);
+test('session: a name that is too long is shortened', function () {
+  assertEqual(Session.cleanName('x'.repeat(60)).length, 40);
 });
 
-test('sessie: je eigen naam aantikken meldt je aan', function () {
-  const club = maakTestClub(8);
-  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p2' });
-  assertGelijk(uitkomst.avond.aanwezigen, ['p2']);
+test('session: tapping your own name checks you in', function () {
+  const club = makeTestClub(8);
+  const evening = Session.newEvening([], 2, 'ABCDEF');
+  const result = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p2' });
+  assertEqual(result.evening.attendees, ['p2']);
 });
 
-test('sessie: hallo koppelt opnieuw maar meldt een vertrokken speler niet vanzelf aan', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(['p2'], 2, 'ABCDEF');
-  avond = Sessie.meldAf(avond, 'p2');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p2' });
-  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p2' });
-  assertGelijk(uitkomst.avond.aanwezigen, []);
+test('session: hello links again but does not check a player who left back in', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening(['p2'], 2, 'ABCDEF');
+  evening = Session.checkOut(evening, 'p2');
+  const result = Session.applyRequest(evening, club, { phone: 't1', type: 'hello', player: 'p2' });
+  assertEqual(result.evening.links, { t1: 'p2' });
+  assertEqual(result.evening.attendees, []);
 });
 
-test('sessie: het concept telt niet mee in de historie', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
-  assert(avond.concept !== null, 'geen concept');
-  assertGelijk(avond.rondes.length, 0);
-  avond = Sessie.publiceer(avond);
-  assertGelijk(avond.rondes.length, 1);
-  assertGelijk(avond.concept, null);
+test('session: the draft does not count towards the history', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(3), attempts: 5 }).evening;
+  assert(evening.draft !== null, 'no draft');
+  assertEqual(evening.rounds.length, 0);
+  evening = Session.publish(evening);
+  assertEqual(evening.rounds.length, 1);
+  assertEqual(evening.draft, null);
 });
 
-test('sessie: een pauze vervalt bij het publiceren van de ronde waarvoor hij gold', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.zetPauze(avond, 'p2', true);
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
-  assertGelijk(avond.concept.gepauzeerd, ['p2']);
-  avond = Sessie.publiceer(avond);
-  assertGelijk(avond.pauzes, {});
+test('session: a pause expires when the round it applied to is published', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.setPause(evening, 'p2', true);
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(3), attempts: 5 }).evening;
+  assertEqual(evening.draft.paused, ['p2']);
+  evening = Session.publish(evening);
+  assertEqual(evening.pauses, {});
 });
 
-test('sessie: een pauze na het concept wordt gemarkeerd en schuift door als het concept zo gepubliceerd wordt', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
-  avond = Sessie.zetPauze(avond, 'p4', true);
-  assertGelijk(avond.verouderd, { p4: 'pauze' });
-  avond = Sessie.publiceer(avond);
-  assertGelijk(avond.pauzes, { p4: true });
-  assertGelijk(avond.verouderd, {});
+test('session: a pause after the draft is marked and carries over if the draft is published as is', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(3), attempts: 5 }).evening;
+  evening = Session.setPause(evening, 'p4', true);
+  assertEqual(evening.stale, { p4: 'pause' });
+  evening = Session.publish(evening);
+  assertEqual(evening.pauses, { p4: true });
+  assertEqual(evening.stale, {});
 });
 
-test('sessie: de telefoon ziet alleen de gepubliceerde ronde en zijn eigen plek', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p0' }).avond;
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
-  assertGelijk(Sessie.toestandVoor(avond, club, 't1').ronde, null, 'concept is zichtbaar');
-  avond = Sessie.publiceer(avond);
-  const toestand = Sessie.toestandVoor(avond, club, 't1');
-  assertGelijk(toestand.ronde.nummer, 1);
-  assertGelijk(toestand.ikNaam, 'Speler 0');
-  assertGelijk(toestand.mijn.status, 'speelt');
-  assertGelijk(toestand.mijn.tegen.length, 2);
+test('session: the phone only sees the published round and its own spot', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p0' }).evening;
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(3), attempts: 5 }).evening;
+  assertEqual(Session.stateFor(evening, club, 't1').round, null, 'draft is visible');
+  evening = Session.publish(evening);
+  const state = Session.stateFor(evening, club, 't1');
+  assertEqual(state.round.number, 1);
+  assertEqual(state.myName, 'Player 0');
+  assertEqual(state.mine.status, 'playing');
+  assertEqual(state.mine.opponents.length, 2);
 });
 
-test('sessie: het aantal banen wijzigen laat de gespeelde rondes staan en geldt bij de volgende loting', function () {
-  const club = maakTestClub(16);
-  let avond = Sessie.nieuweAvond(idsVan(club, 16), 2, 'ABCDEF');
-  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond);
-  avond = Sessie.zetBanen(avond, 4);
-  assertGelijk(avond.rondes[0].banen.length, 2, 'gespeelde ronde is veranderd');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(2), pogingen: 5 }).avond;
-  assertGelijk(avond.concept.banen.length, 4);
+test('session: changing the number of courts leaves played rounds alone and applies at the next draw', function () {
+  const club = makeTestClub(16);
+  let evening = Session.newEvening(idsOf(club, 16), 2, 'ABCDEF');
+  evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(1), attempts: 5 }).evening);
+  evening = Session.setCourts(evening, 4);
+  assertEqual(evening.rounds[0].courts.length, 2, 'played round was changed');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(2), attempts: 5 }).evening;
+  assertEqual(evening.draft.courts.length, 4);
 });
 
-test('sessie: het aantal banen blijft tussen één en twintig', function () {
-  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  assertGelijk(Sessie.zetBanen(avond, 0).banen, 1);
-  assertGelijk(Sessie.zetBanen(avond, 25).banen, 20);
+test('session: the number of courts stays between one and twenty', function () {
+  const evening = Session.newEvening([], 2, 'ABCDEF');
+  assertEqual(Session.setCourts(evening, 0).courts, 1);
+  assertEqual(Session.setCourts(evening, 25).courts, 20);
 });
 
-test('sessie: wie zich aanmeldt terwijl er een concept openstaat, komt in een vernieuwd concept', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond;
-  assertGelijk(Sessie.moetConceptVernieuwen(avond), false);
-  avond = Sessie.meldAan(avond, 'p9');
-  assertGelijk(Sessie.nieuwkomersBuitenConcept(avond), ['p9']);
-  assertGelijk(Sessie.moetConceptVernieuwen(avond), true);
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(2), pogingen: 5 }).avond;
-  assertGelijk(Sessie.nieuwkomersBuitenConcept(avond), []);
+test('session: whoever checks in while a draft is open ends up in a refreshed draft', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(1), attempts: 5 }).evening;
+  assertEqual(Session.shouldRefreshDraft(evening), false);
+  evening = Session.checkIn(evening, 'p9');
+  assertEqual(Session.newcomersOutsideDraft(evening), ['p9']);
+  assertEqual(Session.shouldRefreshDraft(evening), true);
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(2), attempts: 5 }).evening;
+  assertEqual(Session.newcomersOutsideDraft(evening), []);
 });
 
-test('sessie: een nieuwkomer speelt de eerstvolgende ronde', function () {
-  const club = maakTestClub(14);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
+test('session: a newcomer plays the very next round', function () {
+  const club = makeTestClub(14);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
   for (let i = 0; i < 3; i += 1) {
-    avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(i), pogingen: 5 }).avond);
+    evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(i), attempts: 5 }).evening);
   }
-  avond = Sessie.meldAan(avond, 'p13');
-  for (let zaad = 0; zaad < 15; zaad += 1) {
-    const concept = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(100 + zaad), pogingen: 5 }).avond.concept;
-    assert(concept.rustend.indexOf('p13') === -1, 'nieuwkomer rust meteen bij zaad ' + zaad);
+  evening = Session.checkIn(evening, 'p13');
+  for (let seed = 0; seed < 15; seed += 1) {
+    const draft = Session.createDraft(evening, club, { rng: Pairing.createRng(100 + seed), attempts: 5 }).evening.draft;
+    assert(draft.resting.indexOf('p13') === -1, 'newcomer rests straight away for seed ' + seed);
   }
 });
 
-test('sessie: een concept met handmatige wissels wordt niet vanzelf vernieuwd', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 9), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond;
-  const opBaan = avond.concept.banen[0].teamA[0];
-  avond = Sessie.wissel(avond, club, opBaan, avond.concept.rustend[0]);
-  avond = Sessie.meldAan(avond, 'p9');
-  assertGelijk(Sessie.moetConceptVernieuwen(avond), false);
-  assertGelijk(avond.verouderd, { p9: 'aanmelding' });
-  avond = Sessie.publiceer(avond);
-  assertGelijk(avond.rondes[0].handmatig, undefined);
+test('session: a draft with manual swaps is not refreshed automatically', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 9), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(1), attempts: 5 }).evening;
+  const onCourt = evening.draft.courts[0].teamA[0];
+  evening = Session.swap(evening, club, onCourt, evening.draft.resting[0]);
+  evening = Session.checkIn(evening, 'p9');
+  assertEqual(Session.shouldRefreshDraft(evening), false);
+  assertEqual(evening.stale, { p9: 'checkIn' });
+  evening = Session.publish(evening);
+  assertEqual(evening.rounds[0].manual, undefined);
 });
 
-test('sessie: zetNiveau wijzigt alleen die speler en weigert een onbekend niveau', function () {
-  const club = maakTestClub(4);
-  const nieuw = Sessie.zetNiveau(club, 'p0', 1);
-  assertGelijk(nieuw.spelers[0].groep, 1);
-  assertGelijk(club.spelers[0].groep, 0, 'originele club is gewijzigd');
-  assertGelijk(Sessie.zetNiveau(club, 'p0', 7), club);
+test('session: setLevel changes only that player and refuses an unknown level', function () {
+  const club = makeTestClub(4);
+  const updated = Session.setLevel(club, 'p0', 1);
+  assertEqual(updated.players[0].group, 1);
+  assertEqual(club.players[0].group, 0, 'original club was changed');
+  assertEqual(Session.setLevel(club, 'p0', 7), club);
 });
 
-test('sessie: een ander niveau geldt bij de volgende loting, gespeelde rondes blijven staan', function () {
-  let club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond);
-  const voor = JSON.stringify(avond.rondes);
-  club = Sessie.zetNiveau(club, 'p0', 1);
-  assertGelijk(JSON.stringify(avond.rondes), voor);
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(2), pogingen: 5 }).avond;
-  const baanVanP0 = avond.concept.banen.filter(function (b) { return b.teamA.concat(b.teamB).indexOf('p0') !== -1; })[0];
-  if (baanVanP0) assert(baanVanP0.groepen.indexOf(1) !== -1, 'p0 telt nog als niveau 0');
+test('session: a different level applies at the next draw, played rounds stay as they are', function () {
+  let club = makeTestClub(8);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(1), attempts: 5 }).evening);
+  const before = JSON.stringify(evening.rounds);
+  club = Session.setLevel(club, 'p0', 1);
+  assertEqual(JSON.stringify(evening.rounds), before);
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(2), attempts: 5 }).evening;
+  const courtOfP0 = evening.draft.courts.filter(function (c) { return c.teamA.concat(c.teamB).indexOf('p0') !== -1; })[0];
+  if (courtOfP0) assert(courtOfP0.groups.indexOf(1) !== -1, 'p0 still counts as level 0');
 });
 
-test('sessie: staatOpBaanInConcept herkent alleen spelers op een baan', function () {
-  const club = maakTestClub(9);
-  let avond = Sessie.nieuweAvond(idsVan(club, 9), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(1), pogingen: 5 }).avond;
-  assertGelijk(Sessie.staatOpBaanInConcept(avond, avond.concept.banen[0].teamB[1]), true);
-  assertGelijk(Sessie.staatOpBaanInConcept(avond, avond.concept.rustend[0]), false);
-  assertGelijk(Sessie.markeerVerouderd(avond, 'p1', 'niveau').verouderd, { p1: 'niveau' });
+test('session: isOnCourtInDraft only recognises players on a court', function () {
+  const club = makeTestClub(9);
+  let evening = Session.newEvening(idsOf(club, 9), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(1), attempts: 5 }).evening;
+  assertEqual(Session.isOnCourtInDraft(evening, evening.draft.courts[0].teamB[1]), true);
+  assertEqual(Session.isOnCourtInDraft(evening, evening.draft.resting[0]), false);
+  assertEqual(Session.markStale(evening, 'p1', 'level').stale, { p1: 'level' });
 });
 
-test('sessie: wie als eerste met een telefoon meedoet, speelt elke ronde', function () {
-  const club = maakTestClub(11);
-  let avond = Sessie.nieuweAvond(idsVan(club, 6), 2, 'ABCDEF');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p10' }).avond;
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'claim', speler: 'p9' }).avond;
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't3', type: 'claim', speler: 'p8' }).avond;
-  assertGelijk(avond.eerste, 'p10');
+test('session: whoever joins first with a phone plays every round', function () {
+  const club = makeTestClub(11);
+  let evening = Session.newEvening(idsOf(club, 6), 2, 'ABCDEF');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p10' }).evening;
+  evening = Session.applyRequest(evening, club, { phone: 't2', type: 'claim', player: 'p9' }).evening;
+  evening = Session.applyRequest(evening, club, { phone: 't3', type: 'claim', player: 'p8' }).evening;
+  assertEqual(evening.first, 'p10');
   for (let i = 0; i < 12; i += 1) {
-    avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(700 + i), pogingen: 20 }).avond);
-    assert(avond.rondes[i].rustend.indexOf('p10') === -1, 'p10 rust in ronde ' + (i + 1));
+    evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(700 + i), attempts: 20 }).evening);
+    assert(evening.rounds[i].resting.indexOf('p10') === -1, 'p10 rests in round ' + (i + 1));
   }
-  assertGelijk(Sessie.toestandVoor(avond, club, 't2').eerste, undefined);
+  assertEqual(Session.stateFor(evening, club, 't2').first, undefined);
 });
 
-test('sessie: een pauze van de eerste speler wordt gewoon gerespecteerd', function () {
-  const club = maakTestClub(9);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p8' }).avond;
-  avond = Sessie.zetPauze(avond, 'p8', true);
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(3), pogingen: 5 }).avond;
-  assertGelijk(avond.concept.gepauzeerd, ['p8']);
+test('session: a pause by the first player is simply respected', function () {
+  const club = makeTestClub(9);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p8' }).evening;
+  evening = Session.setPause(evening, 'p8', true);
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(3), attempts: 5 }).evening;
+  assertEqual(evening.draft.paused, ['p8']);
 });
 
-test('sessie: aanvinken op de laptop maakt niemand de eerste', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  avond = Sessie.meldAan(avond, 'p0');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'p0' }).avond;
-  assertGelijk(avond.eerste, undefined);
+test('session: ticking someone on the laptop makes nobody the first', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening([], 2, 'ABCDEF');
+  evening = Session.checkIn(evening, 'p0');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'hello', player: 'p0' }).evening;
+  assertEqual(evening.first, undefined);
 });
 
-function opBaan(ronde) {
-  return ronde.banen.flatMap(function (b) { return b.teamA.concat(b.teamB); });
+function onCourt(round) {
+  return round.courts.flatMap(function (c) { return c.teamA.concat(c.teamB); });
 }
 
-function preciesEenKeer(ronde, aanwezigen) {
-  const ids = opBaan(ronde).concat(ronde.rustend, ronde.gepauzeerd || []);
-  assertGelijk(ids.slice().sort(), aanwezigen.slice().sort(), 'niet iedereen precies één keer ingedeeld');
+function exactlyOnce(round, attendees) {
+  const ids = onCourt(round).concat(round.resting, round.paused || []);
+  assertEqual(ids.slice().sort(), attendees.slice().sort(), 'not everyone placed exactly once');
 }
 
-test('invallen: een pauze in het concept vervangt alleen die speler', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
-  const voor = avond.concept;
-  const uit = voor.banen[1].teamA[0];
-  const gevolg = Sessie.pauzeer(avond, club, uit, true, false);
-  const na = gevolg.avond.concept;
-  assertGelijk(gevolg.invallen.length, 1);
-  assertGelijk(gevolg.invallen[0].waar, 'concept');
-  assert(voor.rustend.indexOf(gevolg.invallen[0].in) !== -1, 'invaller rustte niet');
-  assertGelijk(na.banen[0].teamA.concat(na.banen[0].teamB), voor.banen[0].teamA.concat(voor.banen[0].teamB), 'andere baan veranderde');
-  assertGelijk(na.banen[1].teamA[0], gevolg.invallen[0].in);
-  assertGelijk(na.gepauzeerd, [uit]);
-  assertGelijk(gevolg.avond.verouderd, {});
-  preciesEenKeer(na, gevolg.avond.aanwezigen);
-  assertGelijk(Sessie.publiceer(gevolg.avond).pauzes, {}, 'pauze niet verbruikt bij publiceren');
+test('substitutions: a pause in the draft replaces only that player', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(4), attempts: 5 }).evening;
+  const before = evening.draft;
+  const out = before.courts[1].teamA[0];
+  const outcome = Session.pause(evening, club, out, true, false);
+  const after = outcome.evening.draft;
+  assertEqual(outcome.substitutions.length, 1);
+  assertEqual(outcome.substitutions[0].where, 'draft');
+  assert(before.resting.indexOf(outcome.substitutions[0].in) !== -1, 'substitute was not resting');
+  assertEqual(after.courts[0].teamA.concat(after.courts[0].teamB), before.courts[0].teamA.concat(before.courts[0].teamB), 'another court changed');
+  assertEqual(after.courts[1].teamA[0], outcome.substitutions[0].in);
+  assertEqual(after.paused, [out]);
+  assertEqual(outcome.evening.stale, {});
+  exactlyOnce(after, outcome.evening.attendees);
+  assertEqual(Session.publish(outcome.evening).pauses, {}, 'pause not used up on publishing');
 });
 
-test('invallen: handmatige wissels in het concept blijven staan', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
-  const a = avond.concept.banen[0].teamA[0];
-  const b = avond.concept.banen[1].teamB[1];
-  avond = Sessie.wissel(avond, club, a, b);
-  const uit = avond.concept.banen[1].teamA[0];
-  const na = Sessie.pauzeer(avond, club, uit, true, false).avond.concept;
-  assertGelijk(na.banen[0].teamA[0], b, 'handmatige wissel is weg');
-  assertGelijk(na.banen[1].teamB[1], a, 'handmatige wissel is weg');
+test('substitutions: manual swaps in the draft stay in place', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(4), attempts: 5 }).evening;
+  const a = evening.draft.courts[0].teamA[0];
+  const b = evening.draft.courts[1].teamB[1];
+  evening = Session.swap(evening, club, a, b);
+  const out = evening.draft.courts[1].teamA[0];
+  const after = Session.pause(evening, club, out, true, false).evening.draft;
+  assertEqual(after.courts[0].teamA[0], b, 'manual swap is gone');
+  assertEqual(after.courts[1].teamB[1], a, 'manual swap is gone');
 });
 
-test('invallen: zonder rustende spelers wordt het concept opnieuw geloot', function () {
-  const club = maakTestClub(8);
-  let avond = Sessie.nieuweAvond(idsVan(club, 8), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
-  const gevolg = Sessie.pauzeer(avond, club, 'p3', true, false);
-  assertGelijk(gevolg.avond.concept.banen.length, 1);
-  assertGelijk(gevolg.avond.concept.gepauzeerd, ['p3']);
-  preciesEenKeer(gevolg.avond.concept, gevolg.avond.aanwezigen);
+test('substitutions: without resting players the draft is redrawn', function () {
+  const club = makeTestClub(8);
+  let evening = Session.newEvening(idsOf(club, 8), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(4), attempts: 5 }).evening;
+  const outcome = Session.pause(evening, club, 'p3', true, false);
+  assertEqual(outcome.evening.draft.courts.length, 1);
+  assertEqual(outcome.evening.draft.paused, ['p3']);
+  exactlyOnce(outcome.evening.draft, outcome.evening.attendees);
 });
 
-test('invallen: nu meteen pauzeren vervangt de speler in de lopende ronde', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond);
-  const lopend = avond.rondes[0];
-  const uit = lopend.banen[0].teamB[1];
-  const gevolg = Sessie.pauzeer(avond, club, uit, true, true);
-  const na = gevolg.avond.rondes[0];
-  assertGelijk(gevolg.invallen[0].waar, 'ronde');
-  assertGelijk(na.banen[0].teamB[1], gevolg.invallen[0].in);
-  assertGelijk(na.gepauzeerd, [uit]);
-  assertGelijk(gevolg.avond.pauzes, {}, 'pauze geldt ook nog voor de volgende ronde');
-  preciesEenKeer(na, gevolg.avond.aanwezigen);
-  const stat = Hussel.maakOverzicht(gevolg.avond.rondes, [uit, gevolg.invallen[0].in]);
-  assertGelijk([stat[0].gespeeld, stat[0].gepauzeerd, stat[1].gespeeld], [0, 1, 1]);
+test('substitutions: pausing right now replaces the player in the running round', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(4), attempts: 5 }).evening);
+  const running = evening.rounds[0];
+  const out = running.courts[0].teamB[1];
+  const outcome = Session.pause(evening, club, out, true, true);
+  const after = outcome.evening.rounds[0];
+  assertEqual(outcome.substitutions[0].where, 'round');
+  assertEqual(after.courts[0].teamB[1], outcome.substitutions[0].in);
+  assertEqual(after.paused, [out]);
+  assertEqual(outcome.evening.pauses, {}, 'pause also still applies to the next round');
+  exactlyOnce(after, outcome.evening.attendees);
+  const stats = Pairing.summarize(outcome.evening.rounds, [out, outcome.substitutions[0].in]);
+  assertEqual([stats[0].played, stats[0].paused, stats[1].played], [0, 1, 1]);
 });
 
-test('invallen: wie naar huis gaat, wordt in concept en lopende ronde vervangen', function () {
-  const club = maakTestClub(12);
-  let avond = Sessie.nieuweAvond(idsVan(club, 12), 2, 'ABCDEF');
-  avond = Sessie.publiceer(Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond);
-  const uit = avond.rondes[0].banen[0].teamA[1];
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(5), pogingen: 5 }).avond;
-  const gevolg = Sessie.vertrek(avond, club, uit);
-  assert(gevolg.avond.aanwezigen.indexOf(uit) === -1, 'nog aanwezig');
-  const lopend = gevolg.avond.rondes[0];
-  assert(opBaan(lopend).concat(lopend.rustend, lopend.gepauzeerd).indexOf(uit) === -1, 'staat nog in de lopende ronde');
-  const concept = gevolg.avond.concept;
-  assert(opBaan(concept).concat(concept.rustend, concept.gepauzeerd).indexOf(uit) === -1, 'staat nog in het concept');
-  preciesEenKeer(lopend, gevolg.avond.aanwezigen);
-  preciesEenKeer(concept, gevolg.avond.aanwezigen);
+test('substitutions: whoever goes home is replaced in the draft and the running round', function () {
+  const club = makeTestClub(12);
+  let evening = Session.newEvening(idsOf(club, 12), 2, 'ABCDEF');
+  evening = Session.publish(Session.createDraft(evening, club, { rng: Pairing.createRng(4), attempts: 5 }).evening);
+  const out = evening.rounds[0].courts[0].teamA[1];
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(5), attempts: 5 }).evening;
+  const outcome = Session.leave(evening, club, out);
+  assert(outcome.evening.attendees.indexOf(out) === -1, 'still present');
+  const running = outcome.evening.rounds[0];
+  assert(onCourt(running).concat(running.resting, running.paused).indexOf(out) === -1, 'still in the running round');
+  const draft = outcome.evening.draft;
+  assert(onCourt(draft).concat(draft.resting, draft.paused).indexOf(out) === -1, 'still in the draft');
+  exactlyOnce(running, outcome.evening.attendees);
+  exactlyOnce(draft, outcome.evening.attendees);
 });
 
-test('invallen: de invaller is wie het meest rustte, dan wie het dichtst bij het niveau zit', function () {
-  const club = { groepen: ['A', 'B', 'C'], spelers: [
-    { id: 'a1', naam: 'a1', groep: 0 }, { id: 'a2', naam: 'a2', groep: 0 }, { id: 'a3', naam: 'a3', groep: 0 }, { id: 'a4', naam: 'a4', groep: 0 },
-    { id: 'b1', naam: 'b1', groep: 1 }, { id: 'c1', naam: 'c1', groep: 2 }, { id: 'c2', naam: 'c2', groep: 2 },
+test('substitutions: the substitute is whoever rested most, then whoever is closest in level', function () {
+  const club = { groups: ['A', 'B', 'C'], players: [
+    { id: 'a1', name: 'a1', group: 0 }, { id: 'a2', name: 'a2', group: 0 }, { id: 'a3', name: 'a3', group: 0 }, { id: 'a4', name: 'a4', group: 0 },
+    { id: 'b1', name: 'b1', group: 1 }, { id: 'c1', name: 'c1', group: 2 }, { id: 'c2', name: 'c2', group: 2 },
   ] };
-  let avond = Sessie.nieuweAvond(['a1', 'a2', 'a3', 'a4', 'b1', 'c1', 'c2'], 1, 'ABCDEF');
-  avond.concept = {
-    banen: [{ baan: 1, teamA: ['a1', 'a2'], teamB: ['a3', 'a4'], thuisgroep: 0, groepen: [0], leners: [] }],
-    rustend: ['c1', 'b1', 'c2'], gepauzeerd: [],
+  let evening = Session.newEvening(['a1', 'a2', 'a3', 'a4', 'b1', 'c1', 'c2'], 1, 'ABCDEF');
+  evening.draft = {
+    courts: [{ number: 1, teamA: ['a1', 'a2'], teamB: ['a3', 'a4'], homeGroup: 0, groups: [0], borrowers: [] }],
+    resting: ['c1', 'b1', 'c2'], paused: [],
   };
-  assertGelijk(Sessie.pauzeer(avond, club, 'a1', true, false).invallen[0].in, 'b1', 'dichtstbijzijnd niveau');
-  avond.rustcorrectie = { c2: 2 };
-  assertGelijk(Sessie.pauzeer(avond, club, 'a1', true, false).invallen[0].in, 'c2', 'meeste rust gaat voor');
+  assertEqual(Session.pause(evening, club, 'a1', true, false).substitutions[0].in, 'b1', 'closest level');
+  evening.restCorrection = { c2: 2 };
+  assertEqual(Session.pause(evening, club, 'a1', true, false).substitutions[0].in, 'c2', 'most rest comes first');
 });
 
-test('invallen: pauze intrekken zet de speler in het concept terug bij de rustenden', function () {
-  const club = maakTestClub(10);
-  let avond = Sessie.nieuweAvond(idsVan(club, 10), 2, 'ABCDEF');
-  avond = Sessie.maakConcept(avond, club, { rng: Hussel.maakRng(4), pogingen: 5 }).avond;
-  const uit = avond.concept.banen[0].teamA[0];
-  avond = Sessie.pauzeer(avond, club, uit, true, false).avond;
-  avond = Sessie.pauzeer(avond, club, uit, false, false).avond;
-  assertGelijk(avond.concept.gepauzeerd, []);
-  assert(avond.concept.rustend.indexOf(uit) !== -1, 'niet terug bij de rustenden');
-  preciesEenKeer(avond.concept, avond.aanwezigen);
+test('substitutions: withdrawing a pause puts the player back with the resting players in the draft', function () {
+  const club = makeTestClub(10);
+  let evening = Session.newEvening(idsOf(club, 10), 2, 'ABCDEF');
+  evening = Session.createDraft(evening, club, { rng: Pairing.createRng(4), attempts: 5 }).evening;
+  const out = evening.draft.courts[0].teamA[0];
+  evening = Session.pause(evening, club, out, true, false).evening;
+  evening = Session.pause(evening, club, out, false, false).evening;
+  assertEqual(evening.draft.paused, []);
+  assert(evening.draft.resting.indexOf(out) !== -1, 'not back with the resting players');
+  exactlyOnce(evening.draft, evening.attendees);
 });
 
-test('sessie: hallo herkent een speler aan zijn naam als de id onbekend is', function () {
-  const club = maakTestClub(4);
-  const avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'hallo', speler: 'onbekend', naam: ' speler 2 ' });
-  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p2' });
-  assertGelijk(uitkomst.avond.aanwezigen, [], 'hallo mag niet vanzelf aanmelden');
+test('session: hello recognises a player by name when the id is unknown', function () {
+  const club = makeTestClub(4);
+  const evening = Session.newEvening([], 2, 'ABCDEF');
+  const result = Session.applyRequest(evening, club, { phone: 't1', type: 'hello', player: 'unknown', name: ' player 2 ' });
+  assertEqual(result.evening.links, { t1: 'p2' });
+  assertEqual(result.evening.attendees, [], 'hello must not check in automatically');
 });
 
-test('sessie: hallo op naam koppelt niet als die naam al aan een andere telefoon hangt', function () {
-  const club = maakTestClub(4);
-  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p2' }).avond;
-  const uitkomst = Sessie.pasVerzoekToe(avond, club, { telefoon: 't2', type: 'hallo', naam: 'Speler 2' });
-  assertGelijk(uitkomst.avond.koppelingen, { t1: 'p2' });
+test('session: hello by name does not link when that name is already on another phone', function () {
+  const club = makeTestClub(4);
+  let evening = Session.newEvening([], 2, 'ABCDEF');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p2' }).evening;
+  const result = Session.applyRequest(evening, club, { phone: 't2', type: 'hello', name: 'Player 2' });
+  assertEqual(result.evening.links, { t1: 'p2' });
 });
 
-test('sessie: de telefoon krijgt zijn eigen naam en niveau mee om te onthouden', function () {
-  const club = maakTestClub(4);
-  let avond = Sessie.nieuweAvond([], 2, 'ABCDEF');
-  avond = Sessie.pasVerzoekToe(avond, club, { telefoon: 't1', type: 'claim', speler: 'p1' }).avond;
-  const toestand = Sessie.toestandVoor(avond, club, 't1');
-  assertGelijk([toestand.ikNaam, toestand.ikNiveau], ['Speler 1', 'Zwak']);
+test('session: the phone gets its own name and level to remember', function () {
+  const club = makeTestClub(4);
+  let evening = Session.newEvening([], 2, 'ABCDEF');
+  evening = Session.applyRequest(evening, club, { phone: 't1', type: 'claim', player: 'p1' }).evening;
+  const state = Session.stateFor(evening, club, 't1');
+  assertEqual([state.myName, state.myLevel], ['Player 1', 'Weak']);
 });
 
-test('sessie: een avond die twaalf uur niet veranderde, geldt als vergeten', function () {
-  const uur = 60 * 60 * 1000;
-  const nu = 100 * uur;
-  assertGelijk(Sessie.isVergeten(null, nu), false);
-  assertGelijk(Sessie.isVergeten({ bijgewerkt: nu - 3 * uur }, nu), false);
-  assertGelijk(Sessie.isVergeten({ bijgewerkt: nu - 13 * uur }, nu), true);
-  assertGelijk(Sessie.isVergeten({}, nu), true, 'zonder tijdstip vragen we het voor de zekerheid');
+test('session: an evening that has not changed for twelve hours counts as forgotten', function () {
+  const hour = 60 * 60 * 1000;
+  const now = 100 * hour;
+  assertEqual(Session.isForgotten(null, now), false);
+  assertEqual(Session.isForgotten({ updatedAt: now - 3 * hour }, now), false);
+  assertEqual(Session.isForgotten({ updatedAt: now - 13 * hour }, now), true);
+  assertEqual(Session.isForgotten({}, now), true, 'without a timestamp we ask just to be safe');
 });

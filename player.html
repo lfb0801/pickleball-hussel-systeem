@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B1B2C">
+<title data-t="title_phone">Hussel — meedoen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@700;900&display=swap">
+<link rel="stylesheet" href="assets/css/theme.css?v=20261020224710">
+<link rel="stylesheet" href="assets/css/player.css?v=20261020224710">
+</head>
+<body>
+<header class="phone-bar">
+  <span class="ball" aria-hidden="true"></span>
+  <span class="brand-text"><strong data-t="app"></strong><small data-t="club"></small></span>
+  <div id="language-switch"></div>
+  <span id="phone-dot" class="phone-dot" aria-hidden="true"></span>
+</header>
+
+<div id="phone-status" class="phone-status" hidden>
+  <p id="phone-status-text"></p>
+  <p class="phone-status-buttons">
+    <button type="button" id="phone-retry" class="btn btn-small" data-t="phone_retry"></button>
+    <button type="button" id="phone-other-code" class="btn-link" data-t="phone_other_code"></button>
+  </p>
+</div>
+
+<main>
+  <section id="view-code" hidden>
+    <h1 data-t="phone_code_title"></h1>
+    <p class="hint" data-t="phone_code_help"></p>
+    <form id="code-form" class="stack">
+      <input type="text" id="code-field" class="code-field" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+      <button type="submit" class="btn btn-primary btn-large" data-t="phone_code_button"></button>
+    </form>
+  </section>
+
+  <section id="view-connecting" hidden>
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="center" data-t="phone_connecting"></p>
+  </section>
+
+  <section id="view-name" hidden>
+    <h1 data-t="phone_welcome"></h1>
+    <div id="name-list-head">
+      <p class="hint" data-t="phone_pick_help"></p>
+      <input type="search" id="name-search" class="search" data-t-placeholder="search">
+      <ul id="names" class="names"></ul>
+    </div>
+    <div class="card" id="new-card">
+      <h2 data-t="phone_new_title"></h2>
+      <p class="hint" data-t="phone_new_help"></p>
+      <form id="new-form" class="stack">
+        <input type="text" id="new-name" data-t-placeholder="phone_new_name" maxlength="40" autocomplete="name" required>
+        <fieldset class="levels">
+          <legend data-t="phone_level"></legend>
+          <div id="level-choice" class="level-choice"></div>
+          <p class="hint" data-t="phone_level_help"></p>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-large" data-t="phone_new_button"></button>
+      </form>
+    </div>
+  </section>
+
+  <section id="view-main" hidden>
+    <p class="hello"><span id="hello"></span> <button type="button" id="not-you" class="btn-link" data-t="phone_not_you"></button></p>
+    <div id="my-card" class="my-card"></div>
+
+    <div id="not-present" class="card" hidden>
+      <p id="not-present-text"></p>
+      <button type="button" id="im-here" class="btn btn-primary btn-large"></button>
+    </div>
+
+    <div id="controls" class="card controls">
+      <label class="switch">
+        <span data-t="phone_pause_toggle"></span>
+        <input type="checkbox" id="pause-switch" role="switch">
+        <span class="slider" aria-hidden="true"></span>
+      </label>
+      <p id="pause-hint" class="hint" hidden data-t="phone_pause_on"></p>
+      <div id="pause-choice" class="pause-choice" hidden>
+        <p id="pause-choice-text"></p>
+        <button type="button" id="pause-now" class="btn btn-primary" data-t="phone_pause_now"></button>
+        <button type="button" id="pause-later" class="btn" data-t="phone_pause_later"></button>
+        <button type="button" id="pause-cancel" class="btn-link" data-t="phone_pause_cancel"></button>
+      </div>
+      <button type="button" id="go-home" class="btn btn-danger" data-t="phone_go_home"></button>
+    </div>
+
+    <details id="whole-round" class="card" hidden>
+      <summary data-t="phone_whole_round"></summary>
+      <div id="whole-round-content"></div>
+    </details>
+  </section>
+
+  <section id="view-end" hidden>
+    <p class="center large" data-t="phone_ended"></p>
+  </section>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="assets/js/core/locales/nl.js?v=20261020224710"></script>
+<script src="assets/js/core/locales/en.js?v=20261020224710"></script>
+<script src="assets/js/core/i18n.js?v=20261020224710"></script>
+<script src="assets/vendor/peerjs.min.js?v=20261020224710"></script>
+<script src="assets/js/core/network.js?v=20261020224710"></script>
+<script src="assets/js/core/migrate.js?v=20261020224710"></script>
+<script src="assets/js/phone/player.js?v=20261020224710"></script>
+</body>
+</html>

@@ -2,50 +2,52 @@ const fs = require('fs');
 const path = require('path');
 
 const filter = process.argv[2] || '';
-const resultaten = [];
+const results = [];
 
-globalThis.test = function (naam, fn) {
-  if (filter && naam.indexOf(filter) === -1) return;
+globalThis.test = function (name, fn) {
+  if (filter && name.indexOf(filter) === -1) return;
   try {
     fn();
-    resultaten.push({ naam: naam, gelukt: true });
-  } catch (fout) {
-    resultaten.push({ naam: naam, gelukt: false, fout: fout.message });
+    results.push({ name: name, passed: true });
+  } catch (error) {
+    results.push({ name: name, passed: false, error: error.message });
   }
 };
 
-globalThis.assert = function (voorwaarde, bericht) {
-  if (!voorwaarde) throw new Error(bericht || 'assertie mislukt');
+globalThis.assert = function (condition, message) {
+  if (!condition) throw new Error(message || 'assertion failed');
 };
 
-globalThis.assertGelijk = function (gevonden, verwacht, bericht) {
-  const a = JSON.stringify(gevonden);
-  const b = JSON.stringify(verwacht);
-  if (a !== b) throw new Error((bericht || 'niet gelijk') + ': ' + a + ' !== ' + b);
+globalThis.assertEqual = function (actual, expected, message) {
+  const a = JSON.stringify(actual);
+  const b = JSON.stringify(expected);
+  if (a !== b) throw new Error((message || 'not equal') + ': ' + a + ' !== ' + b);
 };
 
 const root = path.join(__dirname, '..');
-const bestanden = [
-  'assets/js/kern/hussel.js',
-  'assets/js/kern/presets.js',
-  'assets/js/kern/sessie.js',
-  'assets/js/kern/opslag.js',
+const files = [
+  'assets/js/core/pairing.js',
+  'assets/js/core/presets.js',
+  'assets/js/core/session.js',
+  'assets/js/core/migrate.js',
+  'assets/js/core/store.js',
   'tests/tests.js',
+  'tests/migrate-tests.js',
 ];
-for (const bestand of bestanden) {
-  const volledig = path.join(root, bestand);
-  (0, eval)(fs.readFileSync(volledig, 'utf8'));
+for (const file of files) {
+  const fullPath = path.join(root, file);
+  (0, eval)(fs.readFileSync(fullPath, 'utf8'));
 }
 
-let mislukt = 0;
-for (const resultaat of resultaten) {
-  if (resultaat.gelukt) {
-    console.log('ok   ' + resultaat.naam);
+let failed = 0;
+for (const result of results) {
+  if (result.passed) {
+    console.log('ok   ' + result.name);
   } else {
-    mislukt += 1;
-    console.log('FOUT ' + resultaat.naam + ' — ' + resultaat.fout);
+    failed += 1;
+    console.log('FAIL ' + result.name + ' — ' + result.error);
   }
 }
 console.log('');
-console.log((resultaten.length - mislukt) + '/' + resultaten.length + ' geslaagd');
-process.exit(mislukt === 0 ? 0 : 1);
+console.log((results.length - failed) + '/' + results.length + ' passed');
+process.exit(failed === 0 ? 0 : 1);

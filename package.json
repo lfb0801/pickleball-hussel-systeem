@@ -2,7 +2,7 @@
   "name": "pickleball-hussel-systeem",
   "version": "1.0.0",
   "private": true,
-  "description": "Indelingssysteem voor pickleball-clubavonden: per ronde wie met en tegen wie speelt, ingedeeld op niveau.",
+  "description": "Court scheduler for pickleball club evenings: who plays with and against whom each round, grouped by level. Dutch and English.",
   "homepage": "https://lfb0801.github.io/pickleball-hussel-systeem/",
   "repository": {
     "type": "git",
@@ -11,7 +11,7 @@
   "scripts": {
     "start": "python3 -m http.server 8080 --bind 127.0.0.1",
     "test": "node tests/node.js",
-    "stempel": "node scripts/stempel-versie.js"
+    "stamp": "node scripts/stamp-version.js"
   },
   "engines": {
     "node": ">=18"

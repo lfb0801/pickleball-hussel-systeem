@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const versie = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
+const versie = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 const paginas = ['index.html', 'speler.html', 'test.html'];
 const eigenBestand = /((?:src|href)=")([a-z0-9.-]+\.(?:js|css))(?:\?v=[0-9]+)?(")/g;
 

@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+  const SPELER_ICOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4.5 21c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const TELEFOON_ICOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="18" r="1.3" fill="currentColor"/></svg>';
 
   // Het zijpaneel Beheer bij het ronde-scherm: al het beheer tijdens de
@@ -111,8 +112,11 @@
 
       const telefoon = App.telefoonVan(speler.id);
       const icoon = document.createElement(telefoon ? 'button' : 'span');
+      // Alleen wie met een telefoon meedoet, krijgt een telefoonicoon; de
+      // rest een gewoon spelersicoon.
       icoon.className = 'telefoon' + (telefoon === 'aan' ? ' aan' : '') + (telefoon ? '' : ' geen');
-      icoon.innerHTML = TELEFOON_ICOON;
+      icoon.innerHTML = telefoon ? TELEFOON_ICOON : SPELER_ICOON;
+      if (!telefoon) icoon.title = T.zonder_telefoon;
       if (telefoon) {
         icoon.type = 'button';
         icoon.title = (telefoon === 'aan' ? T.telefoon_verbonden : T.telefoon_gekoppeld) + ' · ' + T.ontkoppel;

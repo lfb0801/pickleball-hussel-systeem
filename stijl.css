@@ -421,7 +421,7 @@ button.naamkaartje:hover { border-color: var(--kleur-accent); }
 .paneel-rij button.telefoon { cursor: pointer; }
 .paneel-rij button.telefoon:hover { background: var(--kleur-achtergrond); }
 .paneel-rij .telefoon.aan { color: var(--kleur-primair-licht); }
-.paneel-rij .telefoon.geen { opacity: 0.2; }
+.paneel-rij .telefoon.geen { opacity: 0.45; }
 .paneel-rij .telefoon svg { width: 100%; height: 100%; }
 .rij-naam { flex: 1 1 9rem; min-width: 0; display: flex; flex-direction: column; }
 .rij-naam .naam-veld { padding: 0.15rem 0.4rem; margin-left: -0.4rem; }

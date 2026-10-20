@@ -71,6 +71,7 @@
     doet_niet_meer_mee: function (naam) { return naam + ' doet niet meer mee. De lopende ronde blijft staan; de wijziging geldt vanaf de volgende ronde.'; },
     pauze_label: 'Pauze',
     pauze_uitleg: 'Slaat de volgende ronde over',
+    zonder_telefoon: 'Doet mee zonder telefoon',
     telefoon_verbonden: 'Telefoon verbonden',
     telefoon_gekoppeld: 'Telefoon gekoppeld, nu niet verbonden',
     ontkoppel: 'Ontkoppel',

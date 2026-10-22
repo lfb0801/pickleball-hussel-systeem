@@ -13,6 +13,7 @@
 
   Locales.en = {
     club: 'Pickleball Den Bosch',
+    club_site: 'Pickleball Den Bosch website',
     app: 'Hussel',
     language: 'Language',
     title_host: 'Hussel — Pickleball Den Bosch',

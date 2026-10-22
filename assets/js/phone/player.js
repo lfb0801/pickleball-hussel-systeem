@@ -8,6 +8,7 @@
 
   const STORAGE_KEY = 'hussel.phone';
   const OLD_STORAGE_KEY = 'hussel.telefoon';
+  const HOLD_TIME = 700;
 
   function readState() {
     try {
@@ -402,6 +403,31 @@
     render();
   }
 
+  // A tap on the club logo opens the club's website; holding it opens the
+  // laptop page, for whoever runs the evening.
+  function setUpLogo() {
+    const logo = $('club-logo');
+    let timer = null;
+    let held = false;
+    function cancel() {
+      clearTimeout(timer);
+      timer = null;
+    }
+    logo.addEventListener('pointerdown', function () {
+      held = false;
+      cancel();
+      timer = setTimeout(function () {
+        held = true;
+        location.href = 'host/';
+      }, HOLD_TIME);
+    });
+    for (const type of ['pointerup', 'pointercancel', 'pointerleave']) logo.addEventListener(type, cancel);
+    logo.addEventListener('click', function (event) {
+      if (held) event.preventDefault();
+    });
+    logo.addEventListener('contextmenu', function (event) { event.preventDefault(); });
+  }
+
   function sessionFromAddress() {
     const code = new URLSearchParams(location.search).get('session');
     return code ? code.trim().toUpperCase() : null;
@@ -421,6 +447,8 @@
       state.left = false;
       saveState();
     }
+
+    setUpLogo();
 
     $('code-form').addEventListener('submit', function (event) {
       event.preventDefault();

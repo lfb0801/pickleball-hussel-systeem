@@ -1,4 +1,4 @@
-// Appends a version to every local script and stylesheet in the HTML, so a
+// Appends a version to every local script, stylesheet and image in the HTML, so a
 // browser never mixes old and new files after a release, and puts the same
 // version in the service worker. GitHub Pages lets browsers cache files for
 // ten minutes.
@@ -10,7 +10,7 @@ const path = require('path');
 const version = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
 const root = path.join(__dirname, '..');
 const pages = ['index.html', 'host/index.html', 'tests/index.html'];
-const localFile = /((?:src|href)=")((?:\.\.\/)?[a-z0-9./-]+\.(?:js|css))(?:\?v=[0-9]+)?(")/g;
+const localFile = /((?:src|href)=")((?:\.\.\/)?[a-z0-9./-]+\.(?:js|css|png))(?:\?v=[0-9]+)?(")/g;
 
 for (const page of pages) {
   const file = path.join(root, page);

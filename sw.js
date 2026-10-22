@@ -9,17 +9,17 @@
 //
 // On localhost the network comes first, so changes show up straight away
 // while developing; the copy is only used when the server is down.
-const VERSION = '20261022173014';
+const VERSION = '20261022173612';
 const CACHE = 'hussel-' + VERSION;
 const FONTS = 'hussel-fonts';
 const PAGES = ['./', 'index.html', 'host/', 'host/index.html', 'player.html', 'speler.html'];
 const LOCAL = ['localhost', '127.0.0.1', '[::1]'].indexOf(self.location.hostname) !== -1;
 
-// The files a page loads, read from its own script and stylesheet tags, so
+// The files a page loads, read from its own script, stylesheet and image tags, so
 // no list has to be kept up to date by hand.
 function filesOf(html, page) {
   const files = [];
-  const pattern = /(?:src|href)="([a-z0-9./-]+\.(?:js|css)(?:\?v=[0-9]+)?)"/g;
+  const pattern = /(?:src|href)="([a-z0-9./-]+\.(?:js|css|png)(?:\?v=[0-9]+)?)"/g;
   let match;
   while ((match = pattern.exec(html))) files.push(new URL(match[1], new URL(page, self.location.href)).href);
   return files;

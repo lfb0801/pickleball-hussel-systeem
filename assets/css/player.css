@@ -24,14 +24,14 @@ h2 { font-size: 1.15rem; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; min-width: 0; }
 .brand-text strong { font-family: var(--font-heading); font-weight: 900; font-size: 1.25rem; }
 .brand-text small { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
-.ball {
-  width: 28px; height: 28px; border-radius: 50%; flex: none;
-  background:
-    radial-gradient(circle at 30% 30%, var(--color-dark) 0 2.3px, transparent 2.8px),
-    radial-gradient(circle at 68% 34%, var(--color-dark) 0 2.3px, transparent 2.8px),
-    radial-gradient(circle at 50% 66%, var(--color-dark) 0 2.3px, transparent 2.8px),
-    var(--color-accent);
+/* Holding the logo opens the laptop page, so the phone must not show its
+   own menu for a held link or image. */
+.club-logo {
+  display: block; flex: none;
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+  touch-action: manipulation;
 }
+.club-logo img { display: block; width: 38px; height: 44px; -webkit-touch-callout: none; }
 /* The switcher pushes itself and the dot to the right edge of the bar. */
 #language-switch { margin-left: auto; }
 .phone-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #E5484D; }

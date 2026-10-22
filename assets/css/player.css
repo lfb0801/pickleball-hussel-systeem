@@ -23,7 +23,6 @@ h2 { font-size: 1.15rem; }
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; min-width: 0; }
 .brand-text strong { font-family: var(--font-heading); font-weight: 900; font-size: 1.25rem; }
-.brand-text small { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
 /* Holding the logo opens the laptop page, so the phone must not show its
    own menu for a held link or image. */
 .club-logo {

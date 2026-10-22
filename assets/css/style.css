@@ -31,21 +31,8 @@ h3 { font-size: 1.05rem; margin-top: 1.4rem; }
 .brand { display: flex; align-items: center; gap: 0.6rem; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
 .brand-text strong { font-family: var(--font-heading); font-weight: 900; font-size: 1.35rem; letter-spacing: 0.01em; }
-.brand-text small { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
-
-.ball {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 30%, var(--color-dark) 0 2.5px, transparent 3px),
-    radial-gradient(circle at 68% 34%, var(--color-dark) 0 2.5px, transparent 3px),
-    radial-gradient(circle at 50% 66%, var(--color-dark) 0 2.5px, transparent 3px),
-    radial-gradient(circle at 24% 66%, var(--color-dark) 0 2px, transparent 2.5px),
-    radial-gradient(circle at 76% 70%, var(--color-dark) 0 2px, transparent 2.5px),
-    var(--color-accent);
-  flex: none;
-}
+.club-logo { display: block; flex: none; }
+.club-logo img { display: block; width: 41px; height: 48px; }
 
 nav { display: flex; gap: 0.25rem; flex-wrap: wrap; }
 

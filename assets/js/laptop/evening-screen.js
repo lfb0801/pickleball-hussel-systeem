@@ -26,6 +26,7 @@
       const onlyPresent = document.getElementById('only-present').checked;
       const screen = this;
       container.textContent = '';
+      document.getElementById('attendance-help').hidden = App.club.players.length === 0;
 
       if (App.club.players.length === 0) {
         const empty = document.createElement('p');

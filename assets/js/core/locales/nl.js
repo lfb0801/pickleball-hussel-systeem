@@ -63,7 +63,7 @@
     // Evening
     new_evening_title: 'Nieuwe avond',
     attendance_title: 'Wie is er?',
-    attendance_help: 'Vink aan wie er vanavond is. Laatkomers kunnen zich ook later met hun telefoon aanmelden.',
+    attendance_help: 'Vink aan wie er is. Laatkomers melden zich later aan met hun telefoon.',
     select_all: 'Iedereen',
     select_none: 'Niemand',
     only_present: 'Alleen aanwezigen',
@@ -137,7 +137,7 @@
         + (names.length === 1 ? 'die meteen meedoet.' : 'zij meteen meedoen.');
     },
     new_signup: function (name, group) { return name + ' heeft zich aangemeld (' + group + ').'; },
-    evening_no_players: 'Nog geen spelers. Start de avond: spelers melden zich aan met hun telefoon via de QR-code.',
+    evening_no_players: 'Nog geen spelers: ze melden zich aan met de QR-code.',
 
     // Lobby before the first round
     lobby_status: 'Aanmelden',
@@ -262,7 +262,7 @@
     phone_new_round: 'Nieuwe ronde!',
     // Check-in pass
     pass_open: 'Mijn aanmeldpas',
-    pass_teaser_title: 'Slechte wifi in de zaal?',
+    pass_show: 'Toon mijn aanmeldpas',
     pass_teaser_help: 'Maak thuis alvast je aanmeldpas. In de zaal houd je hem voor de camera van de laptop en ben je aangemeld, ook zonder internet.',
     pass_no_connection: 'Lukt verbinden niet? Houd je aanmeldpas voor de camera van de laptop.',
     pass_title: 'Je aanmeldpas',

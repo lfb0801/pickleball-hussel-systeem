@@ -96,7 +96,8 @@
   function onStatus(status) {
     lastStatus = status;
     const dot = $('phone-dot');
-    dot.className = 'phone-dot' + (status === 'connected' ? ' on' : '');
+    dot.className = 'phone-dot on';
+    dot.hidden = status !== 'connected';
     const bar = $('phone-status');
     if (status === 'connected' || (status === 'connecting' && !latest)) {
       bar.hidden = true;

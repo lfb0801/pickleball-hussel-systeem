@@ -9,7 +9,7 @@
 //
 // On localhost the network comes first, so changes show up straight away
 // while developing; the copy is only used when the server is down.
-const VERSION = '20261022174005';
+const VERSION = '20261022180654';
 const CACHE = 'hussel-' + VERSION;
 const FONTS = 'hussel-fonts';
 const PAGES = ['./', 'index.html', 'host/', 'host/index.html', 'player.html', 'speler.html'];

@@ -63,7 +63,7 @@
     // Evening
     new_evening_title: 'New evening',
     attendance_title: 'Who\'s here?',
-    attendance_help: 'Tick everyone who\'s here tonight. Latecomers can also check in later on their phones.',
+    attendance_help: 'Tick who\'s here. Latecomers check in later on their phones.',
     select_all: 'Everyone',
     select_none: 'No one',
     only_present: 'Only those present',
@@ -137,7 +137,7 @@
         + (names.length === 1 ? 'they can play straight away.' : 'they can all play straight away.');
     },
     new_signup: function (name, group) { return name + ' has checked in (' + group + ').'; },
-    evening_no_players: 'No players yet. Start the evening: players check in on their phones with the QR code.',
+    evening_no_players: 'No players yet: they check in with the QR code.',
 
     // Lobby before the first round
     lobby_status: 'Check-in',
@@ -262,7 +262,7 @@
     phone_new_round: 'New round!',
     // Check-in pass
     pass_open: 'My check-in pass',
-    pass_teaser_title: 'Bad wifi in the hall?',
+    pass_show: 'Show my check-in pass',
     pass_teaser_help: 'Make your check-in pass at home. In the hall, hold it up to the laptop camera and you\'re checked in, even without internet.',
     pass_no_connection: 'Can\'t connect? Hold your check-in pass up to the laptop camera.',
     pass_title: 'Your check-in pass',

@@ -180,7 +180,7 @@
 
     joinLink: function () {
       if (!this.evening) return '';
-      return new URL('player.html?session=' + this.evening.sessionCode, location.href).href;
+      return new URL('../?session=' + this.evening.sessionCode, location.href).href;
     },
 
     isLocal: function () {

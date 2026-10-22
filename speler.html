@@ -6,7 +6,7 @@
 <title>Hussel — meedoen</title>
 <script>
   // Old QR codes and home-screen shortcuts point here with ?sessie=CODE:
-  // pass them on to the renamed page with the new parameter name.
+  // pass them on to the phone app with the new parameter name.
   (function () {
     'use strict';
     const params = new URLSearchParams(location.search);
@@ -15,11 +15,11 @@
       params.delete('sessie');
     }
     const query = params.toString();
-    location.replace('player.html' + (query ? '?' + query : '') + location.hash);
+    location.replace('./' + (query ? '?' + query : '') + location.hash);
   })();
 </script>
 </head>
 <body>
-<p><a href="player.html">Hussel — meedoen</a></p>
+<p><a href="./">Hussel — meedoen</a></p>
 </body>
 </html>

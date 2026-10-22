@@ -29,9 +29,9 @@ flowchart LR
 ## Project structure
 
 ```
-├── index.html                 The laptop app (organiser)
-├── player.html                The phone app (via the QR code)
-├── speler.html                Redirect for old links to the phone app
+├── index.html                 The phone app (base URL, via the QR code)
+├── host/index.html            The laptop app (organiser), at /host/
+├── player.html, speler.html   Redirects for old links to the phone app
 ├── sw.js                      Service worker: offline copy of both pages
 ├── assets/
 │   ├── css/                   theme.css (club branding), style.css, player.css
@@ -60,7 +60,7 @@ All visible text lives in `assets/js/core/locales/`. Static text in the HTML ref
 
 ## Running locally
 
-Nothing to install. Open `index.html` directly in a browser (without the offline copy; the camera may not work from a local file), or start a local server:
+Nothing to install. Open `host/index.html` directly in a browser (without the offline copy; the camera may not work from a local file), or start a local server:
 
 ```bash
 npm start

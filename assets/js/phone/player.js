@@ -186,40 +186,11 @@
     if (passOpen || !latest || !latest.eveningRunning) return;
     if (!latest.me) {
       show('name');
-      renderNames();
       renderLevels();
       fillRemembered();
     } else {
       show('main');
       renderMain();
-    }
-  }
-
-  function renderNames() {
-    const list = $('names');
-    const term = $('name-search').value.trim().toLowerCase();
-    list.textContent = '';
-    const visible = latest.players
-      .filter(function (p) { return !term || p.name.toLowerCase().indexOf(term) !== -1; })
-      .sort(function (a, b) { return I18n.compare(a.name, b.name); });
-    $('name-search').hidden = latest.players.length < 12;
-    $('name-list-head').hidden = latest.players.length === 0;
-    for (const player of visible.slice(0, 100)) {
-      const item = document.createElement('li');
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = player.name;
-      button.addEventListener('click', function () {
-        send({ type: 'claim', player: player.id });
-      });
-      item.appendChild(button);
-      list.appendChild(item);
-    }
-    if (!visible.length && latest.players.length) {
-      const empty = document.createElement('li');
-      empty.className = 'empty';
-      empty.textContent = T.no_matches;
-      list.appendChild(empty);
     }
   }
 
@@ -492,7 +463,6 @@
       show('code');
     });
 
-    $('name-search').addEventListener('input', renderNames);
 
     $('new-form').addEventListener('submit', function (event) {
       event.preventDefault();

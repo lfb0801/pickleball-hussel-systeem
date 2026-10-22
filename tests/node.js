@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const filter = process.argv[2] || '';
 const results = [];
@@ -39,6 +40,30 @@ const files = [
 for (const file of files) {
   const fullPath = path.join(root, file);
   (0, eval)(fs.readFileSync(fullPath, 'utf8'));
+}
+
+// The other scripts only run in a browser; they must at least parse. A
+// service worker that does not parse never installs, and devices then keep
+// the old release.
+const browserOnly = [
+  'sw.js',
+  'assets/js/core/i18n.js',
+  'assets/js/core/locales/en.js',
+  'assets/js/core/locales/nl.js',
+  'assets/js/core/network.js',
+  'assets/js/core/offline.js',
+  'assets/js/laptop/app.js',
+  'assets/js/laptop/evening-screen.js',
+  'assets/js/laptop/players-screen.js',
+  'assets/js/laptop/round-screen.js',
+  'assets/js/laptop/scanner.js',
+  'assets/js/laptop/side-panel.js',
+  'assets/js/phone/player.js',
+];
+for (const file of browserOnly) {
+  test('parses: ' + file, function () {
+    new vm.Script(fs.readFileSync(path.join(root, file), 'utf8'), { filename: file });
+  });
 }
 
 let failed = 0;

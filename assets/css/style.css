@@ -481,21 +481,32 @@ button.name-tag:hover { border-color: var(--color-accent); }
 .btn-danger-solid { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
 .btn-danger-solid:hover { filter: brightness(1.1); }
 
-/* Camera that reads check-in passes. The picture is mirrored, so holding a
-   phone up to it feels like a mirror; the frames it reads are not. */
+/* Camera that reads check-in passes. Its picture is never shown: the video
+   only has to keep playing so the scanner can read frames from it, so it
+   stays on screen at one pixel, fully transparent. */
+.scanner-video { position: fixed; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .scanner-slot { margin-top: 0.9rem; }
 .scanner { display: grid; justify-items: center; gap: 0.5rem; }
 .scanner .hint { margin: 0; }
-.scanner-view { position: relative; width: 100%; border-radius: var(--radius-small); overflow: hidden; background: var(--color-dark); }
-.scanner-view video { display: block; width: 100%; height: auto; transform: scaleX(-1); }
-.scanner-result {
-  position: absolute; left: 0; right: 0; bottom: 0; margin: 0;
-  padding: 0.6rem 0.8rem;
-  font: 700 1.05rem var(--font-body); color: #fff;
-  background: var(--color-primary);
-  animation: pop-in 0.25s ease-out;
-}
-.scanner-result.again { background: var(--color-blue); }
-.scanner-result.error { background: var(--color-danger); }
-.join.mini .scanner-result { font-size: 0.85rem; padding: 0.4rem 0.5rem; }
+.scanner-on { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-weight: 600; font-size: 0.92rem; }
+.scanner-dot { flex: none; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--color-primary-light); animation: scanner-pulse 1.6s ease-in-out infinite; }
+@keyframes scanner-pulse { 50% { opacity: 0.35; } }
+.join.mini .scanner-on { font-size: 0.8rem; text-align: left; }
 .scan-levels { display: grid; gap: 0.5rem; margin-top: 1rem; }
+
+/* Every scan is announced at the top of the hall screen, big enough to read
+   from where the player stands. */
+.scan-notice {
+  position: fixed; top: 5rem; left: 50%; z-index: 40;
+  transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 2rem);
+  padding: 1rem 1.6rem;
+  border-radius: var(--radius);
+  font: 900 1.6rem/1.25 var(--font-heading); color: #fff; text-align: center;
+  background: var(--color-primary);
+  box-shadow: 0 12px 40px rgba(11, 27, 44, 0.3);
+  animation: notice-in 0.3s ease-out;
+}
+.scan-notice.again { background: var(--color-blue); }
+.scan-notice.error { background: var(--color-danger); }
+@keyframes notice-in { from { transform: translateX(-50%) translateY(-1rem) scale(0.9); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }

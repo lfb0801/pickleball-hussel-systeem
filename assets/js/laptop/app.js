@@ -264,7 +264,7 @@
 
     // A check-in pass read by the camera: the same rules as a phone that
     // taps its name, without any network. Returns the outcome so the
-    // scanner can greet the player.
+    // scanner can announce the player; that notice replaces the toast.
     scanPass: function (pass, group) {
       if (!this.evening) return null;
       const eveningBefore = JSON.stringify(this.evening);
@@ -276,9 +276,6 @@
       }
       if (JSON.stringify(this.evening) !== eveningBefore) {
         this.saveEvening();
-        const player = this.playerById(result.player);
-        if (result.outcome === 'registered') this.notify(T.new_signup(player.name, this.club.groups[player.group]));
-        else if (result.outcome === 'checked-in') this.notify(T.joins(player.name));
         this.refreshDraft();
         this.renderCurrent();
       }

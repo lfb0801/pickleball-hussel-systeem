@@ -4,7 +4,8 @@
   // The laptop camera reads check-in passes, so players can check in
   // without any internet in the hall. Once switched on it keeps scanning as
   // long as the evening runs; the choice is remembered on this laptop, so
-  // after a reload it starts by itself.
+  // after a reload it starts by itself. The camera picture is not shown on
+  // the hall screen; every scan is announced with a notice at the top.
 
   const STORAGE_KEY = 'hussel.camera';
   const SCAN_EVERY = 250;
@@ -12,7 +13,7 @@
   // the same pass only counts again after this long.
   const REPEAT_AFTER = 8000;
   const SCAN_WIDTH = 640;
-  const RESULT_FOR = 3000;
+  const NOTICE_FOR = 4000;
 
   function $(id) { return document.getElementById(id); }
 
@@ -42,30 +43,24 @@
     // The pass of a new player who is choosing a level in the dialog.
     asking: null,
     audio: null,
-    resultTimer: null,
+    noticeTimer: null,
 
     supported: function () {
       return Boolean(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && typeof jsQR === 'function';
     },
 
-    // The scanner sits in the lobby before the first round and next to the
-    // courts after it; the round screen says where.
+    // The camera switch sits in the lobby before the first round and next
+    // to the courts after it; the round screen says where.
     mount: function (slotId) {
       const scanner = $('scanner');
       const slot = $(slotId);
-      if (slot && scanner.parentNode !== slot) {
-        slot.appendChild(scanner);
-        // A video taken out of the page pauses.
-        if (this.stream) $('scanner-video').play().catch(function () {});
-      }
+      if (slot && scanner.parentNode !== slot) slot.appendChild(scanner);
       if (this.wanted && !this.problem) this.start();
       this.render();
     },
 
     render: function () {
-      const on = Boolean(this.stream);
-      $('scanner-view').hidden = !on;
-      $('scanner-help').hidden = !on;
+      $('scanner-on').hidden = !this.stream;
       $('scanner-message').hidden = !this.problem;
       $('scanner-message').textContent = this.problem || '';
       const toggle = $('scanner-toggle');
@@ -172,12 +167,13 @@
         return;
       }
       if (result.outcome === 'error') {
-        this.showResult(T.phone_errors[result.error] || result.error, 'error');
+        this.showNotice(T.phone_errors[result.error] || result.error, 'error');
         return;
       }
       const name = App.name(result.player);
-      if (result.outcome === 'already-here') this.showResult(T.scan_already(name), 'again');
-      else this.showResult(T.scan_welcome(name), 'ok');
+      if (result.outcome === 'already-here') this.showNotice(T.scan_already(name), 'again');
+      else if (result.outcome === 'registered') this.showNotice(T.scan_registered(name), 'ok');
+      else this.showNotice(T.scan_welcome(name), 'ok');
     },
 
     // A player no laptop has seen before chooses a level themselves, right
@@ -204,13 +200,16 @@
       $('scan-level').showModal();
     },
 
-    showResult: function (text, kind) {
-      const element = $('scanner-result');
+    showNotice: function (text, kind) {
+      const element = $('scan-notice');
       element.textContent = text;
-      element.className = 'scanner-result ' + kind;
+      // Restart the animation when a second player follows straight away.
+      element.className = 'scan-notice';
+      void element.offsetWidth;
+      element.className = 'scan-notice ' + kind;
       element.hidden = false;
-      clearTimeout(this.resultTimer);
-      this.resultTimer = setTimeout(function () { element.hidden = true; }, RESULT_FOR);
+      clearTimeout(this.noticeTimer);
+      this.noticeTimer = setTimeout(function () { element.hidden = true; }, NOTICE_FOR);
       this.beep(kind === 'ok' ? 880 : kind === 'again' ? 660 : 220);
     },
 

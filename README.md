@@ -22,6 +22,8 @@ flowchart LR
 - **No server, no database.** The app is a set of static files on GitHub Pages. Phones connect directly to the laptop via [PeerJS](https://peerjs.com/); only finding each other goes through the free public PeerJS server.
 - **The laptop is the single source of truth.** Phones send requests; the laptop applies them and sends the new state back.
 - **Phones are a convenience, not a requirement.** Everything a phone can do, the laptop can do too, even without internet.
+- **Checking in works without internet.** Each phone can make a check-in pass: a QR code with its phone id, name and level. The laptop camera reads it and checks the player in, signing up someone new on the spot. The pass doesn't depend on the session, so it (or a screenshot of it) works every week. A phone that gets a connection later is already linked to its player.
+- **Opened once, works offline.** A service worker (`sw.js`) keeps a copy of both pages, so they open in the hall without internet once they've been opened before. iPhones clear that copy after about a week without a visit, which is why the pass suggests a screenshot.
 - **No build step.** Plain `<script>` tags instead of ES modules, so everything also works from `file://` and the same code can be tested under Node.
 
 ## Project structure
@@ -30,18 +32,20 @@ flowchart LR
 ├── index.html                 The laptop app (organiser)
 ├── player.html                The phone app (via the QR code)
 ├── speler.html                Redirect for old links to the phone app
+├── sw.js                      Service worker: offline copy of both pages
 ├── assets/
 │   ├── css/                   theme.css (club branding), style.css, player.css
 │   ├── js/
 │   │   ├── core/              Logic without screens: pairing algorithm, presets, session rules,
-│   │   │   │                  storage + migration, network, i18n
+│   │   │   │                  check-in pass, storage + migration, network, offline, i18n
 │   │   │   └── locales/       nl.js (default) and en.js: every visible text
-│   │   ├── laptop/            App start-up and the laptop screens
+│   │   ├── laptop/            App start-up, the laptop screens and the pass scanner
 │   │   └── phone/             The phone app
-│   └── vendor/                PeerJS 1.5.4 and qrcode-generator 1.4.4, pinned
+│   └── vendor/                PeerJS 1.5.4, qrcode-generator 1.4.4 and jsQR 1.4.0, pinned
 ├── tests/
 │   ├── tests.js               Pairing, session and storage tests
 │   ├── migrate-tests.js       Tests for upgrading data saved by older versions
+│   ├── pass-tests.js          Tests for the check-in pass and checking in by scan
 │   ├── index.html             Test runner in the browser
 │   └── node.js                The same tests under Node
 └── scripts/
@@ -56,13 +60,13 @@ All visible text lives in `assets/js/core/locales/`. Static text in the HTML ref
 
 ## Running locally
 
-Nothing to install. Open `index.html` directly in a browser, or start a local server:
+Nothing to install. Open `index.html` directly in a browser (without the offline copy; the camera may not work from a local file), or start a local server:
 
 ```bash
 npm start
 ```
 
-and go to <http://127.0.0.1:8080/>. Phones on the same network need a server that listens on the network address.
+and go to <http://127.0.0.1:8080/>. Phones on the same network need a server that listens on the network address. On localhost the service worker fetches from the network first, so changes show up straight away.
 
 ## Tests
 
@@ -79,3 +83,5 @@ The app runs on GitHub Pages from the `master` branch. Pages lets browsers cache
 ```bash
 npm run stamp
 ```
+
+This also bumps the version in `sw.js`. Browsers then fetch the new release for their offline copy in the background and use it from the next time the page opens.

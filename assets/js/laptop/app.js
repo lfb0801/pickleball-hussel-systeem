@@ -96,6 +96,7 @@
 
     endEvening: function () {
       this.stopSession();
+      if (window.Scanner) Scanner.stop();
       this.evening = null;
       Store.clearEvening();
       if (window.RoundScreen) {
@@ -259,6 +260,29 @@
       } else {
         this.network.send(phone, Session.stateFor(this.evening, this.club, phone));
       }
+    },
+
+    // A check-in pass read by the camera: the same rules as a phone that
+    // taps its name, without any network. Returns the outcome so the
+    // scanner can greet the player.
+    scanPass: function (pass, group) {
+      if (!this.evening) return null;
+      const eveningBefore = JSON.stringify(this.evening);
+      const result = Session.scanPass(this.evening, this.club, pass, this.newId(), group);
+      this.evening = result.evening;
+      if (result.club !== this.club) {
+        this.club = result.club;
+        this.saveClub();
+      }
+      if (JSON.stringify(this.evening) !== eveningBefore) {
+        this.saveEvening();
+        const player = this.playerById(result.player);
+        if (result.outcome === 'registered') this.notify(T.new_signup(player.name, this.club.groups[player.group]));
+        else if (result.outcome === 'checked-in') this.notify(T.joins(player.name));
+        this.refreshDraft();
+        this.renderCurrent();
+      }
+      return result;
     },
 
     // Newcomers belong in the next round straight away: an open draft is

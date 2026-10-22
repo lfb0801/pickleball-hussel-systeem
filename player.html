@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@700;900&display=swap">
-<link rel="stylesheet" href="assets/css/theme.css?v=20261020224710">
-<link rel="stylesheet" href="assets/css/player.css?v=20261020224710">
+<link rel="stylesheet" href="assets/css/theme.css?v=20261022164605">
+<link rel="stylesheet" href="assets/css/player.css?v=20261022164605">
 </head>
 <body>
 <header class="phone-bar">
@@ -24,6 +24,7 @@
   <p class="phone-status-buttons">
     <button type="button" id="phone-retry" class="btn btn-small" data-t="phone_retry"></button>
     <button type="button" id="phone-other-code" class="btn-link" data-t="phone_other_code"></button>
+    <button type="button" class="btn btn-small pass-open" data-t="pass_open"></button>
   </p>
 </div>
 
@@ -35,11 +36,42 @@
       <input type="text" id="code-field" class="code-field" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
       <button type="submit" class="btn btn-primary btn-large" data-t="phone_code_button"></button>
     </form>
+    <div class="card">
+      <h2 data-t="pass_teaser_title"></h2>
+      <p class="hint" data-t="pass_teaser_help"></p>
+      <button type="button" class="btn btn-large pass-open" data-t="pass_open"></button>
+    </div>
   </section>
 
   <section id="view-connecting" hidden>
     <div class="spinner" aria-hidden="true"></div>
     <p class="center" data-t="phone_connecting"></p>
+    <p class="center hint" data-t="pass_no_connection"></p>
+    <button type="button" class="btn btn-large pass-open" data-t="pass_open"></button>
+  </section>
+
+  <section id="view-pass" hidden>
+    <div id="pass-form-part">
+      <h1 data-t="pass_title"></h1>
+      <p class="hint" data-t="pass_form_help"></p>
+      <form id="pass-form" class="stack">
+        <input type="text" id="pass-name" data-t-placeholder="phone_new_name" maxlength="40" autocomplete="name" required>
+        <fieldset id="pass-levels" class="levels">
+          <legend data-t="phone_level"></legend>
+          <div id="pass-level-choice" class="level-choice"></div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-large" data-t="pass_make"></button>
+      </form>
+    </div>
+    <div id="pass-show-part" class="pass">
+      <h1 data-t="pass_title"></h1>
+      <div id="pass-qr" class="pass-qr"></div>
+      <p id="pass-who" class="pass-who"></p>
+      <p class="hint" data-t="pass_help"></p>
+      <p class="pass-tip" data-t="pass_screenshot"></p>
+      <button type="button" id="pass-edit" class="btn-link" data-t="pass_edit"></button>
+    </div>
+    <button type="button" id="pass-back" class="btn btn-large pass-back" data-t="back"></button>
   </section>
 
   <section id="view-name" hidden>
@@ -101,12 +133,15 @@
 </main>
 <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="assets/js/core/locales/nl.js?v=20261020224710"></script>
-<script src="assets/js/core/locales/en.js?v=20261020224710"></script>
-<script src="assets/js/core/i18n.js?v=20261020224710"></script>
-<script src="assets/vendor/peerjs.min.js?v=20261020224710"></script>
-<script src="assets/js/core/network.js?v=20261020224710"></script>
-<script src="assets/js/core/migrate.js?v=20261020224710"></script>
-<script src="assets/js/phone/player.js?v=20261020224710"></script>
+<script src="assets/js/core/locales/nl.js?v=20261022164605"></script>
+<script src="assets/js/core/locales/en.js?v=20261022164605"></script>
+<script src="assets/js/core/i18n.js?v=20261022164605"></script>
+<script src="assets/vendor/peerjs.min.js?v=20261022164605"></script>
+<script src="assets/vendor/qrcode.js?v=20261022164605"></script>
+<script src="assets/js/core/network.js?v=20261022164605"></script>
+<script src="assets/js/core/migrate.js?v=20261022164605"></script>
+<script src="assets/js/core/pass.js?v=20261022164605"></script>
+<script src="assets/js/core/offline.js?v=20261022164605"></script>
+<script src="assets/js/phone/player.js?v=20261022164605"></script>
 </body>
 </html>

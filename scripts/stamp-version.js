@@ -1,6 +1,7 @@
 // Appends a version to every local script and stylesheet in the HTML, so a
-// browser never mixes old and new files after a release. GitHub Pages lets
-// browsers cache files for ten minutes.
+// browser never mixes old and new files after a release, and puts the same
+// version in the service worker. GitHub Pages lets browsers cache files for
+// ten minutes.
 //
 // Usage: npm run stamp   (before every commit you are going to push)
 const fs = require('fs');
@@ -19,4 +20,10 @@ for (const page of pages) {
   });
   fs.writeFileSync(file, after);
 }
+
+// A new version in the service worker makes browsers fetch the new release
+// for their offline copy.
+const worker = path.join(root, 'sw.js');
+const workerBefore = fs.readFileSync(worker, 'utf8');
+fs.writeFileSync(worker, workerBefore.replace(/const VERSION = '[0-9]+';/, "const VERSION = '" + version + "';"));
 console.log('version ' + version);

@@ -45,6 +45,7 @@
       document.getElementById('rest-bar').hidden = lobby;
       document.getElementById('courts').classList.toggle('draft', Boolean(draft));
       this.renderStale(draft ? evening.stale : {});
+      if (window.Scanner) Scanner.mount(lobby ? 'scanner-slot-lobby' : 'scanner-slot-round');
       if (lobby) {
         this.renderLobby();
         return;

@@ -29,10 +29,12 @@ const files = [
   'assets/js/core/pairing.js',
   'assets/js/core/presets.js',
   'assets/js/core/session.js',
+  'assets/js/core/pass.js',
   'assets/js/core/migrate.js',
   'assets/js/core/store.js',
   'tests/tests.js',
   'tests/migrate-tests.js',
+  'tests/pass-tests.js',
 ];
 for (const file of files) {
   const fullPath = path.join(root, file);

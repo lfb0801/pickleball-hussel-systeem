@@ -50,7 +50,7 @@ h2 { font-size: 1.15rem; }
 
 .phone-status { background: var(--color-notice); padding: 0.7rem 1rem; border-bottom: 1px solid #EEDB8A; }
 .phone-status p { margin: 0; }
-.phone-status-buttons { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.5rem !important; }
+.phone-status-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-top: 0.5rem !important; }
 
 main { padding: 1.25rem 1rem 3rem; max-width: 34rem; margin: 0 auto; }
 
@@ -176,3 +176,13 @@ details summary { font-weight: 600; cursor: pointer; }
 
 .pause-choice { margin-top: 0.8rem; padding: 0.9rem; border-radius: var(--radius-small); background: #FFFBEA; border: 1.5px solid var(--color-accent); display: grid; gap: 0.5rem; }
 .pause-choice p { margin: 0 0 0.2rem; font-weight: 600; }
+
+/* Check-in pass: a big QR code for the laptop camera, on white with a wide
+   quiet zone so the camera picks it up from a bright phone screen. */
+.pass { text-align: center; }
+.pass-qr { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.5rem; margin: 0.6rem auto 0.8rem; width: min(100%, 22rem); }
+.pass-qr svg { display: block; width: 100%; height: auto; }
+.pass-who { font: 900 1.4rem var(--font-heading); margin: 0 0 0.6rem; }
+.pass-tip { background: var(--color-notice); border-radius: var(--radius-small); padding: 0.7rem 0.9rem; font-size: 0.95rem; margin: 0 0 0.8rem; }
+.pass-back { margin-top: 1rem; }
+#view-connecting .pass-open { margin-top: 0.4rem; }

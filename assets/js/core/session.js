@@ -467,6 +467,42 @@
     }
   }
 
+  // A check-in pass held up to the laptop camera means: I'm here. The
+  // player is found by the id on the pass, else by name, and the phone on
+  // the pass is linked to them, so it finds its player straight away once
+  // it does get a connection. If another phone already holds that name, the
+  // player is still checked in; the link stays where it was. Someone nobody
+  // knows yet is signed up with the level on the pass. Without a level this
+  // laptop knows, outcome 'needs-level' asks the laptop to let the player
+  // choose; the scan is then repeated with that group.
+  function scanPass(evening, club, pass, newId, group) {
+    const phone = pass.phone;
+    function result(newEvening, newClub, outcome, player, error) {
+      if (outcome === 'checked-in' || outcome === 'registered') {
+        newEvening = rememberFirst({ evening: newEvening, club: newClub, reply: null, phone: phone }).evening;
+      }
+      return { evening: newEvening, club: newClub, outcome: outcome, player: player, error: error || null };
+    }
+
+    const known = pass.player && playerById(club, pass.player)
+      ? pass.player
+      : playerWithName(club, pass.name);
+    if (known) {
+      const attempt = link(evening, phone, known);
+      const linked = attempt.error ? evening : attempt.evening;
+      if (isPresent(linked, known)) return result(linked, club, 'already-here', known);
+      return result(checkIn(linked, known), club, 'checked-in', known);
+    }
+
+    if (!cleanName(pass.name)) return result(evening, club, 'error', null, 'empty-name');
+    const chosen = group === undefined ? club.groups.indexOf(pass.level) : group;
+    if (chosen === -1) return result(evening, club, 'needs-level', null);
+    if (!newId) return result(evening, club, 'error', null, 'unknown-request');
+    const attempt = register(evening, club, phone, pass.name, chosen, newId);
+    if (attempt.error) return result(evening, club, 'error', null, attempt.error);
+    return result(attempt.evening, attempt.club, 'registered', newId);
+  }
+
   function nameOf(club, id) {
     const player = playerById(club, id);
     return player ? player.name : '?';
@@ -558,6 +594,7 @@
     cleanName: cleanName,
     nameExists: nameExists,
     applyRequest: applyRequest,
+    scanPass: scanPass,
     stateFor: stateFor,
   };
 })();

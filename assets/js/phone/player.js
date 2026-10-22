@@ -2,7 +2,8 @@
   'use strict';
 
   // The phone app. It keeps only its own phone id, the session code, the
-  // chosen player and the last round it saw. Everything else comes from the
+  // chosen player, the last round it saw and the levels of the last laptop
+  // it reached (for the check-in pass). Everything else comes from the
   // laptop.
 
   const STORAGE_KEY = 'hussel.phone';
@@ -46,10 +47,17 @@
   let toastTimer = null;
   // Remembered so the pause question can be redrawn in another language.
   let pauseChoiceCourt = null;
+  // While the check-in pass is open, messages from the laptop do not draw
+  // another view over it. returnTo is the view to go back to without one.
+  let passOpen = false;
+  let passEditing = false;
+  let currentView = null;
+  let returnTo = null;
 
   function $(id) { return document.getElementById(id); }
 
   function show(name) {
+    currentView = name;
     for (const section of document.querySelectorAll('main > section')) {
       section.hidden = section.id !== 'view-' + name;
     }
@@ -100,13 +108,21 @@
 
   function onMessage(message) {
     if (message.type === 'state') {
+      const wasPresent = Boolean(latest && latest.me && latest.present);
       latest = message;
       if (!message.eveningRunning) {
         // The player stays remembered for the next evening.
         state.lastRound = null;
         saveState();
-        show('end');
+        if (!passOpen) show('end');
         return;
+      }
+      state.groups = message.groups;
+      // Checked in by holding the pass up to the laptop while this phone
+      // was connected after all: straight on to the round.
+      if (passOpen && message.me && message.present && !wasPresent) {
+        closePass();
+        toast(T.pass_checked_in);
       }
       if (state.player && !message.me) {
         // The name was linked elsewhere or unlinked: pick again.
@@ -167,7 +183,7 @@
   }
 
   function render() {
-    if (!latest || !latest.eveningRunning) return;
+    if (passOpen || !latest || !latest.eveningRunning) return;
     if (!latest.me) {
       show('name');
       renderNames();
@@ -333,6 +349,79 @@
     $('pause-choice').hidden = false;
   }
 
+  // ---- Check-in pass ----
+
+  function openPass() {
+    if (passOpen) return;
+    passOpen = true;
+    passEditing = false;
+    returnTo = currentView;
+    renderPass();
+    show('pass');
+    window.scrollTo(0, 0);
+  }
+
+  function closePass() {
+    passOpen = false;
+    if (latest && latest.eveningRunning) render();
+    else show(latest ? 'end' : returnTo || 'code');
+  }
+
+  // The levels come from the last laptop this phone reached. A phone that
+  // never reached one skips the level: the laptop asks when scanning.
+  function renderPassLevels() {
+    const groups = state.groups || [];
+    const holder = $('pass-level-choice');
+    holder.textContent = '';
+    $('pass-levels').hidden = groups.length === 0;
+    groups.forEach(function (name) {
+      const label = document.createElement('label');
+      label.className = 'level';
+      const choice = document.createElement('input');
+      choice.type = 'radio';
+      choice.name = 'pass-level';
+      choice.value = name;
+      choice.checked = name === state.level;
+      const text = document.createElement('span');
+      text.textContent = name;
+      label.appendChild(choice);
+      label.appendChild(text);
+      holder.appendChild(label);
+    });
+  }
+
+  function renderPass() {
+    const ready = Boolean(state.name) && !passEditing;
+    $('pass-form-part').hidden = ready;
+    $('pass-show-part').hidden = !ready;
+    if (!ready) {
+      $('pass-name').value = state.name || '';
+      renderPassLevels();
+      return;
+    }
+    $('pass-who').textContent = state.level ? state.name + ' · ' + state.level : state.name;
+    const holder = $('pass-qr');
+    holder.textContent = '';
+    if (typeof qrcode !== 'function') return;
+    const qr = qrcode(0, 'M');
+    qr.addData(Pass.encode({ phone: state.phone, player: state.player, name: state.name, level: state.level }));
+    qr.make();
+    holder.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
+  }
+
+  function savePassForm() {
+    const name = $('pass-name').value.replace(/\s+/g, ' ').trim().slice(0, 40);
+    if (!name) return;
+    const level = document.querySelector('#pass-level-choice input:checked');
+    // Another name is another player: let the laptop find them by name.
+    if (name !== state.name) state.player = null;
+    state.name = name;
+    state.level = level ? level.value : null;
+    saveState();
+    passEditing = false;
+    renderPass();
+  }
+
   // Fixed text is filled by I18n.apply; everything drawn from code is drawn
   // again here, so switching language takes effect without a reload.
   function onLanguageChange() {
@@ -378,7 +467,21 @@
       if (connection) connection.retryNow();
     });
 
+    for (const button of document.querySelectorAll('.pass-open')) {
+      button.addEventListener('click', openPass);
+    }
+    $('pass-back').addEventListener('click', closePass);
+    $('pass-edit').addEventListener('click', function () {
+      passEditing = true;
+      renderPass();
+    });
+    $('pass-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      savePassForm();
+    });
+
     $('phone-other-code').addEventListener('click', function () {
+      passOpen = false;
       if (connection) connection.stop();
       connection = null;
       latest = null;
